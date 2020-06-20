@@ -1,40 +1,52 @@
-# -*- coding: utf-8 -*- {{{
-# vim: set fenc=utf-8 ft=python sw=4 ts=4 sts=4 et:
 #
-# Copyright 2019, Battelle Memorial Institute.
+# Copyright (c) 2017, Battelle Memorial Institute
+# All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# This material was prepared as an account of work sponsored by an agency of
-# the United States Government. Neither the United States Government nor the
-# United States Department of Energy, nor Battelle, nor any of their
-# employees, nor any jurisdiction or organization that has cooperated in the
-# development of these materials, makes any warranty, express or
-# implied, or assumes any legal liability or responsibility for the accuracy,
-# completeness, or usefulness or any information, apparatus, product,
-# software, or process disclosed, or represents that its use would not infringe
-# privately owned rights. Reference herein to any specific commercial product,
-# process, or service by trade name, trademark, manufacturer, or otherwise
-# does not necessarily constitute or imply its endorsement, recommendation, or
-# favoring by the United States Government or any agency thereof, or
-# Battelle Memorial Institute. The views and opinions of authors expressed
-# herein do not necessarily state or reflect those of the
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies,
+# either expressed or implied, of the FreeBSD Project.
+#
+# This material was prepared as an account of work sponsored by an
+# agency of the United States Government.  Neither the United States
+# Government nor the United States Department of Energy, nor Battelle,
+# nor any of their employees, nor any jurisdiction or organization
+# that has cooperated in the development of these materials, makes
+# any warranty, express or implied, or assumes any legal liability
+# or responsibility for the accuracy, completeness, or usefulness or
+# any information, apparatus, product, software, or process disclosed,
+# or represents that its use would not infringe privately owned rights.
+#
+# Reference herein to any specific commercial product, process, or
+# service by trade name, trademark, manufacturer, or otherwise does
+# not necessarily constitute or imply its endorsement, recommendation,
+# r favoring by the United States Government or any agency thereof,
+# or Battelle Memorial Institute. The views and opinions of authors
+# expressed herein do not necessarily state or reflect those of the
 # United States Government or any agency thereof.
 #
-# PACIFIC NORTHWEST NATIONAL LABORATORY operated by
-# BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
+# PACIFIC NORTHWEST NATIONAL LABORATORY
+# operated by BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
 # under Contract DE-AC05-76RL01830
-# }}}
 
 from gevent import monkey
 monkey.patch_socket()
@@ -50,7 +62,7 @@ from master_driver.interfaces import BaseInterface, BaseRegister, BasicRevert, D
 import struct
 import logging
 from csv import DictReader
-from io import StringIO
+from StringIO import StringIO
 import os.path
 
 from contextlib import contextmanager, closing
@@ -126,7 +138,7 @@ class ModbusByteRegister(ModbusRegisterBase):
         except struct.error:
             raise ValueError("Invalid Modbus Register '" + type_string + "' for point " + pointName)
         
-        struct_types = [type(x) for x in self.parse_struct.unpack(b'\x00'*self.parse_struct.size)]
+        struct_types = [type(x) for x in self.parse_struct.unpack('\x00'*self.parse_struct.size)]
         
         if len(struct_types) != 1:
             raise ValueError("Invalid length Modbus Register '" + type_string + "' for point " + pointName)
@@ -149,14 +161,13 @@ class ModbusByteRegister(ModbusRegisterBase):
 
         if self.mixed_endian:
             register_values = []
-            for i in range(0, len(target_bytes), PYMODBUS_REGISTER_STRUCT.size):
+            for i in xrange(0, len(target_bytes), PYMODBUS_REGISTER_STRUCT.size):
                 register_values.extend(PYMODBUS_REGISTER_STRUCT.unpack_from(target_bytes, i))
             register_values.reverse()
 
             target_bytes = ""
-            target_bytes = bytes.join(b'', [PYMODBUS_REGISTER_STRUCT.pack(value) for value in register_values])
-            # for value in register_values:
-            #     target_bytes += PYMODBUS_REGISTER_STRUCT.pack(value).decode('utf-8')
+            for value in register_values:
+                target_bytes += PYMODBUS_REGISTER_STRUCT.pack(value)
         
         return self.parse_struct.unpack(target_bytes)[0]
     
@@ -181,7 +192,7 @@ class ModbusByteRegister(ModbusRegisterBase):
         if not self.read_only:
             value_bytes = self.parse_struct.pack(value)
             register_values = []
-            for i in range(0, len(value_bytes), PYMODBUS_REGISTER_STRUCT.size):
+            for i in xrange(0, len(value_bytes), PYMODBUS_REGISTER_STRUCT.size):
                 register_values.extend(PYMODBUS_REGISTER_STRUCT.unpack_from(value_bytes, i))
             if self.mixed_endian:
                 register_values.reverse()
@@ -261,7 +272,7 @@ class Interface(BasicRevert, BaseInterface):
             try:
                 result = register.set_state(client, value)
             except (ConnectionException, ModbusIOException, ModbusInterfaceException) as ex:
-                raise IOError("Error encountered trying to write to point {}: {}".format(point_name, ex))
+                IOError("Error encountered trying to write to point {}: {}".format(point_name, ex))
         return result
     
     def scrape_byte_registers(self, client, read_only):
@@ -272,15 +283,13 @@ class Interface(BasicRevert, BaseInterface):
 
         for register_range in register_ranges:
             start, end, registers = register_range
-            result = b''
+            result = ''
 
-            for group in range(start, end + 1, MODBUS_READ_MAX):
+            for group in xrange(start, end + 1, MODBUS_READ_MAX):
                 count = min(end - group + 1, MODBUS_READ_MAX)
                 response = read_func(group, count, unit=self.slave_id)
                 if response is None:
                     raise ModbusInterfaceException("pymodbus returned None")
-                if isinstance(response, ModbusException):
-                    raise response
                 response_bytes = response.encode()
                 #Trim off length byte.
                 result += response_bytes[1:]
@@ -303,13 +312,11 @@ class Interface(BasicRevert, BaseInterface):
 
             result = []
 
-            for group in range(start, end + 1, MODBUS_READ_MAX):
+            for group in xrange(start, end + 1, MODBUS_READ_MAX):
                 count = min(end - group + 1, MODBUS_READ_MAX)
                 response = client.read_discrete_inputs(group, count, unit=self.slave_id) if read_only else client.read_coils(group, count, unit=self.slave_id)
                 if response is None:
                     raise ModbusInterfaceException("pymodbus returned None")
-                if isinstance(response, ModbusException):
-                    raise response
                 result += response.bits
 
             for register in registers:

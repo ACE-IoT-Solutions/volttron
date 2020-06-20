@@ -36,11 +36,18 @@ heat_pgm_sat,heat_pgm_sun,cool_pgm_mon,cool_pgm_tue,cool_pgm_wed,cool_pgm_thu,
 cool_pgm_fri,cool_pgm_sat,cool_pgm_sun,
 
 """
-
+import json
+import logging
+import sys
+import time
+import ast
+import csv
 from master_driver.interfaces import BaseInterface, BaseRegister, DriverInterfaceError
+from csv import DictReader
+from StringIO import StringIO
+from datetime import datetime
 from . import  thermostat_api
 
-from volttron.platform import jsonapi
 
 class Register(BaseRegister):
     '''Inherits from  Volttron Register Class'''
@@ -117,7 +124,7 @@ class Interface(BaseInterface):
 
     def configure(self, config_dict, registry_config_str):
         '''Configure the Inteface'''
-        print(config_dict)
+        print config_dict
         self.parse_config(registry_config_str)
         self.target_address = config_dict["device_address"]
         self.ping_target(self.target_address)
@@ -174,7 +181,7 @@ class Interface(BaseInterface):
             Set value of a point_name on a device
         '''
         result = {}
-        for point_names, properties in point_map.items():
+        for point_names, properties in point_map.iteritems():
             point_name = properties[0]
 
             if point_name in self.program_name:
@@ -201,7 +208,7 @@ class Interface(BaseInterface):
                 result = self.thermostat.energy_led(value)
             else:
                 print("No such writable point found"+point_names)
-        print(str(point_names) + "::" + str(result))
+        print str(point_names) + "::" + str(result)
         return (result)
 
 
@@ -213,10 +220,10 @@ class Interface(BaseInterface):
         result = {}
         query = {}
         point_map_obj = {}
-        for point_names, properties in point_map.items():
+        for point_names, properties in point_map.iteritems():
             point_name =  properties[0]
     
-            query = jsonapi.loads(self.thermostat.tstat())
+            query = json.loads(self.thermostat.tstat())
             if point_name in self.query_point_name:
                 try:
                     db = query[self.point_name_map[point_name]]

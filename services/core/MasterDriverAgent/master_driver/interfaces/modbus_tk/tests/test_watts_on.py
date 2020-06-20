@@ -3,7 +3,6 @@ import gevent
 import logging
 
 from volttron.platform import get_services_core
-from volttron.platform.agent.known_identities import PLATFORM_DRIVER
 
 logger = logging.getLogger(__name__)
 
@@ -59,15 +58,12 @@ def agent(request, volttron_instance):
     """
 
     # Build master driver agent
-    md_agent = volttron_instance.build_agent(identity="test_md_agent")
-    capabilities = {'edit_config_store': {'identity': PLATFORM_DRIVER}}
-    volttron_instance.add_capabilities(md_agent.core.publickey, capabilities)
+    md_agent = volttron_instance.build_agent()
 
     # Clean out master driver configurations
-    # wait for it to return before adding new config
     md_agent.vip.rpc.call('config.store',
                           'manage_delete_store',
-                          PLATFORM_DRIVER).get()
+                          'platform.driver')
 
     # Add driver configurations
     md_agent.vip.rpc.call('config.store',

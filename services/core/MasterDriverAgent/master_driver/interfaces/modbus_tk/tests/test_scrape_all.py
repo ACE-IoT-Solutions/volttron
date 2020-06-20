@@ -2,11 +2,11 @@ import pytest
 import gevent
 import logging
 import time
-
+import json
 import threading
 from random import randint
 from volttrontesting.utils.utils import get_rand_ip_and_port
-from volttron.platform import get_services_core, jsonapi
+from volttron.platform import get_services_core
 from master_driver.interfaces.modbus_tk.server import Server
 from master_driver.interfaces.modbus_tk.maps import Map, Catalog
 from volttron.platform.agent.known_identities import PLATFORM_DRIVER
@@ -94,29 +94,26 @@ def agent(request, volttron_instance):
     """
 
     # Build master driver agent
-    md_agent = volttron_instance.build_agent(identity="test_md_agent")
-    capabilities = {'edit_config_store': {'identity': PLATFORM_DRIVER}}
-    volttron_instance.add_capabilities(md_agent.core.publickey, capabilities)
+    md_agent = volttron_instance.build_agent()
 
     # Clean out master driver configurations
-    # wait for it to return before adding new config
     md_agent.vip.rpc.call('config.store',
                           'manage_delete_store',
-                          PLATFORM_DRIVER).get()
+                          PLATFORM_DRIVER)
 
     # Add driver configurations
     md_agent.vip.rpc.call('config.store',
                           'manage_store',
                           PLATFORM_DRIVER,
                           'devices/modbus_tk',
-                          jsonapi.dumps(DRIVER_CONFIG),
+                          json.dumps(DRIVER_CONFIG),
                           config_type='json')
 
     md_agent.vip.rpc.call('config.store',
                           'manage_store',
                           PLATFORM_DRIVER,
                           'devices/modbus',
-                          jsonapi.dumps(OLD_VOLTTRON_DRIVER_CONFIG),
+                          json.dumps(OLD_VOLTTRON_DRIVER_CONFIG),
                           config_type='json')
 
     # Add csv configurations

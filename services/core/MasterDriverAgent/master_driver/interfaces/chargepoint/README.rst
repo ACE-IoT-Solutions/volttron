@@ -7,18 +7,8 @@ Version 1.0
 
 Requirements
 ------------
-The Chargepoint driver Python requirements can be installed by running the following in an
-activated environment:
-
-::
-
-    pip install suds-jurko
-
-Alternatively requirements can be installed from requirements.txt using:
-
-::
-
-    pip install -r requirements.txt
+Make sure to do a pip install of requirements.txt. The Chargepoint Driver has a requirement for:
+- suds-jurko==0.6
 
 Write Points
 ------------
@@ -45,7 +35,7 @@ The driver config dictionary must have three entries.
 - username: This is the username to be used for the Chargepoint API Service.
 - password: This is the password to be used for the Chargepoint API Service.
 - cacheExpiration: This is how many seconds any API responses will be cached. Cached responses limit traffic to
-  Chargepoint API services.
+Chargepoint API services.
 
 CSV Config
 ----------
@@ -90,7 +80,6 @@ Notes                   Expected format is 1:00001
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 stationManufacturer
 ^^^^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -105,7 +94,6 @@ Notes                   Value is typically Chargepoint
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 stationModel
 ^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -120,7 +108,6 @@ Notes                   Value of Chargepoint station model
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 portNumber
 ^^^^^^^^^^
 ======================= ======================================================================================
@@ -136,7 +123,6 @@ Notes                   Describes which port number is being referenced. Chargep
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 stationName
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -152,7 +138,6 @@ Notes                   Name of station in Chargepoint. This is for some reason 
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 stationMacAddr
 ^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -167,7 +152,6 @@ Notes                   Typical MAC address format is 1234:5678:90AB:CDEF
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 stationSerialNum
 ^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -182,7 +166,6 @@ Notes                   Serial number of Chargepoint station.
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Address
 ^^^^^^^
 ======================= ======================================================================================
@@ -197,7 +180,6 @@ Notes                   Address where Chargepoint station is located
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 City
 ^^^^
 ======================= ======================================================================================
@@ -212,7 +194,6 @@ Notes                   City where Chargepoint station is located
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 State
 ^^^^^
 ======================= ======================================================================================
@@ -227,7 +208,6 @@ Notes                   State where Chargepoint station is located
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Country
 ^^^^^^^
 ======================= ======================================================================================
@@ -242,7 +222,6 @@ Notes                   Country where Chargepoint station is located
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 postalCode
 ^^^^^^^^^^
 ======================= ======================================================================================
@@ -257,7 +236,6 @@ Notes                   Postal Code where Chargepoint station is located
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Lat
 ^^^
 ======================= ======================================================================================
@@ -273,7 +251,6 @@ Notes                   Latitude of Chargepoint station. This is for some reason
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Long
 ^^^^
 ======================= ======================================================================================
@@ -289,7 +266,6 @@ Notes                   Longitude of Chargepoint station. This is for some reaso
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Reservable
 ^^^^^^^^^^
 ======================= ======================================================================================
@@ -304,7 +280,6 @@ Notes                   Flag indicating whether the charging port can be reserve
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Level
 ^^^^^
 ======================= ======================================================================================
@@ -320,7 +295,6 @@ Notes                   Level of the charging port. This is for US stations only
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Mode
 ^^^^
 ======================= ======================================================================================
@@ -336,7 +310,6 @@ Notes                   Mode of the charging port. This is for outside the US on
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Voltage
 ^^^^^^^
 ======================= ======================================================================================
@@ -351,7 +324,6 @@ Notes                   Configured voltage for the charging port
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Current
 ^^^^^^^
 ======================= ======================================================================================
@@ -366,7 +338,6 @@ Notes                   Configured current for the charging port
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Power
 ^^^^^
 ======================= ======================================================================================
@@ -381,7 +352,6 @@ Notes                   Configured power for the charging port
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Connector
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -396,7 +366,6 @@ Notes                   Type of connector that the charging port uses
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 numPorts
 ^^^^^^^^
 ======================= ======================================================================================
@@ -411,7 +380,6 @@ Notes                   Number of ports configured for a charging station. This 
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Type
 ^^^^
 ======================= ======================================================================================
@@ -426,7 +394,6 @@ Notes                   Either None, 1, 2, or 3. Indicating Session, Hourly, or 
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 startTime
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -441,7 +408,6 @@ Notes                   Time pricing session started
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 endTime
 ^^^^^^^
 ======================= ======================================================================================
@@ -456,7 +422,6 @@ Notes                   Time pricing session ended
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 minPrice
 ^^^^^^^^
 ======================= ======================================================================================
@@ -471,7 +436,6 @@ Notes                   Minimum price charged for a session
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 maxPrice
 ^^^^^^^^
 ======================= ======================================================================================
@@ -486,7 +450,6 @@ Notes                   Maximum price charged for a session
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 unitPricePerHour
 ^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -502,7 +465,6 @@ Notes                   Hourly price of a charging session. If this kind of pric
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 unitPricePerSession
 ^^^^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -518,7 +480,6 @@ Notes                   Session price of a charging session. If this kind of pri
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 unitPricePerKWh
 ^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -534,7 +495,6 @@ Notes                   Price per kWh used in a charging session. If this kind o
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 unitPriceForFirst
 ^^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -550,7 +510,6 @@ Notes                   Hourly price for first portion of timed charging. If thi
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 unitPricePerHourThereafter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -566,7 +525,6 @@ Notes                   Hourly price for second portion of timed charging. If th
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 sessionTime
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -581,7 +539,6 @@ Notes                   Amount of time a charging session is allowed to be activ
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 Description
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -597,7 +554,6 @@ Notes                   Desription of the charging station (or port). Chargepoin
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 mainPhone
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -612,7 +568,6 @@ Notes                   Main support telephone number for drivers.
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 orgID
 ^^^^^
 ======================= ======================================================================================
@@ -627,7 +582,6 @@ Notes                   Organization ID within Chargepoint
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 organizationName
 ^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -642,7 +596,6 @@ Notes                   Name of organization
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 sgID
 ^^^^
 ======================= ======================================================================================
@@ -657,7 +610,6 @@ Notes                   List of all Chargepoint groups that the station belongs 
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 sgName
 ^^^^^^
 ======================= ======================================================================================
@@ -672,7 +624,6 @@ Notes                   List of all Chargepoint group names that the station bel
 Register Name           StationRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 currencyCode
 ^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -707,7 +658,6 @@ Notes                   Status of a given port.
 Register Name           StationStatusRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 TimeStamp
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -753,7 +703,6 @@ Notes                   0 is the only value this register accepts as a write val
 Register Name           LoadRegister
 Starting Value          0
 ======================= ======================================================================================
-
 portLoad
 ^^^^^^^^
 ======================= ======================================================================================
@@ -768,7 +717,6 @@ Notes                   Current load on port.
 Register Name           LoadRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 allowedLoad
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -783,7 +731,6 @@ Notes                   Max load allowed on a station (or port)
 Register Name           LoadRegister
 Starting Value
 ======================= ======================================================================================
-
 percentShed
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -830,7 +777,6 @@ Notes                   Description of most recent alarm.
 Register Name           AlarmRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 alarmTime
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -845,7 +791,6 @@ Notes                   Timestamp of most recent alarm.
 Register Name           AlarmRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 clearAlarms
 ^^^^^^^^^^^
 ======================= ======================================================================================
@@ -905,7 +850,6 @@ Notes                   ID of most recent charging session (on port 1)
 Register Name           ChargingSessionRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 startTime
 ^^^^^^^^^
 ======================= ======================================================================================
@@ -920,7 +864,6 @@ Notes                   Timestamp of the start time of the most recent charging 
 Register Name           ChargingSessionRegister
 Starting Value
 ======================= ======================================================================================
-
 endTime
 ^^^^^^^
 ======================= ======================================================================================
@@ -935,7 +878,6 @@ Notes                   Timestamp of the end time of the most recent charging se
 Register Name           ChargingSessionRegister
 Starting Value
 ======================= ======================================================================================
-
 Energy
 ^^^^^^
 ======================= ======================================================================================
@@ -950,7 +892,6 @@ Notes                   kWh consumed during most recent charging session (on por
 Register Name           ChargingSessionRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 rfidSerialNumber
 ^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -966,7 +907,6 @@ Notes                   Serial # representing the RFID card used for the most re
 Register Name           ChargingSessionRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 driverAccountNumber
 ^^^^^^^^^^^^^^^^^^^
 ======================= ======================================================================================
@@ -982,7 +922,6 @@ Notes                   Driver Acct Number representing the driver who initiated
 Register Name           ChargingSessionRegister
 Starting Value          N/A (Must be empty)
 ======================= ======================================================================================
-
 driverName
 ^^^^^^^^^^
 ======================= ======================================================================================
