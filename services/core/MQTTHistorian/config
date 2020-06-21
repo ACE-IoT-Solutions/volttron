@@ -38,6 +38,9 @@
 
     # MQTT TLS parameters. If used then CA Certs is required. Otherwise the
     # default is None.
+    # To use MQTT TLS Like a web browser, simply set mqtt_tls to an empty dictionary
+    # This will tell the client to use TLS to connect, and will use the system CA Root
+    # certs to verify the server
     # "mqtt_tls": {
     #     "ca_certs":"<ca_certs>",
     #     "certfile":"<certfile>",

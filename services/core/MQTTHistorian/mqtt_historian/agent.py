@@ -91,6 +91,10 @@ class MQTTHistorian(BaseHistorian):
         self._last_error = 0
 
         super(MQTTHistorian, self).__init__(**kwargs)
+        # We do not support the insert RPC call.
+        self.no_insert = True
+        # We do not support the query RPC call.
+        self.no_query = True
 
     def timestamp(self):
         return time.mktime(datetime.datetime.now().timetuple())
