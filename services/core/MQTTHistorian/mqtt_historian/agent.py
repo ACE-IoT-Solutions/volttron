@@ -64,6 +64,7 @@ class MQTTHistorian(BaseHistorian):
 
     def __init__(self, config_path, **kwargs):
         config = utils.load_config(config_path)
+        _log.debug("This prevents startup failure")
 
         # We pass every optional parameter to the MQTT library functions so they
         # default to the same values that paho uses as defaults.
