@@ -157,6 +157,7 @@ class Interface(BasicRevert, BaseInterface):
 
     def __init__(self, **kwargs):
         super(Interface, self).__init__(**kwargs)
+        self.device_path = kwargs.get("device_path")
         self.logger = TED_METER_LOGGER
 
     def configure(self, config_dict, registry_config_str):
