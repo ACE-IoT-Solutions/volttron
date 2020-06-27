@@ -135,7 +135,7 @@ def parse_transform_arg(func, arg):
     :return: the correct argument or raise exception if not matched
     """
     parse_arg = arg
-    if func in (scale, scale_int):
+    if func in (scale, scale_int, scale_decimal_int_signed):
         if type(arg) not in (int, float):
             try:
                 parse_arg = int(arg, 10)
@@ -162,12 +162,13 @@ def transform_func_helper(multiple_lst):
         value *= val
         try:
             num_digits += len(str(val).split(".")[1])
-        except IndexError: #int
+        except IndexError:  # int
             pass
     try:
         return round(value, num_digits)
-    except TypeError: #string
+    except TypeError:  # string
         return value
+
 
 def scale_decimal_int_signed(multiplier):
     """
@@ -190,16 +191,17 @@ def scale_decimal_int_signed(multiplier):
         try:
             try:
                 if value < 0:
-                    return  (0 - (value / float(multiplier))) - 0xFFFF
+                    return (0 - (value / float(multiplier))) - 0xFFFF
                 else:
-                    return (value / float(multipliers))
-            except TypeError: #string
+                    return (value / float(multiplier))
+            except TypeError:  # string
                 return value
         except ZeroDivisionError:
             return None
 
     func.inverse = inverse_func
     return func
+
 
 def scale(multiplier):
     """
@@ -218,7 +220,7 @@ def scale(multiplier):
         try:
             try:
                 return value / float(multiplier)
-            except TypeError: #string
+            except TypeError:  # string
                 return value
         except ZeroDivisionError:
             return None
@@ -229,7 +231,8 @@ def scale(multiplier):
 
 def scale_int(multiplier):
     """
-        Same as scale, except that the function casts its return value to an integer data type.
+        Same as scale, except that the function casts its return value to an
+        integer data type.
 
     :param multiplier: Scale multiplier, eg 0.001
     :return: Returns a function used by the modbus client.
@@ -266,7 +269,7 @@ def scale_reg(reg_name):
         return value * scaling_register_value
 
     func.inverse = inverse_func
-    func.register_args = [reg_name,]
+    func.register_args = [reg_name, ]
     return func
 
 
@@ -281,13 +284,38 @@ def scale_reg_pow_10(reg_name):
     :return: Returns a function used by the modbus client.
     """
     def func(value, scaling_register_value):
-        return transform_func_helper([value, pow(10, float(scaling_register_value))])
+        return transform_func_helper(
+            [value, pow(10, float(scaling_register_value))])
 
     def inverse_func(value, scaling_register_value):
         return value / pow(10, float(scaling_register_value))
 
     func.inverse = inverse_func
-    func.register_args = [reg_name,]
+    func.register_args = [reg_name, ]
+    return func
+
+
+def bitflag(bit_pos, reg_name):
+    """
+        Returns a boolean for a particular bit in a register, use multiple
+        times to map a word or byte of flags
+
+    :param bit_pos: The position of the bit to assign to this topic
+    :return: Returns the boolean state of the bit position in the register
+    """
+    bit_pos = parse_transform_arg(bitflag, bit_pos)
+
+    def func(value, bit_pos):
+        return value & (1 << bit_pos) 
+
+    def inverse_func(value, bit_pos, read_value):
+        if value:
+            return read_value | (value << bit_pos)
+        else:
+            return read_value & (value << bit_pos)
+
+    func.inverse = inverse_func
+    func.register_args = [reg_name, ]
     return func
 
 
