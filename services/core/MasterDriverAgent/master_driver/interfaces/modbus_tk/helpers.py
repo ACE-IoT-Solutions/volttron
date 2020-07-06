@@ -251,6 +251,26 @@ def scale_int(multiplier):
     func.inverse = inverse_func
     return func
 
+def mixed_word(value):
+    """
+        For devices with Mixed word long integers, example:
+        |SmallWord        |BigWord          |
+        |BigByte|SmallByte|BigByte|SmallByte|
+    """
+    def func(value):
+        w1 = (value >> 16) & 0xFFFF
+        w2 = value & 0xFFFF
+        return (w2 << 16) | w1
+    
+    def inverse_func(value):
+        w2 = (value >> 16) & 0xFFFF
+        w1 = value & 0xFFFF
+        return (w2 << 16) | w1
+    
+    func.inverse = inverse_func
+    return func
+        
+
 
 def scale_reg(reg_name):
     """
@@ -295,7 +315,7 @@ def scale_reg_pow_10(reg_name):
     return func
 
 
-def bitflag(bit_pos, reg_name):
+def bitflag(bit_pos):
     """
         Returns a boolean for a particular bit in a register, use multiple
         times to map a word or byte of flags
@@ -303,19 +323,24 @@ def bitflag(bit_pos, reg_name):
     :param bit_pos: The position of the bit to assign to this topic
     :return: Returns the boolean state of the bit position in the register
     """
-    bit_pos = parse_transform_arg(bitflag, bit_pos)
+    try:
+        bit_pos = int(bit_pos)
+    except TypeError as e:
+        raise Exception("bitflag transform requires integer bit position argument")
 
-    def func(value, bit_pos):
-        return value & (1 << bit_pos) 
 
-    def inverse_func(value, bit_pos, read_value):
+
+    def func(value):
+        return (value >> bit_pos)  & 1 
+
+    def inverse_func(value, read_value):
         if value:
             return read_value | (value << bit_pos)
         else:
             return read_value & (value << bit_pos)
 
     func.inverse = inverse_func
-    func.register_args = [reg_name, ]
+    # func.register_args = [reg_name, ]
     return func
 
 

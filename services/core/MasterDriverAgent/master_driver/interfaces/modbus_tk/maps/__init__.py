@@ -67,9 +67,11 @@ transform_map = dict(
     scale=helpers.scale,
     scale_int=helpers.scale_int,
     scale_decimal_int_signed=helpers.scale_decimal_int_signed,
+    mixed_word=helpers.mixed_word,
     mod10k=helpers.mod10k,
     mod10k64=helpers.mod10k64,
     mod10k48=helpers.mod10k48,
+    bitflag=helpers.bitflag,
     scale_reg=helpers.scale_reg,
     scale_reg_pow_10=helpers.scale_reg_pow_10
 )
