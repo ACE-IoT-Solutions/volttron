@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- {{{
 # vim: set fenc=utf-8 ft=python sw=4 ts=4 sts=4 et:
 #
-# Copyright 2019, Battelle Memorial Institute.
+# Copyright 2020, ACE IoT Solutions
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,27 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# This material was prepared as an account of work sponsored by an agency of
-# the United States Government. Neither the United States Government nor the
-# United States Department of Energy, nor Battelle, nor any of their
-# employees, nor any jurisdiction or organization that has cooperated in the
-# development of these materials, makes any warranty, express or
-# implied, or assumes any legal liability or responsibility for the accuracy,
-# completeness, or usefulness or any information, apparatus, product,
-# software, or process disclosed, or represents that its use would not infringe
-# privately owned rights. Reference herein to any specific commercial product,
-# process, or service by trade name, trademark, manufacturer, or otherwise
-# does not necessarily constitute or imply its endorsement, recommendation, or
-# favoring by the United States Government or any agency thereof, or
-# Battelle Memorial Institute. The views and opinions of authors expressed
-# herein do not necessarily state or reflect those of the
-# United States Government or any agency thereof.
-#
-# PACIFIC NORTHWEST NATIONAL LABORATORY operated by
-# BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
-# under Contract DE-AC05-76RL01830
-# }}}
-
 
 import datetime
 import logging
@@ -45,8 +24,11 @@ import gevent
 
 from volttron.platform.agent.base_historian import BaseHistorian, add_timing_data_to_header
 from volttron.platform.agent import utils
+from volttron.platform.messaging.health import (STATUS_BAD,
+                                                STATUS_GOOD, Status)
 
 from paho.mqtt.client import MQTTv311, MQTTv31
+import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 
 
@@ -61,6 +43,7 @@ class MQTTHistorian(BaseHistorian):
 
     def __init__(self, config_path, **kwargs):
         config = utils.load_config(config_path)
+        self.config = config
 
 
         # We pass every optional parameter to the MQTT library functions so they
@@ -86,14 +69,68 @@ class MQTTHistorian(BaseHistorian):
             raise ValueError("Unknown MQTT protocol: {}".format(protocol))
 
         self.mqtt_protocol = protocol
+        self.default_config = {}
 
         # will be available in both threads.
         self._last_error = 0
 
         super(MQTTHistorian, self).__init__(**kwargs)
+    
+    def configure(self, contents):
+        config = self.default_config.copy()
+        config.update(contents)
+        self.mqttc = mqtt.Client(client_id=self.mqtt_client_id, protocol=self.mqtt_protocol)
+        self.broker_connected = False
+
+        self.mqttc.on_connect = self.on_connect
+        self.mqttc.on_log = self.on_log
+        if self.mqtt_auth:
+            self.mqttc.username_pw_set(self.mqtt_auth['user'], password=self.mqtt_auth['password'])
+        try:
+            self.mqttc.connect(self.mqtt_hostname, self.mqtt_port, self.mqtt_keepalive)
+        except:
+            self.reconnect()
+        gevent.spawn(self.start_loop)
+    
+    def start_loop(self):
+        self.vip.health.set_status(
+            STATUS_GOOD, "Connection successful, entering read loop")
+        while True:
+            result = self.mqttc.loop(timeout=1)
+            if result == 7:
+                self.reconnect()
+            gevent.sleep(0.1)
+
+    def on_log(self, client, userdata, level, buf):
+        _log.debug(buf)
 
     def timestamp(self):
         return time.mktime(datetime.datetime.now().timetuple())
+
+    def reconnect(self):
+        while True:
+            try:
+                self.mqttc.reconnect()
+                _log.info("Reconnected")
+                break
+            except:
+                _log.info("Reconnection failed")
+                gevent.sleep(10)
+
+    
+    def on_disconnect(self, client, userdata, rc):
+        self.broker_connected = False
+        _log.info("Disconnected, code {}".format(rc))
+        self.reconnect()
+
+    def on_connect(self, client, userdata, flags, return_code):
+        _log.debug(return_code)
+        if return_code != mqtt.CONNACK_ACCEPTED:
+            self.vip.health.set_status(
+                STATUS_BAD, "Connection Failed")
+            raise Exception(return_code)
+        _log.debug("Connection Accepted")
+        self.broker_connected = True
 
     def publish_to_historian(self, to_publish_list):
         _log.debug("publish_to_historian number of items: {}"
@@ -106,35 +143,25 @@ class MQTTHistorian(BaseHistorian):
                 _log.debug('Not allowing send < 60 seconds from failure')
                 return
 
-        to_send = []
-        for x in to_publish_list:
-            topic = x['topic']
-
-            # Construct payload from data in the publish item.
-            # Available fields: 'value', 'headers', and 'meta'
-            payload = x['value']
-
-            to_send.append({'topic': topic,
-                            'payload': payload,
-                            'qos': self.mqtt_qos,
-                            'retain': self.mqtt_retain})
-
         try:
-            publish.multiple(to_send,
-                             hostname=self.mqtt_hostname,
-                             port=self.mqtt_port,
-                             client_id=self.mqtt_client_id,
-                             keepalive=self.mqtt_keepalive,
-                             will=self.mqtt_will,
-                             auth=self.mqtt_auth,
-                             tls=self.mqtt_tls,
-                             protocol=self.mqtt_protocol)
-            self.report_all_handled()
+            for x in to_publish_list:
+                topic = x['topic']
+
+                # Construct payload from data in the publish item.
+                # Available fields: 'value', 'headers', and 'meta'
+                payload = x['value']
+
+                try:
+                    self.mqttc.publish(topic, payload=payload, qos=self.mqtt_qos, retain=self.mqtt_retain)
+                except Exception as e:
+                    _log.warning("Exception ({}) raised by publish: {}".format(
+                        e.__class__.__name__,
+                        e))
+                    self._last_error = self.timestamp()
         except Exception as e:
-            _log.warning("Exception ({}) raised by publish: {}".format(
-                e.__class__.__name__,
-                e))
-            self._last_error = self.timestamp()
+            raise e
+        else:
+            self.report_all_handled()
 
 
 def main(argv=sys.argv):
