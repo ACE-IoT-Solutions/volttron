@@ -163,6 +163,8 @@ def main():
         maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
         segmentationSupported=args.ini.segmentationsupported,
         vendorIdentifier=int(args.ini.vendoridentifier),
+        bbmdAddress=Address(args.ini.bbmdaddress),
+        bbmdTTL=int(args.ini.foreignttl)
         )
 
     # make a simple application
