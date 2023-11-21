@@ -163,12 +163,10 @@ def main():
         maxApduLengthAccepted=int(args.ini.maxapdulengthaccepted),
         segmentationSupported=args.ini.segmentationsupported,
         vendorIdentifier=int(args.ini.vendoridentifier),
-        bbmdAddress=Address(args.ini.bbmdaddress),
-        bbmdTTL=int(args.ini.foreignttl)
         )
 
     # make a simple application
-    this_application = ReadPropertyApplication(this_device, args.ini.address)
+    this_application = ReadPropertyApplication(this_device, args.ini.address, Address(args.ini.foreignbbmd), int(args.ini.foreignttl))
 
     # get the services supported
     services_supported = this_application.get_services_supported()
