@@ -40,6 +40,7 @@ import logging
 import sys
 import datetime
 import json
+import traceback
 
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.async_ import AsyncCall
@@ -51,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.5.7'
+__version__ = '0.5.9'
 
 from collections import defaultdict
 
@@ -95,6 +96,7 @@ from bacpypes.constructeddata import Array, Any, Choice
 from bacpypes.basetypes import ServicesSupported
 from bacpypes.task import TaskManager
 from gevent.event import AsyncResult
+import gevent
 
 from volttron.platform.agent.known_identities import PLATFORM_DRIVER
 
@@ -764,6 +766,7 @@ class BACnetProxyAgent(Agent):
         self.bacnet_application = None
         self.foreignbbmd = foreignbbmd
         self.foreignttl = foreignttl
+        self.error_mutex = defaultdict(gevent.lock.BoundedSemaphore)
 
         # IO callback
         class IOCB:
@@ -997,7 +1000,6 @@ class BACnetProxyAgent(Agent):
         Iteratively reads points from a device one at a time
         """
         results = {}
-
         for point, properties in point_map.items():
             if len(properties) == 3:
                 object_type, instance_number, property_name = properties
@@ -1012,7 +1014,7 @@ class BACnetProxyAgent(Agent):
             try:
                 prop = self.read_property(
                     target_address, object_type, instance_number, property_name, property_index)
-                if not prop:
+                if prop is None:
                     continue
                 if not self.is_valid_json(prop):
                     _log.debug(f"not valid JSON: {dir(prop)} on prop")
@@ -1049,7 +1051,8 @@ class BACnetProxyAgent(Agent):
         self.bacnet_application.submit_request(iocb)
         try:
             bacnet_results = iocb.ioResult.get(10)
-        except RuntimeError:
+        except RuntimeError as exc:
+            trace = traceback.format_exc()
             _log.error(f"could not read {property_name} on {object_type}-{instance_number} from device {target_address}")
             return None
         # _log.debug(f"found {bacnet_results} for {property_name} on {object_type}-{instance_number} from device {target_address}")
@@ -1100,50 +1103,52 @@ class BACnetProxyAgent(Agent):
         #   contains ObjectIdentifier and listofPropertyReferences
         # target_address is a string, e.g. 192.168.1.97, 1003:23
 
-        bacnet_results = {}
-        for entry in read_access_list:
-            for prop in entry.listOfPropertyReferences:
-                _log.debug(f"making request: {target_address=} {entry.objectIdentifier=} {prop.propertyIdentifier=} {prop.propertyArrayIndex=}")
-                request = ReadPropertyRequest(objectIdentifier=entry.objectIdentifier,
-                                              propertyIdentifier=prop.propertyIdentifier,
-                                              propertyArrayIndex=prop.propertyArrayIndex
-                                              )
-                target_address = target_address if target_address else GlobalBroadcast()
-                request.pduDestination = Address(target_address)
-                iocb = self.iocb_class(request)
-                self.bacnet_application.submit_request(iocb)
-                try:
-                    iocb_ioresult = iocb.ioResult.get(10)
-                    _log.debug(f"{iocb_ioresult=}")
-                    bacnet_results.update(iocb.ioResult.get(10))
-                except TypeError:
-                    bacnet_results.update(
-                        {
-                            (
-                                entry.objectIdentifier[0],
-                                entry.objectIdentifier[1],
-                                prop.propertyIdentifier,
-                                prop.propertyArrayIndex,
-                            ): iocb_ioresult
-                        }
-                    )
-                except Exception as exc:
-                    _log.error(f"{exc} {target_address=} {request=}")
-                    if "Segmentation not supported" in str(exc) or "segmentationNotSupported" in str(exc):
-                        exc.message = f"failed to scrape: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]} - segmentationNotSupported"
-                    else:
-                        exc.message = f"failed to scrape: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]}"
-                    _log.error(
-                        f"Point failing: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]} {exc=}"
-                    )
-                    message = {"target_address": target_address,
-                            "object_type": entry.objectIdentifier[0],
-                            "instance_number": entry.objectIdentifier[1],
-                            "exception": f"{exc}"}
-                    self.vip.pubsub.publish(peer="pubsub",
-                                            topic="errors/bacnet",
-                                            message=message)
-        return bacnet_results
+        with self.error_mutex[target_address]:
+
+            bacnet_results = {}
+            for entry in read_access_list:
+                for prop in entry.listOfPropertyReferences:
+                    # _log.debug(f"making request: {target_address=} {entry.objectIdentifier=} {prop.propertyIdentifier=} {prop.propertyArrayIndex=}")
+                    request = ReadPropertyRequest(objectIdentifier=entry.objectIdentifier,
+                                                propertyIdentifier=prop.propertyIdentifier,
+                                                propertyArrayIndex=prop.propertyArrayIndex
+                                                )
+                    target_address = target_address if target_address else GlobalBroadcast()
+                    request.pduDestination = Address(target_address)
+                    iocb = self.iocb_class(request)
+                    self.bacnet_application.submit_request(iocb)
+                    try:
+                        iocb_ioresult = iocb.ioResult.get(10)
+                        # _log.debug(f"{iocb_ioresult=}")
+                        bacnet_results.update(iocb.ioResult.get(10))
+                    except TypeError:
+                        bacnet_results.update(
+                            {
+                                (
+                                    entry.objectIdentifier[0],
+                                    entry.objectIdentifier[1],
+                                    prop.propertyIdentifier,
+                                    prop.propertyArrayIndex,
+                                ): iocb_ioresult
+                            }
+                        )
+                    except Exception as exc:
+                        _log.error(f"{exc} {target_address=} {request=}")
+                        if "Segmentation not supported" in str(exc) or "segmentationNotSupported" in str(exc):
+                            exc.message = f"failed to scrape: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]} - segmentationNotSupported"
+                        else:
+                            exc.message = f"failed to scrape: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]}"
+                        _log.error(
+                            f"Point failing: {target_address}/{entry.objectIdentifier[0]}/{entry.objectIdentifier[1]} {exc=}"
+                        )
+                        message = {"target_address": target_address,
+                                "object_type": entry.objectIdentifier[0],
+                                "instance_number": entry.objectIdentifier[1],
+                                "exception": f"{exc}"}
+                        self.vip.pubsub.publish(peer="pubsub",
+                                                topic="errors/bacnet",
+                                                message=message)
+            return bacnet_results
 
     @RPC.export
     def read_properties(self, target_address, point_map, max_per_request=None, use_read_multiple=True):
@@ -1194,7 +1199,12 @@ class BACnetProxyAgent(Agent):
                 except RuntimeError as exc:
                     try:
                         _log.debug(f"finding error object: {exc}")
-                        bacnet_results = self.find_error_object(read_access_spec_list, target_address, exc)
+                        if not self.error_mutex[target_address].locked():
+                            # bacnet_results = self.find_error_object(read_access_spec_list, target_address, exc)
+                            bacnet_results = {}
+                        else:
+                            _log.debug(f"mutex locked for {target_address}")
+                            raise exc
                     except PointErrorException as exc_e:
                         _log.debug(exc_e.message)
                         if not hasattr(exc, "message"):
@@ -1206,8 +1216,16 @@ class BACnetProxyAgent(Agent):
                             exc_e.message = f"failed to scrape: {exc_e.address}/{exc_e.object_type}/{exc_e.instance_number}"
                         _log.debug(exc_e.message)
                         raise exc_e from exc
+                    except gevent.Timeout as exc_e:
+                        _log.debug(exc_e)
+                        continue
                 except Exception as exc:
-                    bacnet_results = self.find_error_object(read_access_spec_list, target_address, exc)
+                    if not self.error_mutex[target_address].locked():
+                        # bacnet_results = self.find_error_object(read_access_spec_list, target_address, exc)
+                        bacnet_results = {}
+                    else:
+                        _log.debug(f"mutex locked for {target_address}")
+                        raise gevent.Timeout("mutex locked")
                     _log.error(f"{exc} {target_address=} {request=}")
                     _log.debug(f"{dir(request)=}")
                     raise exc
