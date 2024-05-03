@@ -71,6 +71,9 @@ class Interface(BasicRevert, BaseInterface):
 
     def get_power_meter(self) -> dict:
         self.device_list = self.get_device_list()
+        if self.device_list == "":
+            _log.error("Device list is empty")
+            return None
         for devices in self.device_list.values():
             for device in devices:
                 if (
