@@ -225,12 +225,12 @@ class Interface(BasicRevert, BaseInterface):
         try:
             self.auth_token = self.vip.rpc.call("platform.desigo_credential_handler", "get_token", self.url).get(timeout=30)
         except gevent.timeout.Timeout:
-            _log.error("timed out getting token")
+            _log.error("timed out getting token, ensure desigo token manager agent is running")
             return None
         if self.auth_token is None:
-            _log.error("could not get token")
+            _log.error("could not get token, check credentials")
             return None
-        _log.debug(f"found token: ...{self.auth_token[-4:]}")
+        _log.debug(f"received token: ...{self.auth_token[-4:]}")
         return self.auth_token
 
     def build_device_by_location(self):
@@ -342,6 +342,7 @@ class Interface(BasicRevert, BaseInterface):
         """
         Ensure strings are not returned to forwarder agent
         """
+        _log.debug(f"ensuring no string: {value=}")
         try:
             return float(value)
         except ValueError:
