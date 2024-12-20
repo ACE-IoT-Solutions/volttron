@@ -35,6 +35,8 @@ import copy
 
 import grequests
 
+from json import JSONDecodeError
+
 from volttron.platform.agent import utils
 from platform_driver.interfaces import BaseRegister, BaseInterface, BasicRevert
 from volttron.platform.vip.agent import Agent, Core, RPC, PubSub
@@ -78,6 +80,7 @@ class Interface(BasicRevert, BaseInterface):
         super(Interface, self).__init__(**kwargs)
         self.device_path = kwargs.get("device_path")
         self.logger = _log
+        self.internal_units_in_celsius = True
 
     def configure(self, config_dict, registry_config_str):
         """Configure method called by the platform driver with configuration 
@@ -95,6 +98,25 @@ class Interface(BasicRevert, BaseInterface):
                 continue
             _log.debug(f"inserting register {entry=}")
             self.insert_register(Register(entry, "", ""))
+
+    def _check_api_version(self):
+        """
+        Checks the API version of the thermostat
+        """
+        req = (grequests.get(f"http://{self.device_address}"))
+        system, = grequests.map(req)
+        if system.status_code != 200:
+            raise Exception(
+                "Invalid response from thermostat, check config, received status code: {}".format(system.status_code))
+        try:
+            result = system.json()
+        except (ValueError, AttributeError, JSONDecodeError) as exc:
+            raise Exception(f"Invalid JSON response from thermostat {exc}")
+            
+        if result.get('api_ver') is None:
+            raise Exception("API version not found in thermostat response")
+        if result.get('firmware') >= 5:
+            self.internal_units_in_celsius = False
 
     def _get_tstat_configuration(self):
         """
@@ -205,9 +227,19 @@ class Interface(BasicRevert, BaseInterface):
         else:
             return (system.json(),)
 
+    def f_to_c(self, f):
+        """
+        Convert Fahrenheit to Celsius
+        """
+        return (f - 32) * 5.0/9.0
+
     def _scrape_all(self):
         output = {}
         system_data, = self.get_data()
+        convert_values = ["spacetemp", "heattemp", "cooltemp", "cooltempmin", "cooltempmax", "heattempmin", "heattempmax"]
         output = system_data
+        for key, value in output.items():
+            if (self.internal_units_in_celsius is False) and (key in convert_values):
+                output[key] = self.f_to_c(value)
         del output['name']
         return output
