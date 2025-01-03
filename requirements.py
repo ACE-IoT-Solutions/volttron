@@ -30,7 +30,7 @@
 # wheel version 0.31 has removed metadata.json file
 # https://github.com/pypa/wheel/issues/195
 # so sticking to 0.30 for now. Could upgrade to wheel 0.31 with code changes
-option_requirements = [('pip==24.0', []), ('wheel==0.30', []), ('pyzmq==22.2.1', ['--zmq=bundled'])]
+option_requirements = [('pip==24.0', []), ('wheel==0.30', []), ('pyzmq==26.2.0', ['--zmq=bundled'])]
 
 
 install_requires = ['gevent==21.12.0',
@@ -42,7 +42,7 @@ install_requires = ['gevent==21.12.0',
                     'python-dateutil==2.8.2',
                     'pytz==2022.1',
                     'PyYAML==6.0',
-                    'setuptools>=40.0.0',
+                    'setuptools==68.0.0',
                     # tzlocal 3.0 breaks without the backports.tzinfo package on python < 3.9 https://pypi.org/project/tzlocal/3.0/
                     'tzlocal==2.1',
                     #'pyOpenSSL==19.0.0',
