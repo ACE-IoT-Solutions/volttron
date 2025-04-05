@@ -77,6 +77,9 @@ to the device. Heart beats are triggered by the Actuator Agent which must be run
 
 ## Changes
 
+- 4.5.2 (2025-04-05)
+    - refactored read_property_multiple error handling in the bacnet interface
+
 - 4.4.2 (2024-12-04) 
     - updated ethernetip driver to import from new platform_driver module
     - updated rainforest eagle driver with error handling during configuration 

@@ -100,6 +100,9 @@ class Interface(BaseInterface):
         self.use_read_multiple = True
         self.enable_collection = True
         self.collection_disabled_time = None
+        self.failed_rpm_points = set()  # Track points that have failed with RPM
+        self.last_rpm_retry = datetime.now()
+        self.rpm_retry_interval = timedelta(minutes=60)  # Retry failed points hourly
         # self.unresponsive_devices = {}
 
     def configure(self, config_dict, registry_config_str):
@@ -112,6 +115,15 @@ class Interface(BaseInterface):
         self.max_per_request = config_dict.get("max_per_request", 24)
         self.use_read_multiple = config_dict.get("use_read_multiple", True)
         self.timeout = float(config_dict.get("timeout", 30.0))
+
+        # Reset failed points list when configuration is updated
+        self.failed_rpm_points = set()
+        self.last_rpm_retry = datetime.now()
+
+        # Configure RPM retry interval (in minutes)
+        self.rpm_retry_interval = timedelta(
+            minutes=config_dict.get("rpm_retry_interval_minutes", 60)
+        )
 
         self.ping_retry_interval = timedelta(
             seconds=config_dict.get("ping_retry_interval", 5.0)
@@ -211,6 +223,7 @@ class Interface(BaseInterface):
     def scrape_all(self):
         # TODO: support reading from an array.
         point_map = {}
+        rpm_point_map = {}
         read_registers = self.get_registers_by_type("byte", True)
         write_registers = self.get_registers_by_type("byte", False)
 
@@ -220,7 +233,22 @@ class Interface(BaseInterface):
             else:
                 self.enable_collection = True
 
+        # Check if it's time to retry failed RPM points
+        current_time = datetime.now()
+        retry_failed_points = False
+
+        if (
+            current_time - self.last_rpm_retry > self.rpm_retry_interval
+            and self.failed_rpm_points
+        ):
+            _log.info(
+                f"Time to retry {len(self.failed_rpm_points)} failed RPM points for {self.target_address}"
+            )
+            retry_failed_points = True
+            self.last_rpm_retry = current_time
+
         for register in read_registers + write_registers:
+            # Add all points to the global point map
             point_map[register.point_name] = [
                 register.object_type,
                 register.instance_number,
@@ -228,71 +256,213 @@ class Interface(BaseInterface):
                 register.index,
             ]
 
-        while True:
+            # Use RPM for points that:
+            # 1. Haven't previously failed, OR
+            # 2. Are being retried due to the retry interval
+            if self.use_read_multiple and (
+                retry_failed_points or register.point_name not in self.failed_rpm_points
+            ):
+                rpm_point_map[register.point_name] = [
+                    register.object_type,
+                    register.instance_number,
+                    register.property,
+                    register.index,
+                ]
+
+        result = {}
+
+        # If we have points to read with RPM and RPM is enabled
+        if self.use_read_multiple and rpm_point_map:
+            while True:
+                try:
+                    rpm_result = self.vip.rpc.call(
+                        self.proxy_address,
+                        "read_properties",
+                        self.target_address,
+                        rpm_point_map,
+                        self.max_per_request,
+                        True,  # Always use read_multiple for rpm_point_map
+                    ).get(timeout=180)
+
+                    result.update(rpm_result)
+                    _log.debug(f"Successfully read {len(rpm_result)} points using RPM")
+
+                    # If we're retrying failed points and some succeeded, remove them from the failed list
+                    if retry_failed_points:
+                        successful_retries = (
+                            set(rpm_result.keys()) & self.failed_rpm_points
+                        )
+                        if successful_retries:
+                            _log.info(
+                                f"Successfully retried {len(successful_retries)} previously failed RPM points"
+                            )
+                            self.failed_rpm_points -= successful_retries
+
+                    break
+
+                except gevent.timeout.Timeout as exc:
+                    _log.error(f"Timed out reading target {self.target_address}")
+                    raise exc
+
+                except RemoteError as exc:
+                    # Handle different types of property-related errors
+                    if (
+                        "unknownProperty" in exc.message
+                        or "propertyError" in exc.message
+                    ):
+                        _log.debug(f"Property error: {exc.message}")
+
+                        # Try to extract the object identifier from the error message
+                        match_found = False
+
+                        try:
+                            if "unknownProperty" in exc.message:
+                                obj_identifier = exc.message.split("unknownProperty: ")[
+                                    1
+                                ].strip()
+                                obj_type, obj_instance = obj_identifier.strip(
+                                    "()"
+                                ).split(", ")
+                                prop_name = (
+                                    None  # Unknown for general unknownProperty errors
+                                )
+                                match_found = True
+                            elif "propertyError" in exc.message:
+                                obj_prop = exc.message.split("propertyError: ")[
+                                    1
+                                ].strip()
+                                obj_part, prop_part = obj_prop.split(".")
+                                obj_type, obj_instance = obj_part.strip("()").split(
+                                    ", "
+                                )
+                                prop_name = (
+                                    prop_part.split("[")[0]
+                                    if "[" in prop_part
+                                    else prop_part
+                                )
+                                match_found = True
+                        except (IndexError, ValueError) as parse_err:
+                            _log.warning(
+                                f"Could not parse object info from error: {exc.message} ({parse_err})"
+                            )
+
+                        # If we successfully parsed the object info, mark the affected points
+                        if match_found:
+                            for point_name, props in list(rpm_point_map.items()):
+                                # If prop_name is specified, only mark points with that property
+                                if (
+                                    props[0] == obj_type
+                                    and str(props[1]) == obj_instance
+                                ) and (prop_name is None or props[2] == prop_name):
+                                    self.failed_rpm_points.add(point_name)
+                                    _log.debug(
+                                        f"Added {point_name} to failed RPM points list due to {exc.message}"
+                                    )
+                                    # Remove from current rpm_point_map so we don't retry it
+                                    rpm_point_map.pop(point_name, None)
+                        else:
+                            # If we couldn't parse the error, disable RPM for this read attempt only
+                            _log.warning(
+                                f"Could not parse property error, skipping RPM for this read: {exc.message}"
+                            )
+                            break
+
+                        # If we still have points to read with RPM, continue
+                        if rpm_point_map:
+                            continue
+                        else:
+                            _log.debug(
+                                "No more valid RPM points left after handling property errors"
+                            )
+                            break
+
+                    if "noResponse" in exc.message:
+                        _log.warning(
+                            f"device {self.target_address} did not respond reading multiple"
+                        )
+                        # Don't disable RPM completely, just for this read attempt
+                        break
+
+                    if "segmentationNotSupported" in exc.message:
+                        if self.max_per_request <= 1:
+                            _log.error(
+                                "Receiving a segmentationNotSupported error with 'max_per_request' setting of 1."
+                            )
+                            raise
+                        self.register_count_divisor += 1
+                        self.max_per_request = max(
+                            int(self.register_count / self.register_count_divisor), 1
+                        )
+                        _log.info(
+                            "Device requires a lower max_per_request setting. Trying: "
+                            + str(self.max_per_request)
+                        )
+                        continue
+
+                    elif exc.message.endswith("rejected the request: 9"):
+                        _log.info(
+                            "Device rejected request with 'unrecognized-service' error, switching to individual reads"
+                        )
+                        # This device doesn't support RPM at all, so we'll read individually
+                        self.use_read_multiple = False
+                        break
+
+                    else:
+                        trace = traceback.format_exc()
+                        _log.error(
+                            f"Error reading target {self.target_address}: {trace}"
+                        )
+                        raise exc
+
+                except errors.Unreachable:
+                    # If the Proxy is not running bail.
+                    _log.warning("Unable to reach BACnet proxy.")
+                    self.schedule_ping()
+                    raise
+
+        # Read any points that couldn't be read using RPM
+        remaining_points = {k: v for k, v in point_map.items() if k not in result}
+        if remaining_points:
             try:
-                result = self.vip.rpc.call(
+                # Use individual reads for remaining points
+                individual_result = self.vip.rpc.call(
                     self.proxy_address,
                     "read_properties",
                     self.target_address,
-                    point_map,
+                    remaining_points,
                     self.max_per_request,
-                    self.use_read_multiple,
+                    False,  # Always use individual reads for remaining points
                 ).get(timeout=180)
 
-                _log.debug(f"found {len(result)} results in platform driver")
+                result.update(individual_result)
+                _log.debug(
+                    f"Successfully read {len(individual_result)} points using individual reads"
+                )
             except gevent.timeout.Timeout as exc:
-                _log.error(f"Timed out reading target {self.target_address}")
+                _log.error(
+                    f"Timed out reading target {self.target_address} with individual reads"
+                )
                 raise exc
             except RemoteError as exc:
-                if "unknownProperty" in exc.message:
-                    _log.debug(f"unknownProperty error: {exc.message}")
-                    # self.vip.config.set("unknown_properties", exc.message)
-                if "noResponse" in exc.message and self.use_read_multiple:
-                    _log.warning(
-                        f"device {self.target_address} did not respond reading multiple"
+                if "noResponse" in exc.message:
+                    # Device is unresponsive even to individual reads
+                    _log.error(
+                        f"Device {self.target_address} did not respond to individual reads"
                     )
-                    self.use_read_multiple = False
-                    continue
-                elif "noResponse" in exc.message and not self.use_read_multiple:
-                    # disable device for collection
                     self.enable_collection = False
-                    break
-                if "segmentationNotSupported" in exc.message:
-                    if self.max_per_request <= 1:
-                        _log.error(
-                            "Receiving a segmentationNotSupported error with 'max_per_request' setting of 1."
-                        )
-                        raise
-                    self.register_count_divisor += 1
-                    self.max_per_request = max(
-                        int(self.register_count / self.register_count_divisor), 1
-                    )
-                    _log.info(
-                        "Device requires a lower max_per_request setting. Trying: "
-                        + str(self.max_per_request)
-                    )
-                    continue
-                elif (
-                    exc.message.endswith("rejected the request: 9")
-                    and self.use_read_multiple
-                ):
-                    _log.info(
-                        "Device rejected request with 'unrecognized-service' error, attempting to access with use_read_multiple false"
-                    )
-                    self.use_read_multiple = False
-                    continue
+                    self.collection_disabled_time = datetime.now()
                 else:
                     trace = traceback.format_exc()
-                    _log.error(f"Error reading target {self.target_address}: {trace}")
+                    _log.error(
+                        f"Error reading target {self.target_address} with individual reads: {trace}"
+                    )
                     raise exc
             except errors.Unreachable:
-                # If the Proxy is not running bail.
                 _log.warning("Unable to reach BACnet proxy.")
                 self.schedule_ping()
                 raise
-            else:
-                break
-        _log.debug(f"{self.target_address=}")
+
+        _log.debug(f"Total points read from {self.target_address}: {len(result)}")
         return result
 
     def revert_all(self, priority=None):
@@ -310,27 +480,27 @@ class Interface(BaseInterface):
         """
         self.set_point(point_name, None, priority=priority)
 
-    def parse_config(self, configDict):
-        if configDict is None:
+    def parse_config(self, config_dict):
+        if config_dict is None:
             return
 
-        self.register_count = len(configDict)
+        self.register_count = len(config_dict)
 
-        for regDef in configDict:
+        for reg_definition in config_dict:
             # Skip lines that have no address yet.
-            if not regDef.get("Volttron Point Name"):
+            if not reg_definition.get("Volttron Point Name"):
                 continue
 
-            io_type = regDef.get("BACnet Object Type")
-            read_only = regDef.get("Writable").lower() != "true"
-            point_name = regDef.get("Volttron Point Name")
+            io_type = reg_definition.get("BACnet Object Type")
+            read_only = reg_definition.get("Writable").lower() != "true"
+            point_name = reg_definition.get("Volttron Point Name")
 
             # checks if the point is flagged for change of value
-            is_cov = regDef.get("COV Flag", "false").lower() == "true"
+            is_cov = reg_definition.get("COV Flag", "false").lower() == "true"
 
-            index = int(regDef.get("Index"))
+            index = int(reg_definition.get("Index"))
 
-            list_index = regDef.get("Array Index", "")
+            list_index = reg_definition.get("Array Index", "")
             list_index = list_index.strip()
 
             if not list_index:
@@ -338,7 +508,7 @@ class Interface(BaseInterface):
             else:
                 list_index = int(list_index)
 
-            priority = regDef.get("Write Priority", "")
+            priority = reg_definition.get("Write Priority", "")
             priority = priority.strip()
             if not priority:
                 priority = None
@@ -353,9 +523,9 @@ class Interface(BaseInterface):
                         )
                     )
 
-            description = regDef.get("Notes", "")
-            units = regDef.get("Units")
-            property_name = regDef.get("Property")
+            description = reg_definition.get("Notes", "")
+            units = reg_definition.get("Units")
+            property_name = reg_definition.get("Property")
 
             try:
                 register = Register(
@@ -372,7 +542,7 @@ class Interface(BaseInterface):
 
                 self.insert_register(register)
             except Exception as exc:  # pylint: disable=broad-except
-                _log.error(f"Error parsing register definition: {regDef=} {exc=}")
+                _log.error(f"Error parsing register definition: {reg_definition=} {exc=}")
 
             if is_cov:
                 self.cov_points.append(point_name)

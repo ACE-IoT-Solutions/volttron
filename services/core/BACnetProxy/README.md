@@ -31,3 +31,7 @@ is a conflicting BACnet device ID on your network.
 5. vendor_id - Vendor ID of the virtual BACnet device. Defaults to 15. (Optional)
 6. segmentation_supported -  Segmentation allows larger messages to be broken up into segments and spliced back together.
 Possible setting are “segmentedBoth” (default), “segmentedTransmit”, “segmentedReceive”, or “noSegmentation” (Optional)
+
+## Changes
+- 0.7.0 (2025-04-05)
+    - Added better error messages for read failures

@@ -52,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 
 from collections import defaultdict
 
@@ -651,8 +651,16 @@ class BACnetApplication(BIPSimpleApplication, RecurringTask):
                     if read_result.propertyAccessError is not None:
                         error_obj = read_result.propertyAccessError
 
-                        msg = 'ERROR DURING SCRAPE of {2} (Class: {0} Code: {1})'
-                        _log.error(msg.format(error_obj.errorClass, error_obj.errorCode, object_identifier))
+                        # Create an informative error message with the specific property details
+                        msg = 'ERROR DURING SCRAPE of {2}.{3} (Class: {0} Code: {1})'
+                        error_message = f"propertyError: {object_identifier}.{property_identifier}"
+                        if property_array_index is not None:
+                            error_message += f"[{property_array_index}]"
+                            
+                        _log.debug(f"publishing to message bus: {error_message}")
+                        self.vip.pubsub.publish(peer='pubsub', topic="bacnet/error", message=error_message)
+                        _log.error(msg.format(error_obj.errorClass, error_obj.errorCode, 
+                                             object_identifier, property_identifier))
 
                     else:
                         # here is the value
