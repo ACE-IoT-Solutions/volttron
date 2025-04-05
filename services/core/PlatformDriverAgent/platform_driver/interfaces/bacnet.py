@@ -166,6 +166,9 @@ class Interface(BaseInterface):
             self.schedule_ping()
 
     def get_point(self, point_name, get_priority_array=False):
+        """
+        Concrete imglementation of get_point for BACnet interface.
+        """
         register = self.get_register_by_name(point_name)
         property_name = "priorityArray" if get_priority_array else register.property
         register_index = None if get_priority_array else register.index
@@ -181,6 +184,9 @@ class Interface(BaseInterface):
         return result
 
     def set_point(self, point_name, value, priority=None):
+        """
+        Concrete implementation of set_point for BACnet interface.
+        """
         # TODO: support writing from an array.
         register = self.get_register_by_name(point_name)
         if register.read_only:
@@ -230,11 +236,15 @@ class Interface(BaseInterface):
                 self.enable_collection = True
 
         for register in read_registers + write_registers:
-            if register.point_name in self.failing_points and self.failing_points[
-                register.point_name
-            ] > (now - self.fail_retry):
-                _log.debug(f"Skipping {register.point_name} due to recent failure.")
-                continue
+            if register.point_name in self.failing_points:
+                if self.failing_points[register.point_name] > (now - self.fail_retry):
+                    _log.debug(f"Skipping {register.point_name} due to recent failure.")
+                    continue
+                else:
+                    _log.debug(
+                        f"Retrying {register.point_name} after failure period expired."
+                    )
+                    del self.failing_points[register.point_name]
             point_names.append(register.point_name)
             point_map[register.point_name] = [
                 register.object_type,
