@@ -91,7 +91,8 @@ from bacpypes.apdu import (ReadPropertyRequest,
                            IAmRequest,
                            ConfirmedRequestSequence,
                            SubscribeCOVRequest,
-                           ConfirmedCOVNotificationRequest)
+                           ConfirmedCOVNotificationRequest,
+                           AbortReason)
 from bacpypes.primitivedata import (Null, Atomic, Enumerated, Integer,
                                     Unsigned, Real)
 from bacpypes.constructeddata import Array, Any, Choice
@@ -1165,8 +1166,11 @@ class BACnetProxyAgent(Agent):
                 try:
                     bacnet_results = iocb.ioResult.get(10)
                 except RuntimeError as exc:
-                    try:
-                        _log.debug(f"error reading multiple properties for {target_address} {exc}")
+                    try: 
+                        _log.debug(f"error reading multiple properties for {target_address} {exc} type: {type(exc)}")
+                        if f"{exc}" == "noResponse":
+                            _log.error(f"Device {target_address} did not respond to read request.")
+                            return result_dict
                         raise exc
                     except gevent.Timeout as exc_e:
                         _log.debug(exc_e)
