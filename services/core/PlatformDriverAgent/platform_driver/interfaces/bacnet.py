@@ -270,7 +270,7 @@ class Interface(BaseInterface):
                         self.max_per_request,
                         use_read_multiple,
                     ).get(timeout=180)
-                    _log.debug(f"found {len(batch_result)} results in platform driver")
+                    # _log.debug(f"found {len(batch_result)} results in platform driver")
                     results.append(batch_result)
                 except gevent.timeout.Timeout as exc:
                     _log.error(f"Timed out reading target {self.target_address} with batch {batch}: {exc}")
