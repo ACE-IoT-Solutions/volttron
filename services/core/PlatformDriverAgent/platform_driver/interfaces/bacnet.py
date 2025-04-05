@@ -64,6 +64,7 @@ BACNET_TYPE_MAPPING = {
     "binaryValue": bool,
     "binaryInput": bool,
     "binaryOutput": bool,
+    "schedule": bool,
 }
 
 
@@ -112,7 +113,9 @@ class Interface(BaseInterface):
         self.max_per_request = config_dict.get("max_per_request", 24)
         self.use_read_multiple = config_dict.get("use_read_multiple", True)
         self.timeout = float(config_dict.get("timeout", 30.0))
-        self.failover_bacnet_to_single = bool(config_dict.get("failover_bacnet_to_single", False))
+        self.failover_bacnet_to_single = bool(
+            config_dict.get("failover_bacnet_to_single", True)
+        )
 
         self.ping_retry_interval = timedelta(
             seconds=config_dict.get("ping_retry_interval", 5.0)
@@ -212,6 +215,7 @@ class Interface(BaseInterface):
     def scrape_all(self):
         # TODO: support reading from an array.
         point_map = {}
+        point_names = []
         read_registers = self.get_registers_by_type("byte", True)
         write_registers = self.get_registers_by_type("byte", False)
 
@@ -222,6 +226,7 @@ class Interface(BaseInterface):
                 self.enable_collection = True
 
         for register in read_registers + write_registers:
+            point_names.append(register.point_name)
             point_map[register.point_name] = [
                 register.object_type,
                 register.instance_number,
@@ -229,70 +234,83 @@ class Interface(BaseInterface):
                 register.index,
             ]
 
-        while True:
-            try:
-                result = self.vip.rpc.call(
-                    self.proxy_address,
-                    "read_properties",
-                    self.target_address,
-                    point_map,
-                    self.max_per_request,
-                    self.use_read_multiple,
-                ).get(timeout=180)
-
-                _log.debug(f"found {len(result)} results in platform driver")
-            except gevent.timeout.Timeout as exc:
-                _log.error(f"Timed out reading target {self.target_address}")
-                raise exc
-            except RemoteError as exc:
-                if "unknownProperty" in exc.message:
-                    _log.debug(f"unknownProperty error: {exc.message}")
-                    # self.vip.config.set("unknown_properties", exc.message)
-                if "noResponse" in exc.message and self.use_read_multiple and self.failover_bacnet_to_single is True:
-                    _log.warning(
-                        f"device {self.target_address} did not respond reading multiple"
-                    )
-                    self.use_read_multiple = False
-                    continue
-                elif "noResponse" in exc.message and not self.use_read_multiple:
-                    # disable device for collection
-                    self.enable_collection = False
-                    break
-                if "segmentationNotSupported" in exc.message:
-                    if self.max_per_request <= 1:
-                        _log.error(
-                            "Receiving a segmentationNotSupported error with 'max_per_request' setting of 1."
-                        )
-                        raise
-                    self.register_count_divisor += 1
-                    self.max_per_request = max(
-                        int(self.register_count / self.register_count_divisor), 1
-                    )
-                    _log.info(
-                        "Device requires a lower max_per_request setting. Trying: "
-                        + str(self.max_per_request)
-                    )
-                    continue
-                elif (
-                    exc.message.endswith("rejected the request: 9")
-                    and self.use_read_multiple
-                ):
-                    _log.info(
-                        "Device rejected request with 'unrecognized-service' error, attempting to access with use_read_multiple false"
-                    )
-                    self.use_read_multiple = False
-                    continue
-                else:
-                    trace = traceback.format_exc()
-                    _log.error(f"Error reading target {self.target_address}: {trace}")
+        results = []
+        for i in range(0, len(point_names), self.max_per_request):
+            use_read_multiple = self.use_read_multiple
+            batch = {
+                key: point_map[key] for key in point_names[i : i + self.max_per_request]
+            }
+            while True:
+                try:
+                    batch_result = self.vip.rpc.call(
+                        self.proxy_address,
+                        "read_properties",
+                        self.target_address,
+                        batch,
+                        self.max_per_request,
+                        use_read_multiple,
+                    ).get(timeout=180)
+                    _log.debug(f"found {len(batch_result)} results in platform driver")
+                    results.append(batch_result)
+                except gevent.timeout.Timeout as exc:
+                    _log.error(f"Timed out reading target {self.target_address}")
                     raise exc
-            except errors.Unreachable:
-                # If the Proxy is not running bail.
-                _log.warning("Unable to reach BACnet proxy.")
-                self.schedule_ping()
-                raise
-            else:
-                break
+                except RemoteError as exc:
+                    if "unknownProperty" in exc.message:
+                        _log.debug(f"unknownProperty error: {exc.message}")
+                        # self.vip.config.set("unknown_properties", exc.message)
+                    if (
+                        "noResponse" in exc.message
+                        and self.use_read_multiple
+                        and self.failover_bacnet_to_single is True
+                    ):
+                        _log.warning(
+                            f"device {self.target_address} did not respond reading multiple"
+                        )
+                        use_read_multiple = False
+                        continue
+                    elif "noResponse" in exc.message and not self.use_read_multiple:
+                        # disable device for collection
+                        self.enable_collection = False
+                        break
+                    if "segmentationNotSupported" in exc.message:
+                        if self.max_per_request <= 1:
+                            _log.error(
+                                "Receiving a segmentationNotSupported error with 'max_per_request' setting of 1."
+                            )
+                            raise
+                        self.register_count_divisor += 1
+                        self.max_per_request = max(
+                            int(self.register_count / self.register_count_divisor), 1
+                        )
+                        _log.info(
+                            "Device requires a lower max_per_request setting. Trying: "
+                            + str(self.max_per_request)
+                        )
+                        continue
+                    elif (
+                        exc.message.endswith("rejected the request: 9")
+                        and self.use_read_multiple
+                    ):
+                        _log.info(
+                            "Device rejected request with 'unrecognized-service' error, attempting to access with use_read_multiple false"
+                        )
+                        self.use_read_multiple = False
+                        continue
+                    else:
+                        trace = traceback.format_exc()
+                        _log.error(
+                            f"Error reading target {self.target_address}: {trace}"
+                        )
+                        raise exc
+                except errors.Unreachable:
+                    # If the Proxy is not running bail.
+                    _log.warning("Unable to reach BACnet proxy.")
+                    self.schedule_ping()
+                    raise
+                else:
+                    break
+        result = {k: v for d in results for k, v in d.items()}
         _log.debug(f"{self.target_address=}")
         return result
 
