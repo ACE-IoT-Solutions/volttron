@@ -65,7 +65,7 @@ BACNET_TYPE_MAPPING = {
     "binaryValue": bool,
     "binaryInput": bool,
     "binaryOutput": bool,
-    "schedule": bool,
+    # "schedule": bool,
 }
 
 
@@ -256,6 +256,7 @@ class Interface(BaseInterface):
         results = []
         for i in range(0, len(point_names), self.max_per_request):
             use_read_multiple = self.use_read_multiple
+            # generate a batch of reads equal to the max_per_request
             batch = {
                 key: point_map[key] for key in point_names[i : i + self.max_per_request]
             }
@@ -272,7 +273,9 @@ class Interface(BaseInterface):
                     _log.debug(f"found {len(batch_result)} results in platform driver")
                     results.append(batch_result)
                 except gevent.timeout.Timeout as exc:
-                    _log.error(f"Timed out reading target {self.target_address}")
+                    _log.error(f"Timed out reading target {self.target_address} with batch {batch}: {exc}")
+                    if not use_read_multiple:
+                        break
                     raise exc
                 except RemoteError as exc:
                     if "unknownProperty" in exc.message:
