@@ -301,8 +301,15 @@ class DriverAgent(BasicAgent):
                 depth_first_topic = self.base_topic(point=point)
                 if hasattr(self.interface, "failing_points"):
                     if point not in self.interface.failing_points:
-                        _log.error("Failed to scrape point, adding to failing points: " + depth_first_topic)
-                        self.interface.failing_points[point] = datetime.datetime.utcnow() + datetime.timedelta(minutes=random.randint(1,30))
+                        _log.error(
+                            "Failed to scrape point, adding to failing points: "
+                            + depth_first_topic
+                        )
+                        self.interface.failing_points[
+                            point
+                        ] = datetime.datetime.utcnow() + datetime.timedelta(
+                            minutes=random.randint(1, 30) # random backoff time
+                        )
                 count_scrape_failed += 1
             self.parent.failed_point_scrape.labels(
                 point=depth_first_topic, device=self.device_name
