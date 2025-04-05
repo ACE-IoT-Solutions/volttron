@@ -234,7 +234,7 @@ class PlatformDriverAgent(Agent):
             ["device"],
             registry=self.collector_registry,
         )
-        self.failed_point_scrape = Counter(
+        self.failed_point_scrape = Gauge(
             "failed_point_scrape",
             "Failed scrape for existing point",
             ["point", "device"],
