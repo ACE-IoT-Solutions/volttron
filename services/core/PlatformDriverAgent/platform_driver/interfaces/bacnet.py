@@ -41,6 +41,7 @@ import logging
 import gevent
 import traceback
 from datetime import datetime, timedelta
+from typing import Dict
 
 from platform_driver.driver_exceptions import DriverConfigError
 from platform_driver.interfaces import BaseInterface, BaseRegister
@@ -101,6 +102,8 @@ class Interface(BaseInterface):
         self.use_read_multiple = True
         self.enable_collection = True
         self.collection_disabled_time = None
+        self.failing_points: Dict[str, datetime] = {}
+        self.fail_retry = timedelta(hours=1)
         # self.unresponsive_devices = {}
 
     def configure(self, config_dict, registry_config_str):
@@ -214,6 +217,7 @@ class Interface(BaseInterface):
 
     def scrape_all(self):
         # TODO: support reading from an array.
+        now = datetime.now()
         point_map = {}
         point_names = []
         read_registers = self.get_registers_by_type("byte", True)
@@ -226,6 +230,11 @@ class Interface(BaseInterface):
                 self.enable_collection = True
 
         for register in read_registers + write_registers:
+            if register.point_name in self.failing_points and self.failing_points[
+                register.point_name
+            ] > (now - self.fail_retry):
+                _log.debug(f"Skipping {register.point_name} due to recent failure.")
+                continue
             point_names.append(register.point_name)
             point_map[register.point_name] = [
                 register.object_type,

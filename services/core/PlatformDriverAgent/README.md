@@ -76,9 +76,10 @@ to the device. Heart beats are triggered by the Actuator Agent which must be run
 
 
 ## Changes
-
+- 4.5.1 (2025-04-05)
+    - Added failing point cache with one hour default timeout
 - 4.5.0 (2025-04-05) 
-    -  Moved batching to driver for better control
+    - Moved batching to driver for better control
 
 - 4.4.2 (2024-12-04) 
     - updated ethernetip driver to import from new platform_driver module
