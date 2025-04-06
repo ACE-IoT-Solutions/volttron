@@ -76,6 +76,8 @@ to the device. Heart beats are triggered by the Actuator Agent which must be run
 
 
 ## Changes
+- 4.5.2 (2025-04-05)
+    - Using saner defaults for per-batch timeout
 - 4.5.1 (2025-04-05)
     - Added failing point cache with one hour default timeout
 - 4.5.0 (2025-04-05) 

@@ -254,6 +254,10 @@ class Interface(BaseInterface):
             ]
 
         results = []
+        if self.use_read_multiple:
+            timeout = min( self.timeout, max(30, self.max_per_request), 180)  # cap timeout to 3 minutes for each batch
+        else:
+            timeout = self.timeout
         for i in range(0, len(point_names), self.max_per_request):
             use_read_multiple = self.use_read_multiple
             # generate a batch of reads equal to the max_per_request
@@ -269,7 +273,7 @@ class Interface(BaseInterface):
                         batch,
                         self.max_per_request,
                         use_read_multiple,
-                    ).get(timeout=180)
+                    ).get(timeout=timeout)
                     # _log.debug(f"found {len(batch_result)} results in platform driver")
                     results.append(batch_result)
                 except gevent.timeout.Timeout as exc:
