@@ -296,24 +296,27 @@ class DriverAgent(BasicAgent):
             results = self.interface.scrape_all()
             self.parent.point_count.labels(device=self.device_name).set(len(results))
             register_names = self.interface.get_register_names_view()
-            count_scrape_failed = 0
-            for point in register_names - results.keys():
+            for point in register_names:
                 depth_first_topic = self.base_topic(point=point)
-                if hasattr(self.interface, "failing_points"):
-                    if point not in self.interface.failing_points:
-                        _log.error(
-                            "Failed to scrape point, adding to failing points: "
-                            + depth_first_topic
-                        )
-                        self.interface.failing_points[
-                            point
-                        ] = datetime.datetime.utcnow() + datetime.timedelta(
-                            minutes=random.randint(1, 30) # random backoff time
-                        )
-                count_scrape_failed += 1
-            self.parent.failed_point_scrape.labels(
-                point=depth_first_topic, device=self.device_name
-            ).set(count_scrape_failed)
+                if point not in results.keys():
+                    self.parent.failed_point_scrape.labels(
+                        point=depth_first_topic, device=self.device_name
+                    ).set(1)
+                    if hasattr(self.interface, "failing_points"):
+                        if point not in self.interface.failing_points:
+                            _log.error(
+                                "Failed to scrape point, adding to failing points: "
+                                + depth_first_topic
+                            )
+                            self.interface.failing_points[
+                                point
+                            ] = datetime.datetime.utcnow() + datetime.timedelta(
+                                minutes=random.randint(1, 30) # random backoff time
+                            )
+                else:
+                    self.parent.failed_point_scrape.labels(
+                        point=depth_first_topic, device=self.device_name
+                    ).set(0)
         except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
             self.parent.error_counter.labels(device=self.device_name).inc()
