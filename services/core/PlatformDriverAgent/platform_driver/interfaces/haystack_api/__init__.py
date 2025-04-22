@@ -18,6 +18,7 @@ utils.setup_logging()
 
 OP_TIMEOUT = 180
 
+
 class Register(BaseRegister):
     """
     Register class for Haystack API
@@ -67,7 +68,6 @@ class Interface(BasicRevert, BaseInterface):
 
         _log.info("retrieving all point entities on configure")
         self.point_entities = self.find_all_points()
-
 
     def parse_register_config(self, registry_config_str):
         """
@@ -146,8 +146,12 @@ class Interface(BasicRevert, BaseInterface):
         Override function from base class
         """
         results = {}
-        for point in [entry['name'] for entry in self.registry_config]:
-            results.update(self.scrape(point))
+        for point in [entry["name"] for entry in self.registry_config]:
+            try:
+                results.update(self.scrape(point))
+            except (AttributeError, ValueError) as exc:
+                _log.warning(f"could not scrape {point=}: {exc=}")
+                continue
         return results
 
     def _set_point(self, point_name, value):
@@ -164,7 +168,14 @@ class Interface(BasicRevert, BaseInterface):
         _log.debug(f"trying to scrape {point_ref=}")
         _log.debug(f"point ref has id: {point_ref.id=}")
         point_grid = self.get_entity(point_ref.id)
-        value = point_grid.tags['curVal'].value
+        if (
+            isinstance(point_grid.tags["curVal"], bool)
+            or isinstance(point_grid.tags["curVal"], float)
+            or isinstance(point_grid.tags["curVal"], int)
+            or isinstance(point_grid.tags["curVal"], str)
+        ):
+            return {point: float(point_grid.tags["curVal"])}
+        value = point_grid.tags["curVal"].value
         return {
             point: value,
         }
