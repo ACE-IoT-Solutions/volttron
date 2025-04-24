@@ -2,9 +2,8 @@
 Collection of data structures used in the OPConnect interface.
 """
 
-import enum
-
-class HTTPMethods(enum.Enum, str):
+from enum import Enum
+class HTTPMethods(str, Enum):
     """
     Enum for HTTP methods.
     """
