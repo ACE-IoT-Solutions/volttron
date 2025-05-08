@@ -80,12 +80,12 @@ def agent(request, volttron_instance):
     # Clean out platform driver configurations
     # wait for it to return before adding new config
     md_agent.vip.rpc.call('config.store',
-                          'delete_store',
+                          'manage_delete_store',
                           PLATFORM_DRIVER).get()
 
     # Add driver configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           PLATFORM_DRIVER,
                           'devices/modbus',
                           jsonapi.dumps(DRIVER_CONFIG),
@@ -93,7 +93,7 @@ def agent(request, volttron_instance):
 
     # Add csv configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           PLATFORM_DRIVER,
                           'modbus.csv',
                           REGISTRY_CONFIG_STRING,

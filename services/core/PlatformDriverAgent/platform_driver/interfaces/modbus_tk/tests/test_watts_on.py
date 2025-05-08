@@ -66,12 +66,12 @@ def agent(request, volttron_instance):
     # Clean out platform driver configurations
     # wait for it to return before adding new config
     md_agent.vip.rpc.call('config.store',
-                          'delete_store',
+                          'manage_delete_store',
                           PLATFORM_DRIVER).get()
 
     # Add driver configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           'platform.driver',
                           'devices/watts_on',
                           DRIVER_CONFIG_STRING,
@@ -79,14 +79,14 @@ def agent(request, volttron_instance):
 
     # Add csv configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           'platform.driver',
                           'watts_on.csv',
                           REGISTRY_CONFIG_STRING,
                           config_type='csv')
 
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           'platform.driver',
                           'watts_on_map.csv',
                           REGISTRY_CONFIG_MAP,

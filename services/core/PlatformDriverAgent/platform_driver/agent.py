@@ -1,35 +1,52 @@
 # -*- coding: utf-8 -*- {{{
-# ===----------------------------------------------------------------------===
+# vim: set fenc=utf-8 ft=python sw=4 ts=4 sts=4 et:
 #
-#                 Component of Eclipse VOLTTRON
+# Copyright 2020, Battelle Memorial Institute.
 #
-# ===----------------------------------------------------------------------===
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# Copyright 2023 Battelle Memorial Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not
-# use this file except in compliance with the License. You may obtain a copy
-# of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
-# ===----------------------------------------------------------------------===
+# This material was prepared as an account of work sponsored by an agency of
+# the United States Government. Neither the United States Government nor the
+# United States Department of Energy, nor Battelle, nor any of their
+# employees, nor any jurisdiction or organization that has cooperated in the
+# development of these materials, makes any warranty, express or
+# implied, or assumes any legal liability or responsibility for the accuracy,
+# completeness, or usefulness or any information, apparatus, product,
+# software, or process disclosed, or represents that its use would not infringe
+# privately owned rights. Reference herein to any specific commercial product,
+# process, or service by trade name, trademark, manufacturer, or otherwise
+# does not necessarily constitute or imply its endorsement, recommendation, or
+# favoring by the United States Government or any agency thereof, or
+# Battelle Memorial Institute. The views and opinions of authors expressed
+# herein do not necessarily state or reflect those of the
+# United States Government or any agency thereof.
+#
+# PACIFIC NORTHWEST NATIONAL LABORATORY operated by
+# BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
+# under Contract DE-AC05-76RL01830
 # }}}
 
 import logging
 import sys
 import gevent
 from collections import defaultdict
+
+from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, write_to_textfile
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.agent import utils
 from volttron.platform.agent import math_utils
 from volttron.platform.agent.known_identities import PLATFORM_DRIVER
+from volttron.platform.vip.agent.core import Core
 from .driver import DriverAgent
 import resource
 from datetime import datetime, timedelta
@@ -41,8 +58,10 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.0'
+__version__ = '4.5.0'
 
+
+PROMETHEUS_METRICS_FILE = "/opt/packages/prometheus_exporter/scrape_files/scrape_metrics.prom"
 
 class OverrideError(DriverInterfaceError):
     """Error raised when the user tries to set/revert point when global override is set."""
@@ -61,7 +80,7 @@ def platform_driver_agent(config_path, **kwargs):
 
     # Increase open files resource limit to max or 8192 if unlimited
     system_socket_limit = None
-
+    
     try:
         soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     except OSError:
@@ -85,7 +104,7 @@ def platform_driver_agent(config_path, **kwargs):
     max_concurrent_publishes = get_config('max_concurrent_publishes', 10000)
 
     driver_config_list = get_config('driver_config_list')
-
+    
     scalability_test = get_config('scalability_test', False)
     scalability_test_iterations = get_config('scalability_test_iterations', 3)
 
@@ -150,6 +169,16 @@ class PlatformDriverAgent(Agent):
         self.group_counts = defaultdict(int)
         self._name_map = {}
 
+        self.unresponsive_devices = {}
+
+        self.collector_registry = CollectorRegistry()
+        new_buckets = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, 30, float("inf"))
+        self.performance_histogram = Histogram("device_scrape_time_histogram", "Time taken to scrape given device - histogram", ['device'], registry=self.collector_registry, buckets=new_buckets)
+        self.performance_gauge = Gauge("device_scrape_time", "Time taken to scrape device", ['device'], registry=self.collector_registry)
+        self.error_counter = Counter("device_error_count", "Number of errors per device", ['device'], registry=self.collector_registry)
+        self.failed_point_scrape = Counter("failed_point_scrape", "Failed scrape for existing point", ['point', 'device'], registry=self.collector_registry)
+        self.point_count = Gauge("point_count", "Number of points per device", ['device'], registry=self.collector_registry)
+
         self.publish_depth_first_all = bool(publish_depth_first_all)
         self.publish_breadth_first_all = bool(publish_breadth_first_all)
         self.publish_depth_first = bool(publish_depth_first)
@@ -157,6 +186,8 @@ class PlatformDriverAgent(Agent):
         self._override_devices = set()
         self._override_patterns = None
         self._override_interval_events = {}
+        self.last_written = datetime.now()
+        self.last_scraped = datetime.now()
 
         if scalability_test:
             self.waiting_to_finish = set()
@@ -179,6 +210,13 @@ class PlatformDriverAgent(Agent):
         self.vip.config.subscribe(self.configure_main, actions=["NEW", "UPDATE"], pattern="config")
         self.vip.config.subscribe(self.update_driver, actions=["NEW", "UPDATE"], pattern="devices/*")
         self.vip.config.subscribe(self.remove_driver, actions="DELETE", pattern="devices/*")
+        # self.vip.pubsub.subscribe(peer="pubsub", callback=self.add_unresponsive_bacnet_device, prefix="errors/bacnet")
+        
+    @Core.periodic(10)
+    def flush_metrics(self):
+        if self.last_written < self.last_scraped:
+            self.last_written = datetime.now()
+            write_to_textfile(PROMETHEUS_METRICS_FILE, self.collector_registry)
 
     def configure_main(self, config_name, action, contents):
         config = self.default_config.copy()
@@ -377,16 +415,16 @@ class PlatformDriverAgent(Agent):
     #     _log.debug("Driver hooked up for "+topic)
     #     topic = topic.strip('/')
     #     self.instances[topic] = driver
-
+        
     def scrape_starting(self, topic):
         if not self.scalability_test:
             return
-
+        
         if not self.waiting_to_finish:
             # Start a new measurement
             self.current_test_start = datetime.now()
             self.waiting_to_finish = set(self.instances.keys())
-
+            
         if topic not in self.waiting_to_finish:
             _log.warning(
                 f"{topic} started twice before test finished, increase the length of scrape interval and rerun test")
@@ -394,7 +432,7 @@ class PlatformDriverAgent(Agent):
     def scrape_ending(self, topic):
         if not self.scalability_test:
             return
-
+        
         try:
             self.waiting_to_finish.remove(topic)
         except KeyError:
@@ -406,18 +444,35 @@ class PlatformDriverAgent(Agent):
             delta = end - self.current_test_start
             delta = delta.total_seconds()
             self.test_results.append(delta)
-
+            
             self.test_iterations += 1
-
+            
             _log.info("publish {} took {} seconds".format(self.test_iterations, delta))
-
+            
             if self.test_iterations >= self.scalability_test_iterations:
                 # Test is now over. Button it up and shutdown.
-                mean = math_utils.mean(self.test_results)
-                stdev = math_utils.stdev(self.test_results)
+                mean = math_utils.mean(self.test_results) 
+                stdev = math_utils.stdev(self.test_results) 
                 _log.info("Mean total publish time: "+str(mean))
                 _log.info("Std dev publish time: "+str(stdev))
                 sys.exit(0)
+
+    # def add_unresponsive_bacnet_device(self, peer, sender, bus, topic, headers, message):
+    #     """
+    #     Forward unresponsive devices to BACnet driver interface
+    #     """
+    #     if "noResponse" in message['exception']:
+    #         address = message['target_address']
+    #         _log.debug("Adding unresponsive device: {}".format(address))
+    #         self.unresponsive_devices[address] = datetime.now()
+
+    @RPC.export
+    def set_wh_curtailment(self, device_path, wh_state, duration):
+        """RPC method
+
+        Set curtailment
+        """
+        self.instances[device_path].set_wh_status(wh_state, duration)
 
     @RPC.export
     def get_point(self, path, point_name, **kwargs):
@@ -455,6 +510,14 @@ class PlatformDriverAgent(Agent):
 
     @RPC.export
     def scrape_all(self, path):
+        # _log.debug(f"scraping from platform driver agent: {path=}")
+        # for address, last_noresponse in self.unresponsive_devices.items():
+        #     if (datetime.now() - last_noresponse > timedelta(hours=24)):
+        #         _log.debug("Removing unresponsive device: {}".format(address))
+        #         self.unresponsive_devices.pop(address)
+        #     if address in path:
+        #         _log.debug(f"skipping scan for unresponsive device: {address}")
+        #         return
         return self.instances[path].scrape_all()
 
     @RPC.export
@@ -478,7 +541,7 @@ class PlatformDriverAgent(Agent):
                 "Cannot set point on device {} since global override is set".format(path))
         else:
             return self.instances[path].set_multiple_points(point_names_values, **kwargs)
-
+    
     @RPC.export
     def heart_beat(self):
         """RPC method
@@ -487,11 +550,8 @@ class PlatformDriverAgent(Agent):
         """
         _log.debug("sending heartbeat")
         for device in self.instances.values():
-            try:
-                device.heart_beat()
-            except (Exception, gevent.Timeout) as e:
-                _log.warning(f'Failed to set heart_beat point on device: {device.device_name} -- {e}.')
-
+            device.heart_beat()
+            
     @RPC.export
     def revert_point(self, path, point_name, **kwargs):
         """RPC method
@@ -638,6 +698,11 @@ class PlatformDriverAgent(Agent):
         Get a list of all the override patterns.
         """
         return list(self._override_patterns)
+
+    @RPC.export
+    @RPC.allow('platform_driver_config')
+    def update_config_store(self, config_name, contents):
+        self.vip.config.set(config_name, contents)
 
     def _set_override_off(self, pattern):
         """Turn off override condition on all devices matching the pattern. It removes the pattern from the override
