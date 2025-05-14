@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Directory to save the configuration files.
+SAVE_DIR="/var/lib/volttron/config_backups"
+
+# String to replace '/' in filenames (URL-encoded slash)
+ENCODED_SLASH="%2F"
+# -------------------
+
+# --- Script Logic ---
+
+echo "Saving vctl platform.driver configurations to: $SAVE_DIR"
+
+# Create the save directory if it doesn't exist
+mkdir -p "$SAVE_DIR" || { >&2 echo "Error: Could not create directory $SAVE_DIR. Exiting."; exit 1; }
+
+echo "Listing configuration keys..."
+keys=$(vctl config list platform.driver)
+
+if [ -z "$keys" ]; then
+    echo "No platform.driver configurations found."
+    exit 0
+fi
+
+echo "Found $(echo "$keys" | wc -l) keys. Fetching and saving JSON data..."
+
+# Process each key
+while IFS= read -r key; do
+    if [ -z "$key" ]; then
+        continue # Skip empty lines
+    fi
+
+    # Trim potential leading/trailing whitespace from the key
+    trimmed_key="$(echo "$key" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    if [ -z "$trimmed_key" ]; then
+         echo "Warning: Skipped line with only whitespace."
+         continue
+    fi
+
+    echo "Processing key: $trimmed_key"
+
+    # Create a filename by replacing '/' with the encoded slash string
+    # CORRECTED LINE: Remove the extra '/' inside the replacement braces
+    filename="${trimmed_key//\//${ENCODED_SLASH}}"
+
+    # Construct the full output path
+    output_file="$SAVE_DIR/$filename"
+
+    # Check if the generated filename might be problematic (should not contain slashes now)
+    if [[ "$filename" == */* ]]; then
+        >&2 echo "Error: Generated filename still contains slashes unexpectedly: '$filename' from key '$trimmed_key'. Skipping this key."
+        # Do not continue, this indicates a fundamental problem
+        exit 1
+    fi
+
+
+    # Get the JSON data and save it to the file
+    if vctl config get platform.driver "$trimmed_key" > "$output_file"; then
+        echo "  Saved to: $output_file"
+    else
+        >&2 echo "Error: Failed to get configuration for key '$trimmed_key'. Skipping."
+        # Clean up potentially empty or incomplete file
+        rm -f "$output_file"
+    fi
+
+done <<< "$keys"
+
+echo "Save process finished."
+
+exit 0

@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Directory where the configuration files were saved.
+# Change this to match the SAVE_DIR in the save script.
+RESTORE_DIR="/var/lib/volttron/config_backups"
+
+# String used to replace '/' in filenames (URL-encoded slash)
+# The restore process will match this case-insensitively.
+ENCODED_SLASH="%2F"
+# -------------------
+
+# --- Script Logic ---
+
+echo "Restoring vctl platform.driver configurations from: $RESTORE_DIR"
+
+# Check if the restore directory exists
+if [ ! -d "$RESTORE_DIR" ]; then
+    >&2 echo "Error: Restore directory '$RESTORE_DIR' not found. Exiting."; exit 1;
+fi
+
+echo "Reading files from '$RESTORE_DIR'..."
+
+# Find all files in the restore directory (excluding subdirectories)
+find "$RESTORE_DIR" -maxdepth 1 -type f -print0 | while IFS= read -r -d $'\0' file_path; do
+    if [ -z "$file_path" ]; then
+        continue # Skip empty results from find
+    fi
+
+    # Extract just the filename from the full path
+    filename=$(basename "$file_path")
+
+    # --- Key Reconstruction using sed (case-insensitive) ---
+    # Escape the encoded slash string for use in a sed regex pattern (though %2F is safe)
+    escaped_encoded_slash="${ENCODED_SLASH//[\/$.*[^\]\\]/\\&}"
+
+    # Use sed to replace all occurrences of the encoded slash (case-insensitive 'i') with a literal slash ('/')
+    original_key=$(echo "$filename" | sed "s/$escaped_encoded_slash/\//gi")
+    # --- End Key Reconstruction ---
+
+    # Check if the reconstructed key looks valid (basic check - e.g., doesn't start/end with separator,
+    # or contain double separators unless the original key did, etc.)
+    # A simple non-empty check:
+    if [ -z "$original_key" ]; then
+        >&2 echo "Warning: Reconstructed key is empty for file '$filename'. Skipping."
+        continue
+    fi
+
+    # Inform user about the file and reconstructed key
+    echo "Processing file: $filename -> Key: $original_key"
+
+    # Store the configuration using vctl config store
+    if vctl config store platform.driver "$original_key" "$file_path"; then
+        echo "  Successfully restored."
+    else
+        >&2 echo "Error: Failed to store configuration for key '$original_key' from file '$file_path'. Check vctl output above."
+    fi
+
+done
+
+echo "Restore process finished."
+
+exit 0
