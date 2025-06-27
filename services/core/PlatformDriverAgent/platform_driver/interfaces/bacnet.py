@@ -238,7 +238,7 @@ class Interface(BaseInterface):
                     point_map,
                     self.max_per_request,
                     self.use_read_multiple,
-                ).get(timeout=180)
+                ).get(timeout=self.timeout)
 
                 _log.debug(f"found {len(result)} results in platform driver")
             except gevent.timeout.Timeout as exc:
