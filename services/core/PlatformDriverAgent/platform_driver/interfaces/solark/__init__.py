@@ -35,6 +35,7 @@ import time
 from volttron.platform.agent import utils
 from platform_driver.interfaces import BaseRegister, BaseInterface, BasicRevert
 from volttron.platform.vip.agent import Agent, Core, RPC, PubSub
+from volttron.platform.messaging.health import STATUS_GOOD, STATUS_BAD
 
 from .solark import fetch_bearer_token, get_plant_realtime
 
@@ -87,10 +88,12 @@ class Interface(BasicRevert, BaseInterface):
         _log.info("setting up solark interface")
         # _log.debug(f"{user_exists(self.username)}")
         self.token = fetch_bearer_token(self.api_key, self.username, self.password)
+        if self.token is None:
+            _log.error("Failed to fetch bearer token. Please check your credentials.")
+            self.vip.health.set_status(STATUS_BAD, "Failed to fetch bearer token")
+            return
+        self.vip.health.set_status(STATUS_GOOD, "Bearer token fetched successfully")
         _log.debug(f"...{self.token[-3:]}")
-        # self.token = fetch_bearer_token(
-        #     self.api_key, self.username, self.password, grant_type="password", client_id=self.client_id
-        # )
 
         for entry in DEFAULT_POINTS:
             _log.debug(f"inserting register {entry=}")
