@@ -1,0 +1,33 @@
+{
+    "driver_config": {
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "192.168.1.100",
+            "port": 502,
+            "timeout": 3.0,
+            "retry_attempts": 3
+        },
+        "units": [
+            {
+                "unit_id": 1,
+                "name": "meter_main"
+            },
+            {
+                "unit_id": 2,
+                "name": "meter_building_a"
+            },
+            {
+                "unit_id": 3,
+                "name": "meter_building_b"
+            }
+        ]
+    },
+    "driver_type": "modbus_enhanced",
+    "registry_config": {
+        "1": "config://power_meter_transforms.csv",
+        "2": "config://power_meter_transforms.csv",
+        "3": "config://power_meter_transforms.csv"
+    },
+    "interval": 10,
+    "timezone": "UTC"
+}

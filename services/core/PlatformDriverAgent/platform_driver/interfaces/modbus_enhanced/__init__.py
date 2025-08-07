@@ -351,6 +351,20 @@ class Interface(BasicRevert, BaseInterface):
                     # Prefix point name with unit name for gateway device mode
                     full_point_name = f"{unit_config['name']}.{point_name}"
                     
+                    # Parse transform if provided
+                    transform = None
+                    transform_str = reg_dict.get('Transform', '').strip()
+                    if transform_str:
+                        try:
+                            # Evaluate lambda expression
+                            transform = eval(transform_str)
+                            if not callable(transform):
+                                _log.warning(f"Transform for {point_name} is not callable: {transform_str}")
+                                transform = None
+                        except Exception as e:
+                            _log.error(f"Error parsing transform for {point_name}: {e}")
+                            transform = None
+                    
                     register = EnhancedModbusRegister(
                         address=address,
                         register_type=register_type,
@@ -360,10 +374,27 @@ class Interface(BasicRevert, BaseInterface):
                         unit_id=unit_id,
                         gateway_id=gateway_id,
                         description=reg_dict.get('Notes', ''),
-                        mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true'
+                        mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
+                        transform=transform
                     )
                 elif 'address' in reg_dict:
                     # JSON/dict format
+                    # Parse transform if provided
+                    transform = None
+                    if 'transform' in reg_dict:
+                        transform_str = reg_dict['transform']
+                        try:
+                            if isinstance(transform_str, str):
+                                transform = eval(transform_str)
+                            else:
+                                transform = transform_str  # Already a callable
+                            if not callable(transform):
+                                _log.warning(f"Transform is not callable: {transform_str}")
+                                transform = None
+                        except Exception as e:
+                            _log.error(f"Error parsing transform: {e}")
+                            transform = None
+                    
                     register = EnhancedModbusRegister(
                         address=reg_dict['address'],
                         register_type=reg_dict.get('type', 'uint16'),
@@ -373,7 +404,8 @@ class Interface(BasicRevert, BaseInterface):
                         unit_id=unit_id,
                         gateway_id=gateway_id,
                         description=reg_dict.get('description', ''),
-                        mixed_endian=reg_dict.get('mixed_endian', False)
+                        mixed_endian=reg_dict.get('mixed_endian', False),
+                        transform=transform
                     )
                 else:
                     _log.warning(f"Register dict missing required fields (Point Address or address): {reg_dict}")
@@ -421,6 +453,19 @@ class Interface(BasicRevert, BaseInterface):
             if register_type == 'bool':
                 register_type = 'bit'
             
+            # Parse transform if provided
+            transform = None
+            transform_str = reg_dict.get('Transform', '').strip()
+            if transform_str:
+                try:
+                    transform = eval(transform_str)
+                    if not callable(transform):
+                        _log.warning(f"Transform is not callable: {transform_str}")
+                        transform = None
+                except Exception as e:
+                    _log.error(f"Error parsing transform: {e}")
+                    transform = None
+            
             register = EnhancedModbusRegister(
                 address=int(reg_dict['Point Address']),
                 register_type=register_type,
@@ -430,7 +475,8 @@ class Interface(BasicRevert, BaseInterface):
                 unit_id=unit_id,
                 gateway_id=gateway_id,
                 description=reg_dict.get('Notes', ''),
-                mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true'
+                mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
+                transform=transform
             )
             
             self.register_manager.add_register(register)
@@ -486,6 +532,19 @@ class Interface(BasicRevert, BaseInterface):
             if register_type == 'bool':
                 register_type = 'bit'
             
+            # Parse transform if provided
+            transform = None
+            transform_str = reg_dict.get('Transform', '').strip()
+            if transform_str:
+                try:
+                    transform = eval(transform_str)
+                    if not callable(transform):
+                        _log.warning(f"Transform is not callable: {transform_str}")
+                        transform = None
+                except Exception as e:
+                    _log.error(f"Error parsing transform: {e}")
+                    transform = None
+            
             register = EnhancedModbusRegister(
                 address=int(reg_dict['Point Address']),
                 register_type=register_type,
@@ -495,7 +554,8 @@ class Interface(BasicRevert, BaseInterface):
                 unit_id=unit_id,
                 gateway_id=gateway_id,
                 description=reg_dict.get('Notes', ''),
-                mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true'
+                mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
+                transform=transform
             )
             
             self.register_manager.add_register(register)
