@@ -158,6 +158,22 @@ class Interface(BasicRevert, BaseInterface):
         if isinstance(registry_config, str):
             _log.debug(f"Registry config is a string, parsing as CSV")
             registry_config_lst = self._parse_csv_config(registry_config)
+        elif isinstance(registry_config, dict):
+            # Check if dict values are strings (CSV content) that need parsing
+            first_value = next(iter(registry_config.values())) if registry_config else None
+            if first_value and isinstance(first_value, str) and '\n' in first_value:
+                # Values are CSV strings, parse them
+                _log.debug(f"Registry config is a dict with CSV string values, parsing each")
+                parsed_config = {}
+                for key, csv_content in registry_config.items():
+                    if isinstance(csv_content, str):
+                        parsed_config[key] = self._parse_csv_config(csv_content)
+                    else:
+                        parsed_config[key] = csv_content
+                registry_config_lst = parsed_config
+            else:
+                _log.debug(f"Registry config is a dict, using as-is")
+                registry_config_lst = registry_config
         else:
             _log.debug(f"Registry config is type {type(registry_config)}, using as-is")
             registry_config_lst = registry_config
@@ -233,7 +249,7 @@ class Interface(BasicRevert, BaseInterface):
         
         return config
     
-    def _configure_gateway_device(self, driver_config, registry_config_lst):
+    def _configure_gateway_device(self, driver_config, registry_config_data):
         """
         Configure gateway as device mode.
         
@@ -241,6 +257,10 @@ class Interface(BasicRevert, BaseInterface):
         - The gateway is the VOLTTRON device
         - Multiple units are configured, each with its own registry_config
         - All units share the single gateway connection
+        
+        :param driver_config: Driver configuration dictionary
+        :param registry_config_data: Either a dict mapping unit_id to CSV strings, 
+                                    or a list for all units
         """
         gateway_config = driver_config['gateway']
         
@@ -263,33 +283,84 @@ class Interface(BasicRevert, BaseInterface):
         for unit_config in units:
             # Support both 'unit_id' and 'slave_id' for backward compatibility
             unit_id = unit_config.get('unit_id', unit_config.get('slave_id'))
+            unit_id_str = str(unit_id)
             template_name = unit_config.get('template')
             
-            if template_name and template_name in templates:
+            # Get registers for this unit
+            if isinstance(registry_config_data, dict) and unit_id_str in registry_config_data:
+                # Registry config is a dict mapping unit IDs to CSV strings
+                unit_csv = registry_config_data[unit_id_str]
+                if isinstance(unit_csv, str):
+                    registers = self._parse_csv_config(unit_csv)
+                else:
+                    registers = unit_csv
+            elif template_name and template_name in templates:
                 # Apply template
                 registers = self.template_engine.apply_template(
                     templates[template_name],
                     unit_config
                 )
             else:
-                # Use direct register configuration
+                # Use direct register configuration or empty list
                 registers = unit_config.get('registers', [])
             
             # Add registers for this unit
-            for reg_config in registers:
-                register = EnhancedModbusRegister(
-                    address=reg_config['address'],
-                    register_type=reg_config.get('type', 'uint16'),
-                    read_only=not reg_config.get('writable', False),
-                    point_name=f"{unit_config['name']}.{reg_config['name']}",
-                    units=reg_config.get('units', ''),
-                    unit_id=unit_id,
-                    gateway_id=gateway_id,
-                    description=reg_config.get('description', ''),
-                    mixed_endian=reg_config.get('mixed_endian', False)
-                )
+            for reg_dict in registers:
+                # Skip non-dictionary entries
+                if not isinstance(reg_dict, dict):
+                    _log.warning(f"Skipping non-dictionary register entry for unit {unit_id}")
+                    continue
+                
+                # Handle CSV-style configuration
+                if 'Volttron Point Name' in reg_dict:
+                    # CSV format
+                    point_name = reg_dict.get('Volttron Point Name', '')
+                    if not point_name:
+                        continue
+                    
+                    register_type = reg_dict.get('Modbus Register', 'uint16').lower()
+                    if register_type == 'bool':
+                        register_type = 'bit'
+                    
+                    # Prefix point name with unit name for gateway device mode
+                    full_point_name = f"{unit_config['name']}.{point_name}"
+                    
+                    register = EnhancedModbusRegister(
+                        address=int(reg_dict['Point Address']),
+                        register_type=register_type,
+                        read_only=reg_dict.get('Writable', '').lower() != 'true',
+                        point_name=full_point_name,
+                        units=reg_dict.get('Units', ''),
+                        unit_id=unit_id,
+                        gateway_id=gateway_id,
+                        description=reg_dict.get('Notes', ''),
+                        mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true'
+                    )
+                else:
+                    # JSON/dict format
+                    register = EnhancedModbusRegister(
+                        address=reg_dict['address'],
+                        register_type=reg_dict.get('type', 'uint16'),
+                        read_only=not reg_dict.get('writable', False),
+                        point_name=f"{unit_config['name']}.{reg_dict['name']}",
+                        units=reg_dict.get('units', ''),
+                        unit_id=unit_id,
+                        gateway_id=gateway_id,
+                        description=reg_dict.get('description', ''),
+                        mixed_endian=reg_dict.get('mixed_endian', False)
+                    )
+                
                 self.register_manager.add_register(register)
                 self.insert_register(register)
+                
+                # Set default values if specified
+                if not register.read_only:
+                    default_value = reg_dict.get('Default Value', '').strip()
+                    if default_value:
+                        try:
+                            self.set_default(register.point_name, register.python_type(default_value))
+                        except (ValueError, TypeError):
+                            _log.warning(f"Could not set default value {default_value} for {register.point_name}")
             
             self.unit_configs[unit_id] = unit_config
     
