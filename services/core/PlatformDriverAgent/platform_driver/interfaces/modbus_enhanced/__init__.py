@@ -156,8 +156,10 @@ class Interface(BasicRevert, BaseInterface):
         
         # Parse registry config if it's a string (CSV format)
         if isinstance(registry_config, str):
+            _log.debug(f"Registry config is a string, parsing as CSV")
             registry_config_lst = self._parse_csv_config(registry_config)
         else:
+            _log.debug(f"Registry config is type {type(registry_config)}, using as-is")
             registry_config_lst = registry_config
         
         # Parse configuration
@@ -209,14 +211,25 @@ class Interface(BasicRevert, BaseInterface):
         """
         config = []
         
-        # Use csv.DictReader to parse the CSV string
-        reader = csv.DictReader(StringIO(csv_string))
-        
-        for row in reader:
-            # Skip empty rows
-            if not row.get('Volttron Point Name') and not row.get('Point Name'):
-                continue
-            config.append(row)
+        try:
+            # Use csv.DictReader to parse the CSV string
+            reader = csv.DictReader(StringIO(csv_string))
+            
+            for row in reader:
+                # Skip empty rows
+                if not row.get('Volttron Point Name') and not row.get('Point Name'):
+                    continue
+                config.append(row)
+            
+            _log.debug(f"Parsed {len(config)} register configurations from CSV")
+            
+        except Exception as e:
+            _log.error(f"Error parsing CSV configuration: {e}")
+            # If CSV parsing fails, try to handle as a list
+            # In case it's already parsed somehow
+            if isinstance(csv_string, list):
+                return csv_string
+            raise
         
         return config
     
@@ -296,6 +309,11 @@ class Interface(BasicRevert, BaseInterface):
         
         # Process legacy register configuration
         for reg_dict in registry_config_lst:
+            # Check if reg_dict is actually a dictionary
+            if not isinstance(reg_dict, dict):
+                _log.warning(f"Skipping non-dictionary entry in registry config: {type(reg_dict)}")
+                continue
+                
             if not reg_dict.get('Volttron Point Name'):
                 continue
             
@@ -352,6 +370,11 @@ class Interface(BasicRevert, BaseInterface):
         
         # Process registers for this single unit
         for reg_dict in registry_config_lst:
+            # Check if reg_dict is actually a dictionary
+            if not isinstance(reg_dict, dict):
+                _log.warning(f"Skipping non-dictionary entry in registry config: {type(reg_dict)}")
+                continue
+                
             if not reg_dict.get('Volttron Point Name'):
                 continue
             
