@@ -264,10 +264,14 @@ class Interface(BasicRevert, BaseInterface):
         """
         gateway_config = driver_config['gateway']
         
-        # Setup gateway connection
+        # Setup gateway connection (support both 'address' and 'device_address' for compatibility)
+        gateway_address = gateway_config.get('address', gateway_config.get('device_address'))
+        if not gateway_address:
+            raise ValueError("Gateway configuration must include 'address' or 'device_address'")
+            
         gateway_id = self.gateway_manager.add_gateway(
             gateway_type=gateway_config.get('connection_type', 'tcp'),
-            address=gateway_config.get('address'),
+            address=gateway_address,
             port=gateway_config.get('port', 502),
             baudrate=gateway_config.get('baudrate', 9600),
             retry_config={
@@ -427,10 +431,14 @@ class Interface(BasicRevert, BaseInterface):
         gateway_config = driver_config['gateway']
         unit_id = driver_config.get('unit_id', driver_config.get('slave_id', 1))
         
-        # Setup gateway connection
+        # Setup gateway connection (support both 'address' and 'device_address' for compatibility)
+        gateway_address = gateway_config.get('address', gateway_config.get('device_address'))
+        if not gateway_address:
+            raise ValueError("Gateway configuration must include 'address' or 'device_address'")
+            
         gateway_id = self.gateway_manager.add_gateway(
             gateway_type=gateway_config.get('connection_type', 'tcp'),
-            address=gateway_config.get('address'),
+            address=gateway_address,
             port=gateway_config.get('port', 502),
             baudrate=gateway_config.get('baudrate', 9600),
             retry_config={

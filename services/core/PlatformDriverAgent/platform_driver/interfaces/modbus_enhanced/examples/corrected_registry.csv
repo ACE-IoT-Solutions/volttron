@@ -1,0 +1,13 @@
+Reference Point Name,Volttron Point Name,Units,Modbus Register,Writable,Point Address,Type,Notes
+active_energy,active_energy,MWhr,float,TRUE,1,,Active Energy in MWhr
+reactive_energy,reactive_energy,MVARhr,float,TRUE,3,,Reactive Energy in MVARhr
+voltage_l1,voltage_l1,V,float,FALSE,5,,Line 1 Voltage
+voltage_l2,voltage_l2,V,float,FALSE,7,,Line 2 Voltage
+voltage_l3,voltage_l3,V,float,FALSE,9,,Line 3 Voltage
+current_l1,current_l1,A,float,FALSE,11,,Line 1 Current
+current_l2,current_l2,A,float,FALSE,13,,Line 2 Current
+current_l3,current_l3,A,float,FALSE,15,,Line 3 Current
+power_total,power_total,kW,float,FALSE,17,,Total Power
+power_factor,power_factor,,float,FALSE,19,,Power Factor
+frequency,frequency,Hz,float,FALSE,21,,Frequency
+heartbeat,heartbeat,,uint16,TRUE,23,,Heartbeat counter
