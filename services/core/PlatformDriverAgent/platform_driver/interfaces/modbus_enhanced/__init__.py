@@ -153,6 +153,8 @@ class Interface(BasicRevert, BaseInterface):
         :param registry_config: Register configuration - can be CSV string or parsed list
         """
         _log.info("Configuring Enhanced Modbus Driver")
+        _log.debug(f"config_dict: {config_dict}")
+        _log.debug(f"registry_config type: {type(registry_config)}")
         
         # Parse registry config if it's a string (CSV format)
         if isinstance(registry_config, str):
@@ -178,8 +180,8 @@ class Interface(BasicRevert, BaseInterface):
             _log.debug(f"Registry config is type {type(registry_config)}, using as-is")
             registry_config_lst = registry_config
         
-        # Parse configuration
-        driver_config = config_dict.get('driver_config', {})
+        # The config_dict IS the driver_config (platform driver passes it directly)
+        driver_config = config_dict
         
         # Determine deployment mode
         if 'gateway' in driver_config and 'units' in driver_config:
@@ -191,7 +193,7 @@ class Interface(BasicRevert, BaseInterface):
             deployment_mode = 'unit_device'
             use_singleton = True
         else:
-            # Legacy mode
+            # Legacy mode - check for traditional modbus config keys
             deployment_mode = 'legacy'
             use_singleton = False
         
@@ -211,7 +213,7 @@ class Interface(BasicRevert, BaseInterface):
             self._configure_unit_device(driver_config, registry_config_lst)
         else:
             # Legacy format - convert to enhanced
-            self._configure_legacy(config_dict, registry_config_lst)
+            self._configure_legacy(driver_config, registry_config_lst)
         
         # Build register maps for efficient scraping
         self.register_manager.build_register_maps()
