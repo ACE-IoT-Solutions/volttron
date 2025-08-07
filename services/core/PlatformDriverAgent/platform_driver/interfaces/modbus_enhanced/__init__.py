@@ -33,6 +33,8 @@ This driver provides comprehensive modbus support with the following features:
 import logging
 import struct
 import json
+import csv
+from io import StringIO
 from typing import Dict, List, Optional, Any, Union
 from collections import defaultdict
 from gevent import monkey, sleep
@@ -138,7 +140,7 @@ class Interface(BasicRevert, BaseInterface):
         self.health_status = defaultdict(dict)
         self._lock = RLock()  # gevent.lock.RLock for greenlet-safe synchronization
     
-    def configure(self, config_dict, registry_config_lst):
+    def configure(self, config_dict, registry_config):
         """
         Configure the enhanced modbus driver
         
@@ -148,9 +150,15 @@ class Interface(BasicRevert, BaseInterface):
         3. Legacy single unit mode
         
         :param config_dict: Driver configuration dictionary
-        :param registry_config_lst: List of register configurations or dict of unit->registers
+        :param registry_config: Register configuration - can be CSV string or parsed list
         """
         _log.info("Configuring Enhanced Modbus Driver")
+        
+        # Parse registry config if it's a string (CSV format)
+        if isinstance(registry_config, str):
+            registry_config_lst = self._parse_csv_config(registry_config)
+        else:
+            registry_config_lst = registry_config
         
         # Parse configuration
         driver_config = config_dict.get('driver_config', {})
@@ -191,6 +199,26 @@ class Interface(BasicRevert, BaseInterface):
         self.register_manager.build_register_maps()
         
         _log.info(f"Enhanced Modbus Driver configured successfully in {deployment_mode} mode")
+    
+    def _parse_csv_config(self, csv_string):
+        """
+        Parse CSV configuration string into list of register dictionaries
+        
+        :param csv_string: CSV format registry configuration
+        :return: List of register configuration dictionaries
+        """
+        config = []
+        
+        # Use csv.DictReader to parse the CSV string
+        reader = csv.DictReader(StringIO(csv_string))
+        
+        for row in reader:
+            # Skip empty rows
+            if not row.get('Volttron Point Name') and not row.get('Point Name'):
+                continue
+            config.append(row)
+        
+        return config
     
     def _configure_gateway_device(self, driver_config, registry_config_lst):
         """
