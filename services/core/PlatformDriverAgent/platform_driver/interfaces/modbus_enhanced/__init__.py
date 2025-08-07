@@ -317,22 +317,42 @@ class Interface(BasicRevert, BaseInterface):
                     _log.warning(f"Skipping non-dictionary register entry for unit {unit_id}")
                     continue
                 
-                # Handle CSV-style configuration
-                if 'Volttron Point Name' in reg_dict:
-                    # CSV format
+                # Detect format by checking for CSV-style keys
+                if 'Point Address' in reg_dict or 'Volttron Point Name' in reg_dict:
+                    # CSV format - handle various CSV header variations
                     point_name = reg_dict.get('Volttron Point Name', '')
                     if not point_name:
+                        _log.debug(f"Skipping register with no point name: {reg_dict}")
                         continue
                     
-                    register_type = reg_dict.get('Modbus Register', 'uint16').lower()
+                    # Get address from Point Address field
+                    try:
+                        address = int(reg_dict.get('Point Address', 0))
+                    except (ValueError, TypeError):
+                        _log.error(f"Invalid Point Address for {point_name}: {reg_dict.get('Point Address')}")
+                        continue
+                    
+                    # Try to get register type from either 'Modbus Register' or 'Type' field
+                    register_type = reg_dict.get('Modbus Register', reg_dict.get('Type', 'uint16')).lower()
                     if register_type == 'bool':
                         register_type = 'bit'
+                    # Handle struct format strings that might be in either field
+                    elif register_type.startswith('>') or register_type.startswith('<'):
+                        # It's a struct format string, try to infer the type
+                        if 'f' in register_type:
+                            register_type = 'float'
+                        elif 'i' in register_type or 'I' in register_type:
+                            register_type = 'int32' if 'i' in register_type else 'uint32'
+                        elif 'h' in register_type or 'H' in register_type:
+                            register_type = 'int16' if 'h' in register_type else 'uint16'
+                        else:
+                            register_type = 'uint16'  # Default
                     
                     # Prefix point name with unit name for gateway device mode
                     full_point_name = f"{unit_config['name']}.{point_name}"
                     
                     register = EnhancedModbusRegister(
-                        address=int(reg_dict['Point Address']),
+                        address=address,
                         register_type=register_type,
                         read_only=reg_dict.get('Writable', '').lower() != 'true',
                         point_name=full_point_name,
@@ -342,7 +362,7 @@ class Interface(BasicRevert, BaseInterface):
                         description=reg_dict.get('Notes', ''),
                         mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true'
                     )
-                else:
+                elif 'address' in reg_dict:
                     # JSON/dict format
                     register = EnhancedModbusRegister(
                         address=reg_dict['address'],
@@ -355,6 +375,9 @@ class Interface(BasicRevert, BaseInterface):
                         description=reg_dict.get('description', ''),
                         mixed_endian=reg_dict.get('mixed_endian', False)
                     )
+                else:
+                    _log.warning(f"Register dict missing required fields (Point Address or address): {reg_dict}")
+                    continue
                 
                 self.register_manager.add_register(register)
                 self.insert_register(register)
