@@ -62,7 +62,7 @@ class EnhancedModbusRegister(BaseRegister):
     """Enhanced register with multi-unit support"""
     
     def __init__(self, address, register_type, read_only, point_name, units, 
-                 unit_id=1, gateway_id=None, description=', 
+                 unit_id=1, gateway_id=None, description='', 
                  mixed_endian=False, transform=None):
         super().__init__(register_type, read_only, point_name, units, description=description)
         self.address = address
