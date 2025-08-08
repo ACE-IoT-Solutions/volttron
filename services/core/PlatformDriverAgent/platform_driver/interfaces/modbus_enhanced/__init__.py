@@ -334,27 +334,26 @@ class Interface(BasicRevert, BaseInterface):
             # Get registers for this unit - check multiple sources
             registers = []
             
-            # 1. Check if registry_config_data has unit-specific config
-            if isinstance(registry_config_data, dict):
+            # 1. Check if registry_config_data has unit-specific config (dict)
+            if isinstance(registry_config_data, dict) and unit_id_str in registry_config_data:
                 _log.debug(f"Looking for unit {unit_id_str} in registry_config_data keys: {list(registry_config_data.keys())}")
-                if unit_id_str in registry_config_data:
-                    unit_data = registry_config_data[unit_id_str]
-                    _log.debug(f"Found unit {unit_id_str} data, type: {type(unit_data)}")
-                    if isinstance(unit_data, str):
-                        registers = self._parse_csv_config(unit_data)
-                    elif isinstance(unit_data, list):
-                        registers = unit_data
-                    else:
-                        _log.warning(f"Unknown registry data type for unit {unit_id}: {type(unit_data)}")
+                unit_data = registry_config_data[unit_id_str]
+                _log.debug(f"Found unit {unit_id_str} data, type: {type(unit_data)}")
+                if isinstance(unit_data, str):
+                    registers = self._parse_csv_config(unit_data)
+                elif isinstance(unit_data, list):
+                    registers = unit_data
                 else:
-                    _log.debug(f"Unit {unit_id_str} not found in registry_config_data")
+                    _log.warning(f"Unknown registry data type for unit {unit_id}: {type(unit_data)}")
             
             # 2. Check if unit config has embedded registers
             elif 'registers' in unit_config and unit_config['registers']:
+                _log.debug(f"Using embedded registers for unit {unit_id}")
                 registers = unit_config['registers']
             
             # 3. Check for template
             elif template_name and template_name in templates:
+                _log.debug(f"Using template {template_name} for unit {unit_id}")
                 registers = self.template_engine.apply_template(
                     templates[template_name],
                     unit_config
@@ -362,6 +361,9 @@ class Interface(BasicRevert, BaseInterface):
             
             # 4. If registry_config_data is a list, use it for all units
             elif isinstance(registry_config_data, list):
+                _log.debug(f"Using registry_config_data list for unit {unit_id}, length: {len(registry_config_data)}")
+                if registry_config_data:
+                    _log.debug(f"First item in list: {registry_config_data[0] if registry_config_data else 'empty'}")
                 registers = registry_config_data
             
             # 5. Empty fallback
