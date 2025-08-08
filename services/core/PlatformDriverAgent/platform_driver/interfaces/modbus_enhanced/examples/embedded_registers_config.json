@@ -1,0 +1,104 @@
+{
+    "driver_config": {
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "100.95.2.66",
+            "port": 502
+        },
+        "units": [
+            {
+                "unit_id": "1",
+                "name": "power_meter_1",
+                "registers": [
+                    {
+                        "Volttron Point Name": "active_energy",
+                        "Point Address": "1",
+                        "Modbus Register": "float",
+                        "Units": "MWhr",
+                        "Writable": "TRUE",
+                        "Notes": "Active Energy"
+                    },
+                    {
+                        "Volttron Point Name": "reactive_energy",
+                        "Point Address": "3",
+                        "Modbus Register": "float",
+                        "Units": "MVARhr",
+                        "Writable": "TRUE",
+                        "Notes": "Reactive Energy"
+                    },
+                    {
+                        "Volttron Point Name": "voltage",
+                        "Point Address": "5",
+                        "Modbus Register": "float",
+                        "Units": "V",
+                        "Writable": "FALSE",
+                        "Notes": "Voltage"
+                    }
+                ]
+            },
+            {
+                "unit_id": "2",
+                "name": "power_meter_2",
+                "registers": [
+                    {
+                        "Volttron Point Name": "active_energy",
+                        "Point Address": "1",
+                        "Modbus Register": "float",
+                        "Units": "MWhr",
+                        "Writable": "TRUE",
+                        "Notes": "Active Energy"
+                    },
+                    {
+                        "Volttron Point Name": "reactive_energy",
+                        "Point Address": "3",
+                        "Modbus Register": "float",
+                        "Units": "MVARhr",
+                        "Writable": "TRUE",
+                        "Notes": "Reactive Energy"
+                    },
+                    {
+                        "Volttron Point Name": "voltage",
+                        "Point Address": "5",
+                        "Modbus Register": "float",
+                        "Units": "V",
+                        "Writable": "FALSE",
+                        "Notes": "Voltage"
+                    }
+                ]
+            },
+            {
+                "unit_id": "3",
+                "name": "power_meter_3",
+                "registers": [
+                    {
+                        "Volttron Point Name": "active_energy",
+                        "Point Address": "1",
+                        "Modbus Register": "float",
+                        "Units": "MWhr",
+                        "Writable": "TRUE",
+                        "Notes": "Active Energy"
+                    },
+                    {
+                        "Volttron Point Name": "reactive_energy",
+                        "Point Address": "3",
+                        "Modbus Register": "float",
+                        "Units": "MVARhr",
+                        "Writable": "TRUE",
+                        "Notes": "Reactive Energy"
+                    },
+                    {
+                        "Volttron Point Name": "voltage",
+                        "Point Address": "5",
+                        "Modbus Register": "float",
+                        "Units": "V",
+                        "Writable": "FALSE",
+                        "Notes": "Voltage"
+                    }
+                ]
+            }
+        ]
+    },
+    "driver_type": "modbus_enhanced",
+    "interval": 10,
+    "timezone": "UTC"
+}
