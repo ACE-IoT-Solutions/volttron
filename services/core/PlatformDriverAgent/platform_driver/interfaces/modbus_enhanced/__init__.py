@@ -319,6 +319,7 @@ class Interface(BasicRevert, BaseInterface):
         templates = driver_config.get('device_templates', {})
         
         for unit_config in units:
+            _log.debug(f"Processing unit config: {unit_config}")
             # Support both 'unit_id' and 'slave_id' for backward compatibility
             unit_id = unit_config.get('unit_id', unit_config.get('slave_id'))
             # Handle both string and int unit_ids
@@ -379,7 +380,9 @@ class Interface(BasicRevert, BaseInterface):
             self.gateway_manager.assign_unit_to_gateway(unit_id, gateway_id)
             
             # Add registers for this unit
-            for reg_dict in registers:
+            _log.debug(f"Processing {len(registers)} registers for unit {unit_id}")
+            for idx, reg_dict in enumerate(registers):
+                _log.debug(f"Processing register {idx+1}/{len(registers)} for unit {unit_id}")
                 # Skip non-dictionary entries
                 if not isinstance(reg_dict, dict):
                     _log.warning(f"Skipping non-dictionary register entry for unit {unit_id}")
@@ -480,18 +483,25 @@ class Interface(BasicRevert, BaseInterface):
                     continue
                 
                 self.register_manager.add_register(register)
+                _log.debug(f"Added register {register.point_name} to register_manager")
+                
                 self.insert_register(register)
+                _log.debug(f"Inserted register {register.point_name} to interface")
                 
                 # Set default values if specified
                 if not register.read_only:
                     default_value = reg_dict.get('Default Value', '').strip()
                     if default_value:
                         try:
+                            _log.debug(f"Setting default value {default_value} for {register.point_name}")
                             self.set_default(register.point_name, register.python_type(default_value))
-                        except (ValueError, TypeError):
-                            _log.warning(f"Could not set default value {default_value} for {register.point_name}")
+                        except (ValueError, TypeError) as e:
+                            _log.warning(f"Could not set default value {default_value} for {register.point_name}: {e}")
+                        except Exception as e:
+                            _log.error(f"Unexpected error setting default for {register.point_name}: {e}")
             
             self.unit_configs[unit_id] = unit_config
+            _log.debug(f"Completed configuration for unit {unit_id}")
     
     def _configure_legacy(self, config_dict, registry_config_lst):
         """Configure using legacy format for backward compatibility"""
