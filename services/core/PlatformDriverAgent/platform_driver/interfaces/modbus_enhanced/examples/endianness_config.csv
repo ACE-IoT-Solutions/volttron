@@ -1,0 +1,17 @@
+Volttron Point Name,Point Address,Modbus Register,Units,Writable,Default Value,Transform,Notes,Mixed Endian,Byte Order,Word Order
+active_energy,1,float,MWhr,TRUE,,lambda x: x * 0.001,Active Energy - Standard big-endian,FALSE,big,big
+reactive_energy,3,float,MVARhr,TRUE,,lambda x: x * 0.001,Reactive Energy - Little-endian bytes,FALSE,little,big
+voltage_l1,5,float,V,FALSE,,,Line 1 Voltage - Mixed endian (CDAB),TRUE,,
+voltage_l2,7,float,V,FALSE,,,Line 2 Voltage - Little-endian everything,FALSE,little,little
+current_l1,9,uint16,A,FALSE,,lambda x: x * 0.1,Line 1 Current - 16-bit big-endian,FALSE,big,
+current_l2,10,uint16,A,FALSE,,lambda x: x * 0.1,Line 2 Current - 16-bit little-endian,FALSE,little,
+power_total,11,int32,W,FALSE,,lambda x: x * 0.001,Total Power - 32-bit big-endian,FALSE,big,big
+power_factor,13,int32,,FALSE,,lambda x: x / 10000.0,Power Factor - Low word first,FALSE,big,low
+temperature,15,float,°C,FALSE,,,Temperature - ABCD byte order,FALSE,>,>
+humidity,17,float,%,FALSE,,,Humidity - DCBA byte order,FALSE,<,<
+pressure,19,float,mBar,FALSE,,,Pressure - BADC byte order,FALSE,<,>
+flow_rate,21,float,m³/h,FALSE,,,Flow Rate - CDAB byte order,FALSE,>,<
+status_code,23,uint16,,TRUE,0,,Status Register - Big-endian,FALSE,big,
+error_flags,24,uint16,,FALSE,,,Error Flags - Little-endian,FALSE,little,
+counter_high,25,uint32,pulses,FALSE,,,32-bit Counter - Big-endian,FALSE,>,>
+counter_low,27,uint32,pulses,FALSE,,,32-bit Counter - Little-endian,FALSE,<,<

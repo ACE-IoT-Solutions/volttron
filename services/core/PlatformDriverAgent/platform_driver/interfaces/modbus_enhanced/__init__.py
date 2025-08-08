@@ -65,34 +65,43 @@ class EnhancedModbusRegister(BaseRegister):
     
     def __init__(self, address, register_type, read_only, point_name, units, 
                  unit_id=1, gateway_id=None, description='', 
-                 mixed_endian=False, transform=None):
+                 mixed_endian=False, transform=None, byte_order='>', word_order='>'):
         super().__init__(register_type, read_only, point_name, units, description=description)
         self.address = address
         self.unit_id = unit_id
         self.gateway_id = gateway_id
-        self.mixed_endian = mixed_endian
+        self.mixed_endian = mixed_endian  # Legacy support
+        self.byte_order = byte_order  # '>' for big-endian, '<' for little-endian  
+        self.word_order = word_order  # '>' for high word first, '<' for low word first
         self.transform = transform
         self._parse_struct = None
         self._setup_struct()
     
     def _setup_struct(self):
-        """Setup parsing struct based on register type"""
+        """Setup parsing struct based on register type and endianness"""
         if self.register_type == 'bit':
             self.python_type = bool
         elif self.register_type in ['int16', 'uint16']:
-            self._parse_struct = struct.Struct('>H' if not self.mixed_endian else '<H')
+            # Single register - only byte order matters
+            byte_order = '<' if self.mixed_endian else self.byte_order
+            format_char = 'H' if self.register_type == 'uint16' else 'h'
+            self._parse_struct = struct.Struct(f'{byte_order}{format_char}')
             self.python_type = int
         elif self.register_type in ['int32', 'uint32']:
-            format_str = '>I' if self.register_type == 'uint32' else '>i'
-            if self.mixed_endian:
-                format_str = format_str.replace('>', '<')
-            self._parse_struct = struct.Struct(format_str)
+            # Two registers - both byte and word order matter
+            byte_order = '<' if self.mixed_endian else self.byte_order
+            format_char = 'I' if self.register_type == 'uint32' else 'i'
+            self._parse_struct = struct.Struct(f'{byte_order}{format_char}')
             self.python_type = int
+            # Note: word_order handled in parse_value for 32-bit values
         elif self.register_type == 'float':
-            self._parse_struct = struct.Struct('>f' if not self.mixed_endian else '<f')
+            # Two registers - both byte and word order matter
+            byte_order = '<' if self.mixed_endian else self.byte_order
+            self._parse_struct = struct.Struct(f'{byte_order}f')
             self.python_type = float
+            # Note: word_order handled in parse_value for float values
         else:
-            self._parse_struct = struct.Struct('>H')
+            self._parse_struct = struct.Struct(f'{self.byte_order}H')
             self.python_type = int
     
     def get_register_type(self):
@@ -126,11 +135,18 @@ class EnhancedModbusRegister(BaseRegister):
         
         if self._parse_struct:
             if isinstance(raw_data, bytes):
-                value = self._parse_struct.unpack(raw_data)[0]
+                byte_data = raw_data
             else:
                 # Convert register values to bytes
                 byte_data = b''.join(struct.pack('>H', r) for r in raw_data)
-                value = self._parse_struct.unpack(byte_data)[0]
+            
+            # Handle word order for 32-bit values (2 registers)
+            if self.register_type in ['float', 'int32', 'uint32'] and len(byte_data) == 4:
+                if self.word_order == '<':
+                    # Swap words (16-bit chunks) for low word first
+                    byte_data = byte_data[2:4] + byte_data[0:2]
+            
+            value = self._parse_struct.unpack(byte_data)[0]
             
             # Apply transform if defined
             if self.transform:
@@ -460,6 +476,17 @@ class Interface(BasicRevert, BaseInterface):
                             _log.error(f"Error parsing transform for {point_name}: {e}")
                             transform = None
                     
+                    # Parse endianness settings
+                    byte_order = '>'
+                    word_order = '>'
+                    if 'Byte Order' in reg_dict:
+                        byte_order = '<' if reg_dict['Byte Order'].lower() in ['little', '<', 'le'] else '>'
+                    elif 'Mixed Endian' in reg_dict and reg_dict['Mixed Endian'].lower() == 'true':
+                        byte_order = '<'  # Mixed endian typically means little-endian bytes
+                    
+                    if 'Word Order' in reg_dict:
+                        word_order = '<' if reg_dict['Word Order'].lower() in ['little', '<', 'le', 'low'] else '>'
+                    
                     register = EnhancedModbusRegister(
                         address=address,
                         register_type=register_type,
@@ -470,7 +497,9 @@ class Interface(BasicRevert, BaseInterface):
                         gateway_id=gateway_id,
                         description=reg_dict.get('Notes', ''),
                         mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
-                        transform=transform
+                        transform=transform,
+                        byte_order=byte_order,
+                        word_order=word_order
                     )
                 elif 'address' in reg_dict:
                     # JSON/dict format
@@ -490,6 +519,17 @@ class Interface(BasicRevert, BaseInterface):
                             _log.error(f"Error parsing transform: {e}")
                             transform = None
                     
+                    # Parse endianness settings
+                    byte_order = '>'
+                    word_order = '>'
+                    if 'byte_order' in reg_dict:
+                        byte_order = '<' if reg_dict['byte_order'] in ['little', '<', 'le'] else '>'
+                    elif reg_dict.get('mixed_endian', False):
+                        byte_order = '<'
+                    
+                    if 'word_order' in reg_dict:
+                        word_order = '<' if reg_dict['word_order'] in ['little', '<', 'le', 'low'] else '>'
+                    
                     register = EnhancedModbusRegister(
                         address=reg_dict['address'],
                         register_type=reg_dict.get('type', 'uint16'),
@@ -500,7 +540,9 @@ class Interface(BasicRevert, BaseInterface):
                         gateway_id=gateway_id,
                         description=reg_dict.get('description', ''),
                         mixed_endian=reg_dict.get('mixed_endian', False),
-                        transform=transform
+                        transform=transform,
+                        byte_order=byte_order,
+                        word_order=word_order
                     )
                 else:
                     _log.warning(f"Register dict missing required fields (Point Address or address): {reg_dict}")
@@ -568,6 +610,17 @@ class Interface(BasicRevert, BaseInterface):
                     _log.error(f"Error parsing transform: {e}")
                     transform = None
             
+            # Parse endianness settings
+            byte_order = '>'
+            word_order = '>'
+            if 'Byte Order' in reg_dict:
+                byte_order = '<' if reg_dict['Byte Order'].lower() in ['little', '<', 'le'] else '>'
+            elif reg_dict.get('Mixed Endian', '').lower() == 'true':
+                byte_order = '<'
+            
+            if 'Word Order' in reg_dict:
+                word_order = '<' if reg_dict['Word Order'].lower() in ['little', '<', 'le', 'low'] else '>'
+            
             register = EnhancedModbusRegister(
                 address=int(reg_dict['Point Address']),
                 register_type=register_type,
@@ -578,7 +631,9 @@ class Interface(BasicRevert, BaseInterface):
                 gateway_id=gateway_id,
                 description=reg_dict.get('Notes', ''),
                 mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
-                transform=transform
+                transform=transform,
+                byte_order=byte_order,
+                word_order=word_order
             )
             
             self.register_manager.add_register(register)
@@ -647,6 +702,17 @@ class Interface(BasicRevert, BaseInterface):
                     _log.error(f"Error parsing transform: {e}")
                     transform = None
             
+            # Parse endianness settings
+            byte_order = '>'
+            word_order = '>'
+            if 'Byte Order' in reg_dict:
+                byte_order = '<' if reg_dict['Byte Order'].lower() in ['little', '<', 'le'] else '>'
+            elif reg_dict.get('Mixed Endian', '').lower() == 'true':
+                byte_order = '<'
+            
+            if 'Word Order' in reg_dict:
+                word_order = '<' if reg_dict['Word Order'].lower() in ['little', '<', 'le', 'low'] else '>'
+            
             register = EnhancedModbusRegister(
                 address=int(reg_dict['Point Address']),
                 register_type=register_type,
@@ -657,7 +723,9 @@ class Interface(BasicRevert, BaseInterface):
                 gateway_id=gateway_id,
                 description=reg_dict.get('Notes', ''),
                 mixed_endian=reg_dict.get('Mixed Endian', '').lower() == 'true',
-                transform=transform
+                transform=transform,
+                byte_order=byte_order,
+                word_order=word_order
             )
             
             self.register_manager.add_register(register)
@@ -716,6 +784,10 @@ class Interface(BasicRevert, BaseInterface):
                     # Convert value to registers
                     if register.register_type in ['float', 'int32', 'uint32']:
                         packed = register._parse_struct.pack(value)
+                        # Handle word order when writing
+                        if register.word_order == '<':
+                            # Swap words before unpacking to registers
+                            packed = packed[2:4] + packed[0:2]
                         registers = struct.unpack('>HH', packed)
                         response = client.write_registers(register.address, registers, unit=register.unit_id)
                     else:
