@@ -161,18 +161,45 @@ class Interface(BasicRevert, BaseInterface):
             _log.debug(f"Registry config is a string, parsing as CSV")
             registry_config_lst = self._parse_csv_config(registry_config)
         elif isinstance(registry_config, dict):
-            # Check if dict values are strings (CSV content) that need parsing
+            # Check if dict values are strings (CSV content or file paths) that need parsing
             first_value = next(iter(registry_config.values())) if registry_config else None
-            if first_value and isinstance(first_value, str) and '\n' in first_value:
-                # Values are CSV strings, parse them
-                _log.debug(f"Registry config is a dict with CSV string values, parsing each")
-                parsed_config = {}
-                for key, csv_content in registry_config.items():
-                    if isinstance(csv_content, str):
-                        parsed_config[key] = self._parse_csv_config(csv_content)
-                    else:
-                        parsed_config[key] = csv_content
-                registry_config_lst = parsed_config
+            
+            if first_value and isinstance(first_value, str):
+                if '\n' in first_value:
+                    # Values are CSV strings, parse them
+                    _log.debug(f"Registry config is a dict with CSV string values, parsing each")
+                    parsed_config = {}
+                    for key, csv_content in registry_config.items():
+                        if isinstance(csv_content, str):
+                            parsed_config[key] = self._parse_csv_config(csv_content)
+                        else:
+                            parsed_config[key] = csv_content
+                    registry_config_lst = parsed_config
+                elif first_value.startswith('config://'):
+                    # Values are config file paths - platform driver should have loaded them
+                    # but if not, log a warning
+                    _log.warning(f"Registry config contains file paths ({first_value}), but files not loaded. "
+                                "Platform driver should resolve config:// paths. "
+                                "Attempting to continue with empty registry.")
+                    registry_config_lst = {}
+                else:
+                    # Values might be single-line CSV or other format
+                    _log.debug(f"Registry config is a dict with string values, attempting to parse")
+                    parsed_config = {}
+                    for key, value in registry_config.items():
+                        if isinstance(value, str):
+                            # Try to parse as CSV even without newlines
+                            try:
+                                parsed = self._parse_csv_config(value)
+                                if parsed:
+                                    parsed_config[key] = parsed
+                                else:
+                                    _log.warning(f"No registers parsed from unit {key} config")
+                            except Exception as e:
+                                _log.error(f"Error parsing config for unit {key}: {e}")
+                        else:
+                            parsed_config[key] = value
+                    registry_config_lst = parsed_config
             else:
                 _log.debug(f"Registry config is a dict, using as-is")
                 registry_config_lst = registry_config
@@ -261,8 +288,10 @@ class Interface(BasicRevert, BaseInterface):
         - All units share the single gateway connection
         
         :param driver_config: Driver configuration dictionary
-        :param registry_config_data: Either a dict mapping unit_id to CSV strings, 
-                                    or a list for all units
+        :param registry_config_data: Can be:
+            - Dict mapping unit_id to register lists
+            - List of registers (applied to all units)
+            - Empty dict/None (check for registers in unit configs)
         """
         gateway_config = driver_config['gateway']
         
@@ -289,26 +318,55 @@ class Interface(BasicRevert, BaseInterface):
         for unit_config in units:
             # Support both 'unit_id' and 'slave_id' for backward compatibility
             unit_id = unit_config.get('unit_id', unit_config.get('slave_id'))
+            # Handle both string and int unit_ids
+            try:
+                unit_id = int(unit_id)
+            except (ValueError, TypeError):
+                _log.warning(f"Invalid unit_id: {unit_id}, skipping")
+                continue
+                
             unit_id_str = str(unit_id)
             template_name = unit_config.get('template')
             
-            # Get registers for this unit
+            # Get registers for this unit - check multiple sources
+            registers = []
+            
+            # 1. Check if registry_config_data has unit-specific config
             if isinstance(registry_config_data, dict) and unit_id_str in registry_config_data:
-                # Registry config is a dict mapping unit IDs to CSV strings
-                unit_csv = registry_config_data[unit_id_str]
-                if isinstance(unit_csv, str):
-                    registers = self._parse_csv_config(unit_csv)
+                unit_data = registry_config_data[unit_id_str]
+                if isinstance(unit_data, str):
+                    registers = self._parse_csv_config(unit_data)
+                elif isinstance(unit_data, list):
+                    registers = unit_data
                 else:
-                    registers = unit_csv
+                    _log.warning(f"Unknown registry data type for unit {unit_id}: {type(unit_data)}")
+            
+            # 2. Check if unit config has embedded registers
+            elif 'registers' in unit_config and unit_config['registers']:
+                registers = unit_config['registers']
+            
+            # 3. Check for template
             elif template_name and template_name in templates:
-                # Apply template
                 registers = self.template_engine.apply_template(
                     templates[template_name],
                     unit_config
                 )
+            
+            # 4. If registry_config_data is a list, use it for all units
+            elif isinstance(registry_config_data, list):
+                registers = registry_config_data
+            
+            # 5. Empty fallback
             else:
-                # Use direct register configuration or empty list
-                registers = unit_config.get('registers', [])
+                _log.warning(f"No registers found for unit {unit_id} ({unit_config.get('name', 'unnamed')})")
+                _log.debug(f"registry_config_data type: {type(registry_config_data)}")
+                _log.debug(f"registry_config_data: {registry_config_data}")
+                registers = []
+            
+            _log.info(f"Unit {unit_id} ({unit_config.get('name', 'unnamed')}): {len(registers)} registers")
+            
+            # Assign unit to gateway
+            self.gateway_manager.assign_unit_to_gateway(unit_id, gateway_id)
             
             # Add registers for this unit
             for reg_dict in registers:
