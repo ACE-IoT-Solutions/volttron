@@ -95,6 +95,30 @@ class EnhancedModbusRegister(BaseRegister):
             self._parse_struct = struct.Struct('>H')
             self.python_type = int
     
+    def get_register_type(self):
+        """
+        Return register type for base interface compatibility
+        :return: (register_type, read_only) tuple
+        """
+        # Map our types to base interface types
+        if self.register_type == 'bit':
+            return ('bit', self.read_only)
+        else:
+            # All other types (float, int16, uint16, int32, uint32) are 'byte' type
+            return ('byte', self.read_only)
+    
+    def get_register_count(self):
+        """
+        Get the number of modbus registers this point uses
+        :return: Number of 16-bit registers
+        """
+        if self.register_type == 'bit':
+            return 1
+        elif self.register_type in ['float', 'int32', 'uint32']:
+            return 2  # 32-bit values use 2 registers
+        else:  # int16, uint16
+            return 1
+    
     def parse_value(self, raw_data):
         """Parse raw modbus data into proper value"""
         if self.register_type == 'bit':
