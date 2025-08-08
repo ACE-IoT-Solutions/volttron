@@ -161,6 +161,9 @@ class Interface(BasicRevert, BaseInterface):
             _log.debug(f"Registry config is a string, parsing as CSV")
             registry_config_lst = self._parse_csv_config(registry_config)
         elif isinstance(registry_config, dict):
+            _log.debug(f"Registry config dict keys: {list(registry_config.keys())}")
+            _log.debug(f"Registry config dict values (first 100 chars): {str(registry_config)[:100]}")
+            
             # Check if dict values are strings (CSV content or file paths) that need parsing
             first_value = next(iter(registry_config.values())) if registry_config else None
             
@@ -332,14 +335,19 @@ class Interface(BasicRevert, BaseInterface):
             registers = []
             
             # 1. Check if registry_config_data has unit-specific config
-            if isinstance(registry_config_data, dict) and unit_id_str in registry_config_data:
-                unit_data = registry_config_data[unit_id_str]
-                if isinstance(unit_data, str):
-                    registers = self._parse_csv_config(unit_data)
-                elif isinstance(unit_data, list):
-                    registers = unit_data
+            if isinstance(registry_config_data, dict):
+                _log.debug(f"Looking for unit {unit_id_str} in registry_config_data keys: {list(registry_config_data.keys())}")
+                if unit_id_str in registry_config_data:
+                    unit_data = registry_config_data[unit_id_str]
+                    _log.debug(f"Found unit {unit_id_str} data, type: {type(unit_data)}")
+                    if isinstance(unit_data, str):
+                        registers = self._parse_csv_config(unit_data)
+                    elif isinstance(unit_data, list):
+                        registers = unit_data
+                    else:
+                        _log.warning(f"Unknown registry data type for unit {unit_id}: {type(unit_data)}")
                 else:
-                    _log.warning(f"Unknown registry data type for unit {unit_id}: {type(unit_data)}")
+                    _log.debug(f"Unit {unit_id_str} not found in registry_config_data")
             
             # 2. Check if unit config has embedded registers
             elif 'registers' in unit_config and unit_config['registers']:
