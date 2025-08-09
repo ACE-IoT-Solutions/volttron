@@ -17,7 +17,7 @@ The Enhanced Modbus Driver is a comprehensive redesign of the VOLTTRON modbus in
 - **Mixed deployments**: Support both TCP and serial connections simultaneously
 
 ### 3. Advanced Configuration
-- **Template system**: Define device templates for easy deployment of similar devices
+- **Template system**: Define device templates for easy deployment of similar devices (see `examples/TEMPLATES_README.md`)
 - **Bulk configuration**: Generate configurations for hundreds of devices with simple commands
 - **Backward compatibility**: Seamlessly works with existing modbus configurations
 
@@ -32,6 +32,12 @@ The Enhanced Modbus Driver is a comprehensive redesign of the VOLTTRON modbus in
 - **Device health tracking**: Monitor online/offline status of each unit
 - **Gateway health**: Track gateway connection status and errors
 - **Connection statistics**: Monitor pool usage and performance metrics
+
+### 6. Data Processing
+- **Value transforms**: Scale, convert, and process raw modbus values
+- **Flexible endianness**: Support for various byte and word ordering
+- **Error handling**: Built-in handling for error values and status codes
+- **Calibration support**: Apply offsets and calibration curves
 
 ## Architecture Comparison
 
@@ -48,6 +54,8 @@ The Enhanced Modbus Driver is a comprehensive redesign of the VOLTTRON modbus in
 | Gateway abstraction | ❌ | ❌ | ✅ |
 | Health monitoring | ❌ | ❌ | ✅ |
 | Bulk configuration | ❌ | ❌ | ✅ |
+| Value transforms | ❌ | ❌ | ✅ |
+| Flexible endianness | Limited | Limited | ✅ |
 
 ## VOLTTRON Integration Approaches
 
@@ -169,6 +177,88 @@ The enhanced driver automatically detects and supports legacy configuration form
     "registry_config": "config://modbus_registers.csv"
 }
 ```
+
+## Data Transforms
+
+The enhanced driver supports data transforms to scale, convert, or process raw modbus values:
+
+### Transform Configuration
+
+Transforms can be specified as lambda functions in either CSV or JSON format:
+
+**CSV Format:**
+```csv
+Volttron Point Name,Point Address,Modbus Register,Units,Transform
+temperature,100,float,°C,lambda x: x * 0.1
+power,102,uint32,kW,lambda x: x * 0.001
+status,104,uint16,,lambda x: 'ON' if x > 0 else 'OFF'
+```
+
+**JSON Format:**
+```json
+{
+    "name": "temperature",
+    "address": 100,
+    "type": "float",
+    "units": "°C",
+    "transform": "lambda x: x * 0.1"
+}
+```
+
+### Common Transform Examples
+
+See `examples/transforms_example.md` for comprehensive transform patterns including:
+- Value scaling and unit conversion
+- Error value handling
+- Status decoding
+- Calibration and offsets
+- Complex calculations
+
+## Endianness Configuration
+
+The driver supports flexible endianness configuration for different device manufacturers:
+
+### Endianness Parameters
+
+- **Byte Order**: Order of bytes within each 16-bit register
+  - `big` or `>`: Most significant byte first (default)
+  - `little` or `<`: Least significant byte first
+  
+- **Word Order**: Order of registers for 32-bit values
+  - `big` or `>`: High word first (default)
+  - `little` or `<`: Low word first
+
+### Configuration Examples
+
+**CSV Format:**
+```csv
+Volttron Point Name,Point Address,Modbus Register,Byte Order,Word Order
+energy_standard,100,float,big,big
+energy_mixed,102,float,little,little
+counter,104,uint32,big,low
+```
+
+**JSON Format:**
+```json
+{
+    "name": "energy",
+    "address": 100,
+    "type": "float",
+    "byte_order": "little",
+    "word_order": "little"
+}
+```
+
+### Common Patterns
+
+| Pattern | Byte Order | Word Order | Description |
+|---------|------------|------------|-------------|
+| ABCD | big | big | Standard Modbus (default) |
+| CDAB | little | little | Mixed/Swapped endian |
+| DCBA | little | little | Full little-endian |
+| BADC | little | big | Little bytes, big words |
+
+See `examples/ENDIANNESS_README.md` for detailed endianness documentation.
 
 ## Migration Guide
 
