@@ -180,39 +180,46 @@ The enhanced driver automatically detects and supports legacy configuration form
 
 ## Data Transforms
 
-The enhanced driver supports data transforms to scale, convert, or process raw modbus values:
+The enhanced driver supports data transforms to scale, convert, or process raw modbus values. It includes all transforms from the legacy modbus-tk driver plus many additional commonly needed transforms.
 
 ### Transform Configuration
 
-Transforms can be specified as lambda functions in either CSV or JSON format:
+Transforms can be specified in three ways:
 
-**CSV Format:**
+**1. Named Transforms (Recommended):**
+```csv
+Volttron Point Name,Point Address,Modbus Register,Units,Transform
+voltage,100,uint16,V,scale_0_1
+power,102,int32,kW,W_to_kW
+temperature,104,float,°C,C_to_F
+status,106,uint16,,alarm_status
+```
+
+**2. Parameterized Transforms (Legacy Compatible):**
+```csv
+Volttron Point Name,Point Address,Modbus Register,Units,Transform
+voltage,100,float,V,scale(0.001)
+energy,102,int32,kWh,mod10k(false)
+scaled_value,104,uint16,,scale_reg(scaling_factor)
+```
+
+**3. Lambda Expressions (Custom):**
 ```csv
 Volttron Point Name,Point Address,Modbus Register,Units,Transform
 temperature,100,float,°C,lambda x: x * 0.1
-power,102,uint32,kW,lambda x: x * 0.001
 status,104,uint16,,lambda x: 'ON' if x > 0 else 'OFF'
 ```
 
-**JSON Format:**
-```json
-{
-    "name": "temperature",
-    "address": 100,
-    "type": "float",
-    "units": "°C",
-    "transform": "lambda x: x * 0.1"
-}
-```
+### Pre-Canned Transforms
 
-### Common Transform Examples
+The driver includes 60+ built-in transforms:
+- **Legacy modbus-tk compatible**: scale, scale_int, mod10k, scale_reg, etc.
+- **Unit conversions**: W_to_kW, mA_to_A, C_to_F, Wh_to_kWh, etc.
+- **Status transforms**: alarm_status, bool_to_status, binary_status
+- **Bit extraction**: bit_0 through bit_15
+- **Error handling**: error_to_none, nan_to_none, inf_to_none
 
-See `examples/transforms_example.md` for comprehensive transform patterns including:
-- Value scaling and unit conversion
-- Error value handling
-- Status decoding
-- Calibration and offsets
-- Complex calculations
+See `examples/TRANSFORMS_REFERENCE.md` for complete list and `examples/transforms_example.md` for usage patterns.
 
 ## Endianness Configuration
 

@@ -52,6 +52,7 @@ from .connection_pool import ConnectionPool
 from .gateway_manager import GatewayManager
 from .config_template import ConfigTemplateEngine
 from .register_manager import RegisterManager
+from .transforms import create_transform, transform_registry
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
@@ -466,15 +467,9 @@ class Interface(BasicRevert, BaseInterface):
                     transform = None
                     transform_str = reg_dict.get('Transform', '').strip()
                     if transform_str:
-                        try:
-                            # Evaluate lambda expression
-                            transform = eval(transform_str)
-                            if not callable(transform):
-                                _log.warning(f"Transform for {point_name} is not callable: {transform_str}")
-                                transform = None
-                        except Exception as e:
-                            _log.error(f"Error parsing transform for {point_name}: {e}")
-                            transform = None
+                        transform = create_transform(transform_str)
+                        if not transform:
+                            _log.warning(f"Could not create transform for {point_name}: {transform_str}")
                     
                     # Parse endianness settings
                     byte_order = '>'
@@ -507,17 +502,14 @@ class Interface(BasicRevert, BaseInterface):
                     transform = None
                     if 'transform' in reg_dict:
                         transform_str = reg_dict['transform']
-                        try:
-                            if isinstance(transform_str, str):
-                                transform = eval(transform_str)
-                            else:
-                                transform = transform_str  # Already a callable
-                            if not callable(transform):
-                                _log.warning(f"Transform is not callable: {transform_str}")
-                                transform = None
-                        except Exception as e:
-                            _log.error(f"Error parsing transform: {e}")
-                            transform = None
+                        if isinstance(transform_str, str):
+                            transform = create_transform(transform_str)
+                            if not transform:
+                                _log.warning(f"Could not create transform: {transform_str}")
+                        elif callable(transform_str):
+                            transform = transform_str  # Already a callable
+                        else:
+                            _log.warning(f"Transform is not callable: {transform_str}")
                     
                     # Parse endianness settings
                     byte_order = '>'
@@ -601,14 +593,9 @@ class Interface(BasicRevert, BaseInterface):
             transform = None
             transform_str = reg_dict.get('Transform', '').strip()
             if transform_str:
-                try:
-                    transform = eval(transform_str)
-                    if not callable(transform):
-                        _log.warning(f"Transform is not callable: {transform_str}")
-                        transform = None
-                except Exception as e:
-                    _log.error(f"Error parsing transform: {e}")
-                    transform = None
+                transform = create_transform(transform_str)
+                if not transform:
+                    _log.warning(f"Could not create transform: {transform_str}")
             
             # Parse endianness settings
             byte_order = '>'
@@ -693,14 +680,9 @@ class Interface(BasicRevert, BaseInterface):
             transform = None
             transform_str = reg_dict.get('Transform', '').strip()
             if transform_str:
-                try:
-                    transform = eval(transform_str)
-                    if not callable(transform):
-                        _log.warning(f"Transform is not callable: {transform_str}")
-                        transform = None
-                except Exception as e:
-                    _log.error(f"Error parsing transform: {e}")
-                    transform = None
+                transform = create_transform(transform_str)
+                if not transform:
+                    _log.warning(f"Could not create transform: {transform_str}")
             
             # Parse endianness settings
             byte_order = '>'
