@@ -16,14 +16,15 @@
                         "type": "float",
                         "units": "MWhr",
                         "writable": true,
-                        "transform": "lambda x: x * 0.001"
+                        "transform": "scale_0_001"
                     },
                     {
                         "name": "voltage",
                         "address": 5,
                         "type": "float",
                         "units": "V",
-                        "writable": false
+                        "writable": false,
+                        "transform": "scale_0_1"
                     }
                 ]
             },
@@ -37,14 +38,15 @@
                         "type": "float",
                         "units": "MWhr",
                         "writable": true,
-                        "transform": "lambda x: x * 0.001"
+                        "transform": "scale_0_001"
                     },
                     {
                         "name": "voltage",
                         "address": 5,
                         "type": "float",
                         "units": "V",
-                        "writable": false
+                        "writable": false,
+                        "transform": "scale_0_1"
                     }
                 ]
             },
@@ -58,14 +60,15 @@
                         "type": "float",
                         "units": "MWhr",
                         "writable": true,
-                        "transform": "lambda x: x * 0.001"
+                        "transform": "scale_0_001"
                     },
                     {
                         "name": "voltage",
                         "address": 5,
                         "type": "float",
                         "units": "V",
-                        "writable": false
+                        "writable": false,
+                        "transform": "scale_0_1"
                     }
                 ]
             }
