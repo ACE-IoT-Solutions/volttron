@@ -1,0 +1,4634 @@
+{
+    "https://localhost:18080/assets/system/properties": [
+        {
+            "name": "System_reset",
+            "displayname": "Reset Alarms",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": "System",
+            "value": false
+        },
+        {
+            "name": "General_enable",
+            "displayname": "Enable System",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": "System",
+            "value": false
+        },
+        {
+            "name": "System_minUtilityImportSetpoint",
+            "displayname": "Minimum Utility Import Setpoint",
+            "units": "kW",
+            "group": "Command Info",
+            "subgroup": "System",
+            "value": 10
+        },
+        {
+            "name": "System_operationMode",
+            "displayname": "Operation Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": "System",
+            "value": 1
+        },
+        {
+            "name": "System_maxSoCSetpoint",
+            "displayname": "Maximum SoC Setpoint",
+            "units": "%",
+            "group": "Command Info",
+            "subgroup": "System ",
+            "value": 93
+        },
+        {
+            "name": "Configuration_gridReclosureTimeDelay",
+            "displayname": "Grid Re-closure Time Delay",
+            "units": "s",
+            "group": "Configuration Info",
+            "subgroup": "System ",
+            "value": 30000
+        },
+        {
+            "name": "ESS_essTTL",
+            "displayname": "BESS Time to Live",
+            "units": "hr",
+            "group": "SoC Info",
+            "subgroup": "BESS",
+            "value": 142.5
+        },
+        {
+            "name": "System_frequency",
+            "displayname": "System Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": "System",
+            "value": 60.0099983215332
+        },
+        {
+            "name": "ESS_breakerStatus",
+            "displayname": "BESS Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "BESS",
+            "value": true
+        },
+        {
+            "name": "System_voltage",
+            "displayname": "System Voltage",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": "System",
+            "value": 210
+        },
+        {
+            "name": "PCC_breakerState",
+            "displayname": "PCC Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "PCC",
+            "value": true
+        },
+        {
+            "name": "System_activeLoad",
+            "displayname": "Active Load",
+            "units": "kW",
+            "group": "General Info",
+            "subgroup": "System",
+            "value": 30.7228736877441
+        },
+        {
+            "name": "PV_pv2BreakerState",
+            "displayname": "PV2 Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "PV",
+            "value": false
+        },
+        {
+            "name": "PV_activePowerReading",
+            "displayname": "Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "PV",
+            "value": 0
+        },
+        {
+            "name": "System_isEnergMSB",
+            "displayname": "MSB Energized",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "System",
+            "value": true
+        },
+        {
+            "name": "Gen1_breakerState",
+            "displayname": "Gen Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "Gen",
+            "value": false
+        },
+        {
+            "name": "PV_reactivePowerReading",
+            "displayname": "Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": "PV",
+            "value": 0
+        },
+        {
+            "name": "PCC_activePowerReading",
+            "displayname": "Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "PCC",
+            "value": -24
+        },
+        {
+            "name": "PV_pv1BreakerState",
+            "displayname": "PV1 Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": "PV",
+            "value": false
+        },
+        {
+            "name": "PCC_reactivePowerReading",
+            "displayname": "Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": "PCC",
+            "value": 3
+        },
+        {
+            "name": "PV_totalCapacity",
+            "displayname": "Total PV Capacity",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "PV",
+            "value": 133.300003051758
+        },
+        {
+            "name": "ESS_unitsActive",
+            "displayname": "Active Units",
+            "units": "Count",
+            "group": "General Info",
+            "subgroup": "BESS",
+            "value": 1
+        },
+        {
+            "name": "ESS_totalCapacity",
+            "displayname": "Total BESS Capacity",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "BESS",
+            "value": 125
+        },
+        {
+            "name": "PV_unitsActive",
+            "displayname": "Active Units",
+            "units": "Count",
+            "group": "General Info",
+            "subgroup": "PV",
+            "value": 0
+        },
+        {
+            "name": "System_reactiveLoad",
+            "displayname": "Reactive Load",
+            "units": "kVAr",
+            "group": "General Info",
+            "subgroup": "System",
+            "value": -5.60593748092651
+        },
+        {
+            "name": "Gen_unitsActive",
+            "displayname": "Active Units",
+            "units": "Count",
+            "group": "General Info",
+            "subgroup": "Gen",
+            "value": 0
+        },
+        {
+            "name": "Rollup_systemWarningState",
+            "displayname": "System Warning State",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "System",
+            "value": false
+        },
+        {
+            "name": "ESS_activePower",
+            "displayname": "Active Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "BESS",
+            "value": -1.48606216907501
+        },
+        {
+            "name": "ESS_reactivePower",
+            "displayname": "Reactive Power",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": "BESS",
+            "value": 0.223747432231903
+        },
+        {
+            "name": "ESS_soc",
+            "displayname": "Average BESS SoC",
+            "units": "%",
+            "group": "SoC Info",
+            "subgroup": "BESS",
+            "value": 62
+        },
+        {
+            "name": "Rollup_systemCriticalState",
+            "displayname": "System Critical State",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "System",
+            "value": false
+        },
+        {
+            "name": "Gen_activePower",
+            "displayname": "Active Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": "Gen",
+            "value": 0
+        },
+        {
+            "name": "General_name",
+            "displayname": "Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "System",
+            "value": "NIAC"
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "System",
+            "value": "Spirae LLC"
+        },
+        {
+            "name": "Configuration_gridReclosureTimeDelaydefault",
+            "displayname": "Grid Re-closure Time Delay Default",
+            "units": "s",
+            "group": "",
+            "subgroup": "",
+            "value": 300
+        },
+        {
+            "name": "System_minUtilityImportSetpointmin",
+            "displayname": "Minimum Utility Import Setpoint Minimum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 0
+        },
+        {
+            "name": "System_minUtilityImportSetpointmax",
+            "displayname": "Minimum Utility Import Setpoint Maximum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 1000
+        },
+        {
+            "name": "System_minUtilityImportSetpointdefault",
+            "displayname": "Minimum Utility Import Setpoint Default",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 30
+        },
+        {
+            "name": "System_maxSoCSetpointmin",
+            "displayname": "Maximum SoC Setpoint Minimum Limit",
+            "units": "%",
+            "group": "",
+            "subgroup": "",
+            "value": 10
+        },
+        {
+            "name": "System_maxSoCSetpointmax",
+            "displayname": "Maximum SoC Setpoint Maximum Limit",
+            "units": "%",
+            "group": "",
+            "subgroup": "",
+            "value": 100
+        },
+        {
+            "name": "System_maxSoCSetpointdefault",
+            "displayname": "Maximum SoC Setpoint Default",
+            "units": "%",
+            "group": "",
+            "subgroup": "",
+            "value": 80
+        }
+    ],
+    "https://localhost:18080/assets/system/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/system/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/system/quickview": {
+        "SoC Info": [
+            {
+                "name": "ESS_essTTL",
+                "displayname": "BESS Time to Live",
+                "units": "hr",
+                "group": "SoC Info",
+                "subgroup": "BESS",
+                "value": 142.5
+            },
+            {
+                "name": "ESS_soc",
+                "displayname": "Average BESS SoC",
+                "units": "%",
+                "group": "SoC Info",
+                "subgroup": "BESS",
+                "value": 62
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "System_frequency",
+                "displayname": "System Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": "System",
+                "value": 60.0099983215332
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "System_voltage",
+                "displayname": "System Voltage",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": "System",
+                "value": 210
+            }
+        ],
+        "General Info": [
+            {
+                "name": "PCC_breakerState",
+                "displayname": "PCC Breaker State",
+                "units": null,
+                "group": "General Info",
+                "subgroup": "PCC",
+                "value": true
+            },
+            {
+                "name": "System_activeLoad",
+                "displayname": "Active Load",
+                "units": "kW",
+                "group": "General Info",
+                "subgroup": "System",
+                "value": 30.6272430419922
+            },
+            {
+                "name": "System_reactiveLoad",
+                "displayname": "Reactive Load",
+                "units": "kVAr",
+                "group": "General Info",
+                "subgroup": "System",
+                "value": -5.59914064407349
+            }
+        ],
+        "": [
+            {
+                "name": "General_name",
+                "displayname": "Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "NIAC"
+            },
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Spirae LLC"
+            },
+            {
+                "name": "Configuration_gridReclosureTimeDelaydefault",
+                "displayname": "Grid Re-closure Time Delay Default",
+                "units": "s",
+                "group": "",
+                "subgroup": null,
+                "value": 300
+            },
+            {
+                "name": "System_minUtilityImportSetpointmin",
+                "displayname": "Minimum Utility Import Setpoint Minimum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "System_minUtilityImportSetpointmax",
+                "displayname": "Minimum Utility Import Setpoint Maximum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 1000
+            },
+            {
+                "name": "System_minUtilityImportSetpointdefault",
+                "displayname": "Minimum Utility Import Setpoint Default",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 30
+            },
+            {
+                "name": "System_maxSoCSetpointmin",
+                "displayname": "Maximum SoC Setpoint Minimum Limit",
+                "units": "%",
+                "group": "",
+                "subgroup": null,
+                "value": 10
+            },
+            {
+                "name": "System_maxSoCSetpointmax",
+                "displayname": "Maximum SoC Setpoint Maximum Limit",
+                "units": "%",
+                "group": "",
+                "subgroup": null,
+                "value": 100
+            },
+            {
+                "name": "System_maxSoCSetpointdefault",
+                "displayname": "Maximum SoC Setpoint Default",
+                "units": "%",
+                "group": "",
+                "subgroup": null,
+                "value": 80
+            }
+        ]
+    },
+    "https://localhost:18080/assets/bess/properties": [
+        {
+            "name": "General_start",
+            "displayname": "Start",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery_frequencySetpoint",
+            "displayname": "Frequency Setpoint",
+            "units": "Hz",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 60
+        },
+        {
+            "name": "General_stop",
+            "displayname": "Stop",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery_voltageSetpoint",
+            "displayname": "Voltage Setpoint",
+            "units": "V",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 0.49099999666214
+        },
+        {
+            "name": "General_enable",
+            "displayname": "Enable",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "Battery_realMode",
+            "displayname": "Real Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "Battery_reactiveMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "General_reset",
+            "displayname": "Alarms Reset",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery_realPowerSetpoint",
+            "displayname": "Real Power Setpoint",
+            "units": "kW",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": -10
+        },
+        {
+            "name": "Battery_reactivePowerSetpoint",
+            "displayname": "Reactive Power Setpoint",
+            "units": "kVAr",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Configuration_socMinimumReserve",
+            "displayname": "SoC Minimum Reserve",
+            "units": "%",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 5
+        },
+        {
+            "name": "Configuration_socMaximumReserve",
+            "displayname": "SoC Maximum Reserve",
+            "units": "%",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 75
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJan",
+            "displayname": "Battery Reserve Capacity for January",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 88
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityFeb",
+            "displayname": "Battery Reserve Capacity for February",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 79
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityMarch",
+            "displayname": "Battery Reserve Capacity for March",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 70
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityApril",
+            "displayname": "Battery Reserve Capacity for April",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 77
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityMay",
+            "displayname": "Battery Reserve Capacity for May",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 66
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJune",
+            "displayname": "Battery Reserve Capacity for June",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 70
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJuly",
+            "displayname": "Battery Reserve Capacity for July",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 66
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityAugust",
+            "displayname": "Battery Reserve Capacity for August",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 66
+        },
+        {
+            "name": "Configuration_batteryReserveCapacitySept",
+            "displayname": "Battery Reserve Capacity for September",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 77
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityOct",
+            "displayname": "Battery Reserve Capacity for October",
+            "units": "kWh",
+            "group": "Configuration  Info",
+            "subgroup": null,
+            "value": 75
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityNov",
+            "displayname": "Battery Reserve Capacity for November",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 132
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityDec",
+            "displayname": "Battery Reserve Capacity for December",
+            "units": "kWh",
+            "group": "Configuration Info",
+            "subgroup": null,
+            "value": 88
+        },
+        {
+            "name": "PCS1_breakerState",
+            "displayname": "Breaker State",
+            "units": null,
+            "group": "PCS1 Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "Site_soc",
+            "displayname": "SoC",
+            "units": "%",
+            "group": "Site Info",
+            "subgroup": "SoC Info",
+            "value": 62
+        },
+        {
+            "name": "Site_availability",
+            "displayname": "Availability",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Site_systemHasP1Alarms",
+            "displayname": "System Has P1 Alarms",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_assetMode",
+            "displayname": "Asset Mode",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "Site_ratedRealPower",
+            "displayname": "Rated Real Power",
+            "units": "kW",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 125
+        },
+        {
+            "name": "Site_ratedReactivePower",
+            "displayname": "Rated Reactive Power",
+            "units": "kVAr",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 125
+        },
+        {
+            "name": "Site_systemHasP2Alarms",
+            "displayname": "System Has P2 Alarms",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_numberOfConnectedAssets",
+            "displayname": "Number of Connected Assets",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Site_ratedRealEnergy",
+            "displayname": "Rated Real Energy",
+            "units": "kWh",
+            "group": "Site Info",
+            "subgroup": "Energy Info",
+            "value": 253
+        },
+        {
+            "name": "Site_numberOfConfiguredAssets",
+            "displayname": "Number of Configured Assets",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Site_systemHasP3Alarms",
+            "displayname": "System Has P3 Alarms",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_ratedAcVoltage",
+            "displayname": "Rated AC Voltage",
+            "units": "V",
+            "group": "Site Info",
+            "subgroup": "Voltage Info",
+            "value": 400
+        },
+        {
+            "name": "Site_highSOCAlarm",
+            "displayname": "Storage state of charge is too high",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "PCS1_pcsState",
+            "displayname": "PCS State",
+            "units": "",
+            "group": "PCS1 Info",
+            "subgroup": "Status Info",
+            "value": 9
+        },
+        {
+            "name": "Site_socAtReserveAlarm",
+            "displayname": "Storage state of charge is too low",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_batteryState",
+            "displayname": "Battery State",
+            "units": "",
+            "group": "Battery1 Info",
+            "subgroup": "State Info",
+            "value": 3
+        },
+        {
+            "name": "Site_ratedAcCurrent",
+            "displayname": "Rated AC Current",
+            "units": "A",
+            "group": "Site Info",
+            "subgroup": "Current Info",
+            "value": 168
+        },
+        {
+            "name": "Battery1_chargeState",
+            "displayname": "Charge State",
+            "units": "",
+            "group": "Battery1 Info",
+            "subgroup": "State of Charge Info",
+            "value": 6
+        },
+        {
+            "name": "Site_lowSOCAlarm",
+            "displayname": "Storage state of charge is depleted",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_realPower",
+            "displayname": "Real Power",
+            "units": "kW",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": -1.58181643486023
+        },
+        {
+            "name": "Site_activePowerMode",
+            "displayname": "Active Power Mode",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "Site_reactivePower",
+            "displayname": "Reactive Power",
+            "units": "kVAr",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 0.0145569294691086
+        },
+        {
+            "name": "Site_highAmbientTemperatureAlarm",
+            "displayname": "Ambient temperature too high",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_reactivePowerMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "Site_apparentPower",
+            "displayname": "Apparent Power",
+            "units": "kVA",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 1.58188343048096
+        },
+        {
+            "name": "Site_highInternalTemperatureAlarm",
+            "displayname": "Storage internal temperature too high",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_communicationFailure",
+            "displayname": "Asset Communication Failure",
+            "units": null,
+            "group": "Site Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Site_powerFactor",
+            "displayname": "Power Factor",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": -0.999957621097565
+        },
+        {
+            "name": "Site_machineState",
+            "displayname": "Machine State",
+            "units": "",
+            "group": "Site Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "PCSUnits_groundFault",
+            "displayname": "Ground Fault",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "Site_maxChargeRate",
+            "displayname": "Max Charge Rate",
+            "units": "kW",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 126.971000671387
+        },
+        {
+            "name": "Site_maxDischargeRate",
+            "displayname": "Max Discharge Rate",
+            "units": "kVAr",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 126.971000671387
+        },
+        {
+            "name": "PCSUnits_dcOverVoltage",
+            "displayname": "DC Over Voltage",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCSUnits_acDisconnectOpen",
+            "displayname": "AC Disconnect Open",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Site Info",
+            "subgroup": "Frequency Info",
+            "value": 60.0035705566406
+        },
+        {
+            "name": "PCSUnits_dcDisconnectOpen",
+            "displayname": "DC Disconnect Open",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_reactivePower",
+            "displayname": "Reactive Power",
+            "units": "kVAr",
+            "group": "PCS1 Info",
+            "subgroup": "Power Info",
+            "value": 0.0145569294691086
+        },
+        {
+            "name": "PCS1_averageLineToLineAcVoltage",
+            "displayname": "Average Line-Line Voltage",
+            "units": "V",
+            "group": "Site Info",
+            "subgroup": "Power Info",
+            "value": 475.607604980469
+        },
+        {
+            "name": "PCSUnits_gridShutdown",
+            "displayname": "Grid Shutdown",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_avgAcCurrent",
+            "displayname": "Average AC Current",
+            "units": "A",
+            "group": "PCS1 Info",
+            "subgroup": "AC Current Info",
+            "value": 5.64064645767212
+        },
+        {
+            "name": "PCSUnits_cabinetOpen",
+            "displayname": "Cabinet Open",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_dcLinkVoltage",
+            "displayname": "DC Link Voltage",
+            "units": "V",
+            "group": "PCS1 Info",
+            "subgroup": "DC Info",
+            "value": 897.627258300781
+        },
+        {
+            "name": "PCSUnits_manualShutdown",
+            "displayname": "Manual Shutdown",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_realPower",
+            "displayname": "Active Power",
+            "units": "kW",
+            "group": "PCS1 Info",
+            "subgroup": "Power Info",
+            "value": -1.58181643486023
+        },
+        {
+            "name": "PCSUnits_overTemperature",
+            "displayname": "Over Temperature",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCSUnits_frequencyAboveLimit",
+            "displayname": "Frequency Above Limit",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_heatSinkTemperature",
+            "displayname": "Heat Sink Temperature",
+            "units": "\u00b0C",
+            "group": "PCS1 Info",
+            "subgroup": "Temperature Info",
+            "value": 43.4232025146484
+        },
+        {
+            "name": "PCSUnits_frequencyUnderLimit",
+            "displayname": "Frequency Under Limit",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCS1_otherTemperature",
+            "displayname": "Other Temperature",
+            "units": "\u00b0C",
+            "group": "PCS1 Info",
+            "subgroup": "Temperature Info",
+            "value": 32.4096755981445
+        },
+        {
+            "name": "Battery1_voltage",
+            "displayname": "Voltage",
+            "units": "V",
+            "group": "Battery1 Info",
+            "subgroup": "Voltage Info",
+            "value": 900.5
+        },
+        {
+            "name": "PCSUnits_acVoltageAboveLimit",
+            "displayname": "AC Voltage Above Limit",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "Battery1_soc",
+            "displayname": "SoC",
+            "units": "%",
+            "group": "Battery1 Info",
+            "subgroup": "SoC Info",
+            "value": 62
+        },
+        {
+            "name": "PCSUnits_acVoltageUnderLimit",
+            "displayname": "AC Voltage Under Limit",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCSUnits_blownStringFuseOnInput",
+            "displayname": "Blown String Fuse on Input",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "Battery1_current",
+            "displayname": "Current",
+            "units": "A",
+            "group": "Battery1 Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Battery1_soh",
+            "displayname": "SoH",
+            "units": "%",
+            "group": "Battery1 Info",
+            "subgroup": "SoH Info",
+            "value": 92.5
+        },
+        {
+            "name": "PCSUnits_underTemperature",
+            "displayname": "Under Temperature",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "PCSUnits_genericMemoryOrCommunicationError",
+            "displayname": "Generic Memory or Communication Error (Internal)",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "Battery1_maxChargeRate",
+            "displayname": "Max Charge Rate",
+            "units": "kW",
+            "group": "Battery1 Info",
+            "subgroup": "Power Info",
+            "value": 127
+        },
+        {
+            "name": "Battery1_maxDischargeRate",
+            "displayname": "Max Discharge Rate",
+            "units": "kVAr",
+            "group": "Battery1 Info",
+            "subgroup": "Power Info",
+            "value": 127
+        },
+        {
+            "name": "PCSUnits_hardwareTestFailure",
+            "displayname": "Hardware Test Failure",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": "PCS Alarm",
+            "value": false
+        },
+        {
+            "name": "Battery1_maxModuleTemp",
+            "displayname": "Maximum Module Temp",
+            "units": "\u00b0C",
+            "group": "Battery1 Info",
+            "subgroup": "Temperature Info",
+            "value": 25.5
+        },
+        {
+            "name": "Battery1_lowSocWarning",
+            "displayname": "Under State of Charge Minimum Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_minModuleTemp",
+            "displayname": "Minimum Module Temp",
+            "units": "\u00b0C",
+            "group": "Battery1 Info",
+            "subgroup": "Temperature Info",
+            "value": 23.5
+        },
+        {
+            "name": "Battery1_highSocWarning",
+            "displayname": "Over State of Charge Maximum Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_lowSocAlarm",
+            "displayname": "Under State of Charge Minimum Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_highSocAlarm",
+            "displayname": "Over State of Charge Maximum Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_communicationError",
+            "displayname": "Communication Error",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overTemperatureAlarm",
+            "displayname": "Over Temperature Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_underTemperatureAlarm",
+            "displayname": "Under Temperature Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overTemperatureWarning",
+            "displayname": "Over Temperature  Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_underTemperatureWarning",
+            "displayname": "Under Temperature  Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overChargeCurrentAlarm",
+            "displayname": "Over Charge Current Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overDischargeCurrentAlarm",
+            "displayname": "Over Discharge Current Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overChargeCurrentWarning",
+            "displayname": "Over Charge Current Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overDischargeCurrentWarning",
+            "displayname": "Over Discharge Current Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_voltageImbalanceWarning",
+            "displayname": "Voltage Imbalance Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_currentImbalanceWarning",
+            "displayname": "Current Imbalance Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overVoltageAlarm",
+            "displayname": "Over Voltage Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_underVoltageAlarm",
+            "displayname": "Under Voltage Alarm",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_overVoltageWarning",
+            "displayname": "Over Voltage Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_underVoltageWarning",
+            "displayname": "Under Voltage Warning",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_contactorError",
+            "displayname": "Contactor Error",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Battery1_fanError",
+            "displayname": "Fan Error",
+            "units": null,
+            "group": "Battery 1 Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Schneider"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "BESS125-250Q-QMMA81152-03"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Schneider BESS125-250Q-QMMA81152-03"
+        },
+        {
+            "name": "Battery_reactivePowerSetpointmin",
+            "displayname": "Reactive Power Setpoint Minimum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": -125
+        },
+        {
+            "name": "Battery_reactivePowerSetpointmax",
+            "displayname": "Reactive Power Setpoint Maximum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": 125
+        },
+        {
+            "name": "Battery_frequencySetpointmin",
+            "displayname": "Frequency Setpoint Minimum Limit",
+            "units": "Hz",
+            "group": "",
+            "subgroup": "",
+            "value": 59
+        },
+        {
+            "name": "Battery_frequencySetpointmax",
+            "displayname": "Frequency Setpoint Maximum Limit",
+            "units": "Hz",
+            "group": "",
+            "subgroup": "",
+            "value": 61
+        },
+        {
+            "name": "Battery_realPowerSetpointmin",
+            "displayname": "Real Power Setpoint Minimum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": -125
+        },
+        {
+            "name": "Battery_realPowerSetpointmax",
+            "displayname": "Real Power Setpoint Maximum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 125
+        },
+        {
+            "name": "Battery_voltageSetpointmin",
+            "displayname": "Voltage Setpoint Minimum Limit",
+            "units": "V",
+            "group": "",
+            "subgroup": "",
+            "value": 460
+        },
+        {
+            "name": "Battery_voltageSetpointmax",
+            "displayname": "Voltage Setpoint Maximum Limit",
+            "units": "V",
+            "group": "",
+            "subgroup": "",
+            "value": 500
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityDecdefault",
+            "displayname": "Battery Reserve Capacity for December Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 200
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityMaydefault",
+            "displayname": "Battery Reserve Capacity for May Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 150
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJunedefault",
+            "displayname": "Battery Reserve Capacity for June Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 160
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJulydefault",
+            "displayname": "Battery Reserve Capacity for July Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 150
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityAugustdefault",
+            "displayname": "Battery Reserve Capacity for August Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 150
+        },
+        {
+            "name": "Configuration_socMinimumReservedefault",
+            "displayname": "SoC Minimum Reserve Default",
+            "units": "%",
+            "group": "",
+            "subgroup": "",
+            "value": 5
+        },
+        {
+            "name": "Configuration_batteryReserveCapacitySeptdefault",
+            "displayname": "Battery Reserve Capacity for September Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 175
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityJandefault",
+            "displayname": "Battery Reserve Capacity for January Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 200
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityFebdefault",
+            "displayname": "Battery Reserve Capacity for February Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 180
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityMarchdefault",
+            "displayname": "Battery Reserve Capacity for March Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 160
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityOctdefault",
+            "displayname": "Battery Reserve Capacity for October Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 170
+        },
+        {
+            "name": "Configuration_socMaximumReservedefault",
+            "displayname": "SoC Maximum Reserve Default",
+            "units": "%",
+            "group": "",
+            "subgroup": "",
+            "value": 90
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityAprildefault",
+            "displayname": "Battery Reserve Capacity for April Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 175
+        },
+        {
+            "name": "Configuration_batteryReserveCapacityNovdefault",
+            "displayname": "Battery Reserve Capacity for November Default",
+            "units": "kWh",
+            "group": "",
+            "subgroup": "",
+            "value": 300
+        }
+    ],
+    "https://localhost:18080/assets/bess/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/bess/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/bess/quickview": {
+        "Command Info": [
+            {
+                "name": "Battery_frequencySetpoint",
+                "displayname": "Frequency Setpoint",
+                "units": "Hz",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 60
+            },
+            {
+                "name": "Battery_voltageSetpoint",
+                "displayname": "Voltage Setpoint",
+                "units": "V",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 0.49099999666214
+            },
+            {
+                "name": "Battery_realPowerSetpoint",
+                "displayname": "Real Power Setpoint",
+                "units": "kW",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": -10
+            },
+            {
+                "name": "Battery_reactivePowerSetpoint",
+                "displayname": "Reactive Power Setpoint",
+                "units": "kVAr",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "PCS1 Info": [
+            {
+                "name": "PCS1_breakerState",
+                "displayname": "Breaker State",
+                "units": null,
+                "group": "PCS1 Info",
+                "subgroup": null,
+                "value": true
+            },
+            {
+                "name": "PCS1_pcsState",
+                "displayname": "PCS State",
+                "units": "",
+                "group": "PCS1 Info",
+                "subgroup": "Status Info",
+                "value": 9
+            },
+            {
+                "name": "PCS1_reactivePower",
+                "displayname": "Reactive Power",
+                "units": "kVAr",
+                "group": "PCS1 Info",
+                "subgroup": "Power Info",
+                "value": -0.388720393180847
+            },
+            {
+                "name": "PCS1_avgAcCurrent",
+                "displayname": "Average AC Current",
+                "units": "A",
+                "group": "PCS1 Info",
+                "subgroup": "AC Current Info",
+                "value": 5.32738447189331
+            },
+            {
+                "name": "PCS1_dcLinkVoltage",
+                "displayname": "DC Link Voltage",
+                "units": "V",
+                "group": "PCS1 Info",
+                "subgroup": "DC Info",
+                "value": 889.922302246094
+            },
+            {
+                "name": "PCS1_realPower",
+                "displayname": "Active Power",
+                "units": "kW",
+                "group": "PCS1 Info",
+                "subgroup": "Power Info",
+                "value": -0.89111590385437
+            }
+        ],
+        "Site Info": [
+            {
+                "name": "Site_availability",
+                "displayname": "Availability",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": null,
+                "value": 1
+            },
+            {
+                "name": "Site_soc",
+                "displayname": "SoC",
+                "units": "%",
+                "group": "Site Info",
+                "subgroup": "SoC Info",
+                "value": 62
+            },
+            {
+                "name": "Site_assetMode",
+                "displayname": "Asset Mode",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": null,
+                "value": 3
+            },
+            {
+                "name": "Site_realPower",
+                "displayname": "Real Power",
+                "units": "kW",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": -0.89111590385437
+            },
+            {
+                "name": "Site_activePowerMode",
+                "displayname": "Active Power Mode",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": null,
+                "value": 2
+            },
+            {
+                "name": "Site_reactivePower",
+                "displayname": "Reactive Power",
+                "units": "kVAr",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": -0.388720393180847
+            },
+            {
+                "name": "Site_apparentPower",
+                "displayname": "Apparent Power",
+                "units": "kVA",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": 0.972209393978119
+            },
+            {
+                "name": "Site_reactivePowerMode",
+                "displayname": "Reactive Power Mode",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": null,
+                "value": 2
+            },
+            {
+                "name": "Site_machineState",
+                "displayname": "Machine State",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": null,
+                "value": 3
+            },
+            {
+                "name": "Site_powerFactor",
+                "displayname": "Power Factor",
+                "units": "",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": -0.916588425636292
+            },
+            {
+                "name": "Site_maxChargeRate",
+                "displayname": "Max Charge Rate",
+                "units": "kW",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": 126.971000671387
+            },
+            {
+                "name": "Site_maxDischargeRate",
+                "displayname": "Max Discharge Rate",
+                "units": "kVAr",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": 126.971000671387
+            },
+            {
+                "name": "PCS1_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Site Info",
+                "subgroup": "Frequency Info",
+                "value": 60.0474662780762
+            },
+            {
+                "name": "PCS1_averageLineToLineAcVoltage",
+                "displayname": "Average Line-Line Voltage",
+                "units": "V",
+                "group": "Site Info",
+                "subgroup": "Power Info",
+                "value": 475.766784667969
+            }
+        ],
+        "Battery1 Info": [
+            {
+                "name": "Battery1_batteryState",
+                "displayname": "Battery State",
+                "units": "",
+                "group": "Battery1 Info",
+                "subgroup": "State Info",
+                "value": 3
+            },
+            {
+                "name": "Battery1_chargeState",
+                "displayname": "Charge State",
+                "units": "",
+                "group": "Battery1 Info",
+                "subgroup": "State of Charge Info",
+                "value": 6
+            },
+            {
+                "name": "Battery1_voltage",
+                "displayname": "Voltage",
+                "units": "V",
+                "group": "Battery1 Info",
+                "subgroup": "Voltage Info",
+                "value": 900.5
+            },
+            {
+                "name": "Battery1_soc",
+                "displayname": "SoC",
+                "units": "%",
+                "group": "Battery1 Info",
+                "subgroup": "SoC Info",
+                "value": 62
+            },
+            {
+                "name": "Battery1_soh",
+                "displayname": "SoH",
+                "units": "%",
+                "group": "Battery1 Info",
+                "subgroup": "SoH Info",
+                "value": 92.5
+            },
+            {
+                "name": "Battery1_maxChargeRate",
+                "displayname": "Max Charge Rate",
+                "units": "kW",
+                "group": "Battery1 Info",
+                "subgroup": "Power Info",
+                "value": 127
+            },
+            {
+                "name": "Battery1_maxDischargeRate",
+                "displayname": "Max Discharge Rate",
+                "units": "kVAr",
+                "group": "Battery1 Info",
+                "subgroup": "Power Info",
+                "value": 127
+            }
+        ],
+        "": [
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Schneider"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "BESS125-250Q-QMMA81152-03"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Schneider BESS125-250Q-QMMA81152-03"
+            },
+            {
+                "name": "Battery_reactivePowerSetpointmin",
+                "displayname": "Reactive Power Setpoint Minimum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": -125
+            },
+            {
+                "name": "Battery_reactivePowerSetpointmax",
+                "displayname": "Reactive Power Setpoint Maximum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": 125
+            },
+            {
+                "name": "Battery_frequencySetpointmin",
+                "displayname": "Frequency Setpoint Minimum Limit",
+                "units": "Hz",
+                "group": "",
+                "subgroup": null,
+                "value": 59
+            },
+            {
+                "name": "Battery_frequencySetpointmax",
+                "displayname": "Frequency Setpoint Maximum Limit",
+                "units": "Hz",
+                "group": "",
+                "subgroup": null,
+                "value": 61
+            },
+            {
+                "name": "Battery_realPowerSetpointmin",
+                "displayname": "Real Power Setpoint Minimum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": -125
+            },
+            {
+                "name": "Battery_realPowerSetpointmax",
+                "displayname": "Real Power Setpoint Maximum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 125
+            },
+            {
+                "name": "Battery_voltageSetpointmin",
+                "displayname": "Voltage Setpoint Minimum Limit",
+                "units": "V",
+                "group": "",
+                "subgroup": null,
+                "value": 460
+            },
+            {
+                "name": "Battery_voltageSetpointmax",
+                "displayname": "Voltage Setpoint Maximum Limit",
+                "units": "V",
+                "group": "",
+                "subgroup": null,
+                "value": 500
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityDecdefault",
+                "displayname": "Battery Reserve Capacity for December Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 200
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityMaydefault",
+                "displayname": "Battery Reserve Capacity for May Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 150
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityJunedefault",
+                "displayname": "Battery Reserve Capacity for June Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 160
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityJulydefault",
+                "displayname": "Battery Reserve Capacity for July Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 150
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityAugustdefault",
+                "displayname": "Battery Reserve Capacity for August Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 150
+            },
+            {
+                "name": "Configuration_socMinimumReservedefault",
+                "displayname": "SoC Minimum Reserve Default",
+                "units": "%",
+                "group": "",
+                "subgroup": null,
+                "value": 5
+            },
+            {
+                "name": "Configuration_batteryReserveCapacitySeptdefault",
+                "displayname": "Battery Reserve Capacity for September Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 175
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityJandefault",
+                "displayname": "Battery Reserve Capacity for January Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 200
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityFebdefault",
+                "displayname": "Battery Reserve Capacity for February Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 180
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityMarchdefault",
+                "displayname": "Battery Reserve Capacity for March Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 160
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityOctdefault",
+                "displayname": "Battery Reserve Capacity for October Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 170
+            },
+            {
+                "name": "Configuration_socMaximumReservedefault",
+                "displayname": "SoC Maximum Reserve Default",
+                "units": "%",
+                "group": "",
+                "subgroup": null,
+                "value": 90
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityAprildefault",
+                "displayname": "Battery Reserve Capacity for April Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 175
+            },
+            {
+                "name": "Configuration_batteryReserveCapacityNovdefault",
+                "displayname": "Battery Reserve Capacity for November Default",
+                "units": "kWh",
+                "group": "",
+                "subgroup": null,
+                "value": 300
+            }
+        ]
+    },
+    "https://localhost:18080/assets/pv1/properties": [
+        {
+            "name": "General_reset",
+            "displayname": "Alarms Reset",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": "Alarms",
+            "value": false
+        },
+        {
+            "name": "General_enable",
+            "displayname": "Enable",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "Inverter_activePowerMode",
+            "displayname": "Active Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "General_inverterActivePowerMode",
+            "displayname": "Active Power Mode",
+            "units": "",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "Inverter_pfLag",
+            "displayname": "PF Lag/Lead",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "Inverter_powerFactorSetpoint",
+            "displayname": "Power Factor Setpoint ",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": -1
+        },
+        {
+            "name": "Inverter_reactivePowerMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 2
+        },
+        {
+            "name": "General_reactivePowerMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 6
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpoint",
+            "displayname": "Reactive Power Setpoint",
+            "units": "kVAr",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 5
+        },
+        {
+            "name": "Inverter_curtailmentSetPoint",
+            "displayname": "Curtailment Setpoint",
+            "units": "kW",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 90
+        },
+        {
+            "name": "Inverter_acCurrent",
+            "displayname": "AC Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentA",
+            "displayname": "Phase A Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentB",
+            "displayname": "Phase B Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentC",
+            "displayname": "Phase C Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageAB",
+            "displayname": "Voltage AB",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageBC",
+            "displayname": "Voltage BC",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageCA",
+            "displayname": "Voltage CA",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageAN",
+            "displayname": "Voltage AN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageBN",
+            "displayname": "Voltage BN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageCN",
+            "displayname": "Voltage CN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerActiveACTotal",
+            "displayname": "Active Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerAppACTotal",
+            "displayname": "Apparent Power",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerReactiveACTotal",
+            "displayname": "Reactive Power",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_pf",
+            "displayname": "Power Factor",
+            "units": "",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalEnergy",
+            "displayname": "Energy",
+            "units": "kWh",
+            "group": "Energy Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCCurrent",
+            "displayname": "DC Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCVoltage",
+            "displayname": "DC Voltage",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCPower",
+            "displayname": "DC Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_faultInverter",
+            "displayname": "Fault Inverter\t",
+            "units": "",
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "General_assetCommFailure",
+            "displayname": "Asset Communication Failure",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "General_inverterFault",
+            "displayname": "Inverter Fault",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "InverterFault_inverterConfigurationIncorrect",
+            "displayname": "Inverter Configuration incorrect",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "General_acBreakerStatus",
+            "displayname": "Breaker State",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Inverter_avgVoltage",
+            "displayname": "Average AC Voltage ",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "General_protocol",
+            "displayname": "Protocol",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Modbus"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SE100K"
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Solar Edge"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SolarEdge SE100K"
+        },
+        {
+            "name": "Inverter_powerFactorSetpointmin",
+            "displayname": "Power Factor Setpoint  Minimum Limit",
+            "units": "",
+            "group": "",
+            "subgroup": "",
+            "value": 0.7
+        },
+        {
+            "name": "Inverter_powerFactorSetpointmax",
+            "displayname": "Power Factor Setpoint  Maximum Limit",
+            "units": "",
+            "group": "",
+            "subgroup": "",
+            "value": 1
+        },
+        {
+            "name": "Inverter_curtailmentSetPointmin",
+            "displayname": "Curtailment Setpoint Minimum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 0
+        },
+        {
+            "name": "Inverter_curtailmentSetPointmax",
+            "displayname": "Curtailment Setpoint Maximum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 100
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpointmin",
+            "displayname": "Reactive Power Setpoint Minimum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": -100
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpointmax",
+            "displayname": "Reactive Power Setpoint Maximum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": 100
+        }
+    ],
+    "https://localhost:18080/assets/pv1/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/pv1/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/pv1/quickview": {
+        "Power Info": [
+            {
+                "name": "General_inverterActivePowerMode",
+                "displayname": "Active Power Mode",
+                "units": "",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 2
+            },
+            {
+                "name": "General_reactivePowerMode",
+                "displayname": "Reactive Power Mode",
+                "units": "",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 6
+            },
+            {
+                "name": "Inverter_powerActiveACTotal",
+                "displayname": "Active Power",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_powerReactiveACTotal",
+                "displayname": "Reactive Power",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_pf",
+                "displayname": "Power Factor",
+                "units": "",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_totalDCPower",
+                "displayname": "DC Power",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Command Info": [
+            {
+                "name": "Inverter_powerFactorSetpoint",
+                "displayname": "Power Factor Setpoint ",
+                "units": "",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": -1
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpoint",
+                "displayname": "Reactive Power Setpoint",
+                "units": "kVAr",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 5
+            },
+            {
+                "name": "Inverter_curtailmentSetPoint",
+                "displayname": "Curtailment Setpoint",
+                "units": "kW",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 90
+            }
+        ],
+        "Current Info": [
+            {
+                "name": "Inverter_acCurrent",
+                "displayname": "AC Current",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_totalDCCurrent",
+                "displayname": "DC Current",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Inverter_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Inverter_totalDCVoltage",
+                "displayname": "DC Voltage",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_avgVoltage",
+                "displayname": "Average AC Voltage ",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "": [
+            {
+                "name": "General_protocol",
+                "displayname": "Protocol",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Modbus"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SE100K"
+            },
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Solar Edge"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SolarEdge SE100K"
+            },
+            {
+                "name": "Inverter_powerFactorSetpointmin",
+                "displayname": "Power Factor Setpoint  Minimum Limit",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": 0.7
+            },
+            {
+                "name": "Inverter_powerFactorSetpointmax",
+                "displayname": "Power Factor Setpoint  Maximum Limit",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": 1
+            },
+            {
+                "name": "Inverter_curtailmentSetPointmin",
+                "displayname": "Curtailment Setpoint Minimum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_curtailmentSetPointmax",
+                "displayname": "Curtailment Setpoint Maximum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 100
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpointmin",
+                "displayname": "Reactive Power Setpoint Minimum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": -100
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpointmax",
+                "displayname": "Reactive Power Setpoint Maximum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": 100
+            }
+        ]
+    },
+    "https://localhost:18080/assets/pv2/properties": [
+        {
+            "name": "General_reset",
+            "displayname": "Alarms Reset",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": "Alarms",
+            "value": false
+        },
+        {
+            "name": "Inverter_activePowerMode",
+            "displayname": "Active Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 14
+        },
+        {
+            "name": "General_enable",
+            "displayname": "Enable",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "Inverter_pfLag",
+            "displayname": "PF Lag/Lead",
+            "units": null,
+            "group": "Command Info",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "General_inverterActivePowerMode",
+            "displayname": "Active Power Mode",
+            "units": " ",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 14
+        },
+        {
+            "name": "Inverter_powerFactorSetpoint",
+            "displayname": "Power Factor Setpoint",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": -1
+        },
+        {
+            "name": "Inverter_reactivePowerMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 6
+        },
+        {
+            "name": "General_reactivePowerMode",
+            "displayname": "Reactive Power Mode",
+            "units": "",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 6
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpoint",
+            "displayname": "Reactive Power Setpoint",
+            "units": "kVAr",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_curtailmentSetPoint",
+            "displayname": "Curtailment Setpoint",
+            "units": "kW",
+            "group": "Command Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrent",
+            "displayname": "AC Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentA",
+            "displayname": "Phase A Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentB",
+            "displayname": "Phase B Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_acCurrentC",
+            "displayname": "Phase C Inverter Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageAB",
+            "displayname": "Voltage AB",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageBC",
+            "displayname": "Voltage BC",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageCA",
+            "displayname": "Voltage CA",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageAN",
+            "displayname": "Voltage AN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageBN",
+            "displayname": "Voltage BN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_voltageCN",
+            "displayname": "Voltage CN",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerActiveACTotal",
+            "displayname": "Active Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerAppACTotal",
+            "displayname": "Apparent Power",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_powerReactiveACTotal",
+            "displayname": "Reactive Power",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_pf",
+            "displayname": "Power Factor",
+            "units": "",
+            "group": "General Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalEnergy",
+            "displayname": "Energy",
+            "units": "kWh",
+            "group": "Energy Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCCurrent",
+            "displayname": "DC Current",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCVoltage",
+            "displayname": "DC Voltage",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_totalDCPower",
+            "displayname": "DC Power",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Inverter_faultInverter",
+            "displayname": "Fault Inverter\t",
+            "units": "",
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "General_assetCommFailure",
+            "displayname": "Asset Communication Failure",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "General_inverterFault",
+            "displayname": "Inverter Fault",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "InverterFault_inverterConfigurationIncorrect",
+            "displayname": "Inverter Configuration incorrect",
+            "units": null,
+            "group": "Alarm Info\t",
+            "subgroup": null,
+            "value": true
+        },
+        {
+            "name": "General_acBreakerStatus",
+            "displayname": "Breaker Status",
+            "units": null,
+            "group": "General Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Inverter_avgVoltage",
+            "displayname": "Average  Voltage",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "General_protocol",
+            "displayname": "Protocol",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Modbus"
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Solar Edge"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SE33.3K"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "Solar Edge SE33.3K"
+        },
+        {
+            "name": "Inverter_powerFactorSetpointmin",
+            "displayname": "Power Factor Setpoint Minimum Limit",
+            "units": "",
+            "group": "",
+            "subgroup": "",
+            "value": 0.7
+        },
+        {
+            "name": "Inverter_powerFactorSetpointmax",
+            "displayname": "Power Factor Setpoint Maximum Limit",
+            "units": "",
+            "group": "",
+            "subgroup": "",
+            "value": 1
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpointmin",
+            "displayname": "Reactive Power Setpoint Minimum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": 0
+        },
+        {
+            "name": "Inverter_reactivePowerVARSetpointmax",
+            "displayname": "Reactive Power Setpoint Maximum Limit",
+            "units": "kVAr",
+            "group": "",
+            "subgroup": "",
+            "value": 33
+        },
+        {
+            "name": "Inverter_curtailmentSetPointmin",
+            "displayname": "Curtailment Setpoint Minimum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 0
+        },
+        {
+            "name": "Inverter_curtailmentSetPointmax",
+            "displayname": "Curtailment Setpoint Maximum Limit",
+            "units": "kW",
+            "group": "",
+            "subgroup": "",
+            "value": 33.3
+        }
+    ],
+    "https://localhost:18080/assets/pv2/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/pv2/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/pv2/quickview": {
+        "Power Info": [
+            {
+                "name": "General_inverterActivePowerMode",
+                "displayname": "Active Power Mode",
+                "units": " ",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 14
+            },
+            {
+                "name": "General_reactivePowerMode",
+                "displayname": "Reactive Power Mode",
+                "units": "",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 6
+            },
+            {
+                "name": "Inverter_powerActiveACTotal",
+                "displayname": "Active Power",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_powerReactiveACTotal",
+                "displayname": "Reactive Power",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_pf",
+                "displayname": "Power Factor",
+                "units": "",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_totalDCPower",
+                "displayname": "DC Power",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Command Info": [
+            {
+                "name": "Inverter_powerFactorSetpoint",
+                "displayname": "Power Factor Setpoint",
+                "units": "",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": -1
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpoint",
+                "displayname": "Reactive Power Setpoint",
+                "units": "kVAr",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_curtailmentSetPoint",
+                "displayname": "Curtailment Setpoint",
+                "units": "kW",
+                "group": "Command Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Current Info": [
+            {
+                "name": "Inverter_acCurrent",
+                "displayname": "AC Current",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_totalDCCurrent",
+                "displayname": "DC Current",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Inverter_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Inverter_totalDCVoltage",
+                "displayname": "DC Voltage",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_avgVoltage",
+                "displayname": "Average  Voltage",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "": [
+            {
+                "name": "General_protocol",
+                "displayname": "Protocol",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Modbus"
+            },
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Solar Edge"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SE33.3K"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "Solar Edge SE33.3K"
+            },
+            {
+                "name": "Inverter_powerFactorSetpointmin",
+                "displayname": "Power Factor Setpoint Minimum Limit",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": 0.7
+            },
+            {
+                "name": "Inverter_powerFactorSetpointmax",
+                "displayname": "Power Factor Setpoint Maximum Limit",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": 1
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpointmin",
+                "displayname": "Reactive Power Setpoint Minimum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_reactivePowerVARSetpointmax",
+                "displayname": "Reactive Power Setpoint Maximum Limit",
+                "units": "kVAr",
+                "group": "",
+                "subgroup": null,
+                "value": 33
+            },
+            {
+                "name": "Inverter_curtailmentSetPointmin",
+                "displayname": "Curtailment Setpoint Minimum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Inverter_curtailmentSetPointmax",
+                "displayname": "Curtailment Setpoint Maximum Limit",
+                "units": "kW",
+                "group": "",
+                "subgroup": null,
+                "value": 33.3
+            }
+        ]
+    },
+    "https://localhost:18080/assets/pcc_relay_lineside/properties": [
+        {
+            "name": "Relay_currentA",
+            "displayname": "Current A",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 81
+        },
+        {
+            "name": "Relay_currentB",
+            "displayname": "Current B",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 86
+        },
+        {
+            "name": "Relay_currentC",
+            "displayname": "Current C",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 40
+        },
+        {
+            "name": "Relay_currentG",
+            "displayname": "Current G",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 17
+        },
+        {
+            "name": "Relay_currentAvg",
+            "displayname": "Average Current ",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 69
+        },
+        {
+            "name": "Relay_voltageAB",
+            "displayname": "Voltage A-B",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageBC",
+            "displayname": "Voltage B-C",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageCA",
+            "displayname": "Voltage C-A",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageLLAvg",
+            "displayname": "Average Voltage L-L ",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageAN",
+            "displayname": "Voltage A-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageBN",
+            "displayname": "Voltage B-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageCN",
+            "displayname": "Voltage C-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageLNAvg",
+            "displayname": "Average Voltage L-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_activePowerA",
+            "displayname": "Active Power A",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -10
+        },
+        {
+            "name": "Relay_activePowerB",
+            "displayname": "Active Power B",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -10
+        },
+        {
+            "name": "Relay_activePowerC",
+            "displayname": "Active Power C",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -5
+        },
+        {
+            "name": "Relay_activePowerTotal",
+            "displayname": "Total Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -24
+        },
+        {
+            "name": "Relay_reactivePowerA",
+            "displayname": "Reactive Power A",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_reactivePowerB",
+            "displayname": "Reactive Power B",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "Relay_reactivePowerC",
+            "displayname": "Reactive Power C",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Relay_reactivePowerTotal",
+            "displayname": "Total Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "Relay_apparentPowerA",
+            "displayname": "Apparent Power A",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 10
+        },
+        {
+            "name": "Relay_apparentPowerB",
+            "displayname": "Apparent Power B",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 10
+        },
+        {
+            "name": "Relay_apparentPowerC",
+            "displayname": "Apparent Power C",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 5
+        },
+        {
+            "name": "Relay_apparentPowerTotal",
+            "displayname": "Total Apparent Power ",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 24
+        },
+        {
+            "name": "Relay_tripStatusHigh",
+            "displayname": "Trip Status High",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorA",
+            "displayname": "Power Factor A",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "General_meterCommunicationFailure",
+            "displayname": "SEL Relay Communication Failure",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Relay_powerFactorB",
+            "displayname": "Power Factor B",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.949999988079071
+        },
+        {
+            "name": "Relay_tripStatusLow",
+            "displayname": "Trip Status Low ",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorC",
+            "displayname": "Power Factor C",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.989999949932098
+        },
+        {
+            "name": "Relay_warnStatusHigh",
+            "displayname": "Warn Status High",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorTotal",
+            "displayname": "Power Factor Total ",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.989999949932098
+        },
+        {
+            "name": "Relay_warnStatusLow",
+            "displayname": "Warn Status Low",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 60.0099983215332
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SEL"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "700G"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SEL 700G"
+        }
+    ],
+    "https://localhost:18080/assets/pcc_relay_lineside/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/pcc_relay_lineside/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/pcc_relay_lineside/quickview": {
+        "Current Info": [
+            {
+                "name": "Relay_currentAvg",
+                "displayname": "Average Current ",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 67.6666641235352
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Relay_voltageLLAvg",
+                "displayname": "Average Voltage L-L ",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 210
+            }
+        ],
+        "Power Info": [
+            {
+                "name": "Relay_activePowerTotal",
+                "displayname": "Total Active Power ",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": -23
+            },
+            {
+                "name": "Relay_reactivePowerTotal",
+                "displayname": "Total Reactive Power ",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 3
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Relay_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 60.0099983215332
+            }
+        ],
+        "": [
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SEL"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "700G"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SEL 700G"
+            }
+        ]
+    },
+    "https://localhost:18080/assets/pcc_relay_loadside/properties": [
+        {
+            "name": "Relay_currentA",
+            "displayname": "Current A",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 81
+        },
+        {
+            "name": "Relay_currentB",
+            "displayname": "Current B",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 87
+        },
+        {
+            "name": "Relay_currentC",
+            "displayname": "Current C",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 37
+        },
+        {
+            "name": "Relay_currentG",
+            "displayname": "Current G",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 19
+        },
+        {
+            "name": "Relay_currentAvg",
+            "displayname": "Average Current ",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 68.3333358764648
+        },
+        {
+            "name": "Relay_voltageAB",
+            "displayname": "Voltage A-B",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageBC",
+            "displayname": "Voltage B-C",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageCA",
+            "displayname": "Voltage C-A",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageLLAvg",
+            "displayname": "Average Voltage L-L ",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 210
+        },
+        {
+            "name": "Relay_voltageAN",
+            "displayname": "Voltage A-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageBN",
+            "displayname": "Voltage B-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageCN",
+            "displayname": "Voltage C-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_voltageLNAvg",
+            "displayname": "Average Voltage L-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 120
+        },
+        {
+            "name": "Relay_activePowerA",
+            "displayname": "Active Power A",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -10
+        },
+        {
+            "name": "Relay_activePowerB",
+            "displayname": "Active Power B",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -10
+        },
+        {
+            "name": "Relay_activePowerC",
+            "displayname": "Active Power C",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -4
+        },
+        {
+            "name": "Relay_activePowerTotal",
+            "displayname": "Total Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -24
+        },
+        {
+            "name": "Relay_reactivePowerA",
+            "displayname": "Reactive Power A",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -1
+        },
+        {
+            "name": "Relay_reactivePowerB",
+            "displayname": "Reactive Power B",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "Relay_reactivePowerC",
+            "displayname": "Reactive Power C",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Relay_reactivePowerTotal",
+            "displayname": "Total Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3
+        },
+        {
+            "name": "Relay_apparentPowerA",
+            "displayname": "Apparent Power A",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 10
+        },
+        {
+            "name": "Relay_apparentPowerB",
+            "displayname": "Apparent Power B",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 10
+        },
+        {
+            "name": "Relay_apparentPowerC",
+            "displayname": "Apparent Power C",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 4
+        },
+        {
+            "name": "Relay_apparentPowerTotal",
+            "displayname": "Total Apparent Power ",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 24
+        },
+        {
+            "name": "Relay_tripStatusHigh",
+            "displayname": "Trip Status High",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorA",
+            "displayname": "Power Factor A",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "General_meterCommunicationFailure",
+            "displayname": "SEL Relay Communication Failure",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Relay_powerFactorB",
+            "displayname": "Power Factor B",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.949999988079071
+        },
+        {
+            "name": "Relay_tripStatusLow",
+            "displayname": "Trip Status Low ",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorC",
+            "displayname": "Power Factor C",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.989999949932098
+        },
+        {
+            "name": "Relay_warnStatusHigh",
+            "displayname": "Warn Status High",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_powerFactorTotal",
+            "displayname": "Power Factor Total ",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0.989999949932098
+        },
+        {
+            "name": "Relay_warnStatusLow",
+            "displayname": "Warn Status Low",
+            "units": "",
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Relay_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 60.0099983215332
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SEL"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "700G"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "SEL 700G"
+        }
+    ],
+    "https://localhost:18080/assets/pcc_relay_loadside/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/pcc_relay_loadside/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/pcc_relay_loadside/quickview": {
+        "Current Info": [
+            {
+                "name": "Relay_currentAvg",
+                "displayname": "Average Current ",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 68.3333358764648
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Relay_voltageLLAvg",
+                "displayname": "Average Voltage L-L ",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 210
+            }
+        ],
+        "Power Info": [
+            {
+                "name": "Relay_activePowerTotal",
+                "displayname": "Total Active Power ",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": -24
+            },
+            {
+                "name": "Relay_reactivePowerTotal",
+                "displayname": "Total Reactive Power ",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 3
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Relay_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 60.0099983215332
+            }
+        ],
+        "": [
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SEL"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "700G"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "SEL 700G"
+            }
+        ]
+    },
+    "https://localhost:18080/assets/gen_meter/properties": [
+        {
+            "name": "Meter_currentA",
+            "displayname": "Current A",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_currentB",
+            "displayname": "Current B",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_currentC",
+            "displayname": "Current C",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_currentN",
+            "displayname": "Current N",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_currentAvg",
+            "displayname": "Average Current ",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_voltageAB",
+            "displayname": "Voltage A-B",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.651824951172
+        },
+        {
+            "name": "Meter_voltageBC",
+            "displayname": "Voltage B-C",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.655029296875
+        },
+        {
+            "name": "Meter_voltageCA",
+            "displayname": "Voltage C-A",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.909896850586
+        },
+        {
+            "name": "Meter_voltageLLAvg",
+            "displayname": "Average Voltage L-L ",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.738906860352
+        },
+        {
+            "name": "Meter_voltageAN",
+            "displayname": "Voltage A-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.916923522949
+        },
+        {
+            "name": "Meter_voltageBN",
+            "displayname": "Voltage B-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.603843688965
+        },
+        {
+            "name": "Meter_voltageCN",
+            "displayname": "Voltage C-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.910636901855
+        },
+        {
+            "name": "Meter_voltageLNAvg",
+            "displayname": "Average Voltage L-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.81046295166
+        },
+        {
+            "name": "Meter_activePowerA",
+            "displayname": "Active Power A",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_activePowerB",
+            "displayname": "Active Power B",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_activePowerC",
+            "displayname": "Active Power C",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_activePowerTotal",
+            "displayname": "Total Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_reactivePowerA",
+            "displayname": "Reactive Power A",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_reactivePowerB",
+            "displayname": "Reactive Power B",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_reactivePowerC",
+            "displayname": "Reactive Power C",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_reactivePowerTotal",
+            "displayname": "Total Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_apparentPowerA",
+            "displayname": "Apparent Power A",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_apparentPowerB",
+            "displayname": "Apparent Power B",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_apparentPowerC",
+            "displayname": "Apparent Power C",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_apparentPowerTotal",
+            "displayname": "Total Apparent Power ",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_powerFactorA",
+            "displayname": "Power Factor A",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Meter_powerFactorB",
+            "displayname": "Power Factor B",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "General_meterCommunicationFailure",
+            "displayname": "Meter Communication Failure",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Meter_powerFactorC",
+            "displayname": "Power Factor C",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_powerFactorTotal",
+            "displayname": "Power Factor Total",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 1
+        },
+        {
+            "name": "Meter_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 60.0060691833496
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "GE"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "EPM 4600"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "GE EPM 4600"
+        }
+    ],
+    "https://localhost:18080/assets/gen_meter/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/gen_meter/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/gen_meter/quickview": {
+        "Current Info": [
+            {
+                "name": "Meter_currentAvg",
+                "displayname": "Average Current ",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Meter_voltageLLAvg",
+                "displayname": "Average Voltage L-L ",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 205.745071411133
+            }
+        ],
+        "Power Info": [
+            {
+                "name": "Meter_activePowerTotal",
+                "displayname": "Total Active Power ",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            },
+            {
+                "name": "Meter_reactivePowerTotal",
+                "displayname": "Total Reactive Power ",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 0
+            }
+        ],
+        "Power Factor Info": [
+            {
+                "name": "Meter_powerFactorTotal",
+                "displayname": "Power Factor Total",
+                "units": "",
+                "group": "Power Factor Info",
+                "subgroup": null,
+                "value": 1
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Meter_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 60.0054206848145
+            }
+        ],
+        "": [
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "GE"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "EPM 4600"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "GE EPM 4600"
+            }
+        ]
+    },
+    "https://localhost:18080/assets/tie_meter/properties": [
+        {
+            "name": "Meter_currentA",
+            "displayname": "Current A",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 30.1218757629395
+        },
+        {
+            "name": "Meter_currentB",
+            "displayname": "Current B",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 28.728271484375
+        },
+        {
+            "name": "Meter_currentC",
+            "displayname": "Current C",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 27.3317165374756
+        },
+        {
+            "name": "Meter_currentN",
+            "displayname": "Current N",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 47.416015625
+        },
+        {
+            "name": "Meter_currentAvg",
+            "displayname": "Average Current ",
+            "units": "A",
+            "group": "Current Info",
+            "subgroup": null,
+            "value": 28.7272872924805
+        },
+        {
+            "name": "Meter_voltageAB",
+            "displayname": "Voltage A-B",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.657531738281
+        },
+        {
+            "name": "Meter_voltageBC",
+            "displayname": "Voltage B-C",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.660369873047
+        },
+        {
+            "name": "Meter_voltageCA",
+            "displayname": "Voltage C-A",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.917297363281
+        },
+        {
+            "name": "Meter_voltageLLAvg",
+            "displayname": "Average Voltage L-L ",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 205.745071411133
+        },
+        {
+            "name": "Meter_voltageAN",
+            "displayname": "Voltage A-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.92204284668
+        },
+        {
+            "name": "Meter_voltageBN",
+            "displayname": "Voltage B-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.605735778809
+        },
+        {
+            "name": "Meter_voltageCN",
+            "displayname": "Voltage C-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.922142028809
+        },
+        {
+            "name": "Meter_voltageLNAvg",
+            "displayname": "Average Voltage L-N",
+            "units": "V",
+            "group": "Voltage Info",
+            "subgroup": null,
+            "value": 118.81664276123
+        },
+        {
+            "name": "Meter_activePowerA",
+            "displayname": "Active Power A",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 2.57487058639526
+        },
+        {
+            "name": "Meter_activePowerB",
+            "displayname": "Active Power B",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 2.29061961174011
+        },
+        {
+            "name": "Meter_activePowerC",
+            "displayname": "Active Power C",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 1.9193127155304
+        },
+        {
+            "name": "Meter_activePowerTotal",
+            "displayname": "Total Active Power ",
+            "units": "kW",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 6.78480291366577
+        },
+        {
+            "name": "Meter_reactivePowerA",
+            "displayname": "Reactive Power A",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -2.53664064407349
+        },
+        {
+            "name": "Meter_reactivePowerB",
+            "displayname": "Reactive Power B",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 2.52968740463257
+        },
+        {
+            "name": "Meter_reactivePowerC",
+            "displayname": "Reactive Power C",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -2.59718751907349
+        },
+        {
+            "name": "Meter_reactivePowerTotal",
+            "displayname": "Total Reactive Power ",
+            "units": "kVAr",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": -2.60414052009583
+        },
+        {
+            "name": "Meter_apparentPowerA",
+            "displayname": "Apparent Power A",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3.6145122051239
+        },
+        {
+            "name": "Meter_apparentPowerB",
+            "displayname": "Apparent Power B",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3.41265916824341
+        },
+        {
+            "name": "Meter_apparentPowerC",
+            "displayname": "Apparent Power C",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 3.22938847541809
+        },
+        {
+            "name": "Meter_apparentPowerTotal",
+            "displayname": "Total Apparent Power ",
+            "units": "kVA",
+            "group": "Power Info",
+            "subgroup": null,
+            "value": 10.2565593719482
+        },
+        {
+            "name": "Meter_powerFactorA",
+            "displayname": "Power Factor A",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": -0.712370097637177
+        },
+        {
+            "name": "Meter_powerFactorB",
+            "displayname": "Power Factor B",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": -0.671212494373322
+        },
+        {
+            "name": "General_meterCommunicationFailure",
+            "displayname": "Meter Communication Failure",
+            "units": null,
+            "group": "Alarm Info",
+            "subgroup": null,
+            "value": false
+        },
+        {
+            "name": "Meter_powerFactorC",
+            "displayname": "Power Factor C",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": 0
+        },
+        {
+            "name": "Meter_powerFactorTotal",
+            "displayname": "Power Factor Total",
+            "units": "",
+            "group": "Power Factor Info",
+            "subgroup": null,
+            "value": -0.661508619785309
+        },
+        {
+            "name": "Meter_frequency",
+            "displayname": "Frequency",
+            "units": "Hz",
+            "group": "Frequency Info",
+            "subgroup": null,
+            "value": 60.0054206848145
+        },
+        {
+            "name": "General_manufacturer",
+            "displayname": "Manufacturer",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "GE"
+        },
+        {
+            "name": "General_model",
+            "displayname": "Model",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "EPM 4600"
+        },
+        {
+            "name": "General_oemName",
+            "displayname": "OEM Name",
+            "units": "",
+            "group": "Nameplate Info",
+            "subgroup": "",
+            "value": "GE EPM 4600"
+        }
+    ],
+    "https://localhost:18080/assets/tie_meter/status": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /assets/tie_meter/status</pre>\n</body>\n</html>\n",
+    "https://localhost:18080/assets/tie_meter/quickview": {
+        "Current Info": [
+            {
+                "name": "Meter_currentAvg",
+                "displayname": "Average Current ",
+                "units": "A",
+                "group": "Current Info",
+                "subgroup": null,
+                "value": 28.7523593902588
+            }
+        ],
+        "Voltage Info": [
+            {
+                "name": "Meter_voltageLLAvg",
+                "displayname": "Average Voltage L-L ",
+                "units": "V",
+                "group": "Voltage Info",
+                "subgroup": null,
+                "value": 205.751693725586
+            }
+        ],
+        "Power Info": [
+            {
+                "name": "Meter_activePowerTotal",
+                "displayname": "Total Active Power ",
+                "units": "kW",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": 6.82124185562134
+            },
+            {
+                "name": "Meter_reactivePowerTotal",
+                "displayname": "Total Reactive Power ",
+                "units": "kVAr",
+                "group": "Power Info",
+                "subgroup": null,
+                "value": -2.59773445129395
+            }
+        ],
+        "Power Factor Info": [
+            {
+                "name": "Meter_powerFactorTotal",
+                "displayname": "Power Factor Total",
+                "units": "",
+                "group": "Power Factor Info",
+                "subgroup": null,
+                "value": -0.662931621074677
+            }
+        ],
+        "Frequency Info": [
+            {
+                "name": "Meter_frequency",
+                "displayname": "Frequency",
+                "units": "Hz",
+                "group": "Frequency Info",
+                "subgroup": null,
+                "value": 60.0051307678223
+            }
+        ],
+        "": [
+            {
+                "name": "General_manufacturer",
+                "displayname": "Manufacturer",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "GE"
+            },
+            {
+                "name": "General_model",
+                "displayname": "Model",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "EPM 4600"
+            },
+            {
+                "name": "General_oemName",
+                "displayname": "OEM Name",
+                "units": "",
+                "group": "",
+                "subgroup": null,
+                "value": "GE EPM 4600"
+            }
+        ]
+    }
+}
