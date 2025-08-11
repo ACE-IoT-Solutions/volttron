@@ -13,14 +13,18 @@ This driver provides integration with Spirae Wave energy management systems thro
 - **Async operations**: Uses grequests for non-blocking HTTP requests in gevent context
 - **Batch scraping**: Efficiently fetches all points using parallel requests
 
-## Dependencies
+## Requirements
 
+### Python Version
+- Python 3.8 or higher
+
+### Dependencies
 The driver requires the following Python packages:
 - `grequests>=0.6.0` - For async HTTP requests in gevent context
-- `requests>=2.28.0` - HTTP library
+- `requests>=2.28.0` - HTTP library  
 - `gevent>=21.0.0` - Coroutine-based Python networking library
 
-These are automatically installed with the PlatformDriver agent.
+These dependencies are automatically installed with the PlatformDriver agent.
 
 ## Configuration
 
@@ -192,12 +196,50 @@ To enable debug logging, set the logging level for the module:
 logging.getLogger('platform_driver.interfaces.spirae_wave').setLevel(logging.DEBUG)
 ```
 
+## Integration with VOLTTRON
+
+### Installing the Driver
+
+1. Place the `spirae_wave` directory in:
+   ```
+   $VOLTTRON_HOME/services/core/PlatformDriverAgent/platform_driver/interfaces/
+   ```
+
+2. Configure your device in the platform driver:
+   ```bash
+   vctl config store platform.driver devices/spirae_wave spirae_wave.config
+   vctl config store platform.driver spirae_wave.csv spirae_wave.csv --csv
+   ```
+
+3. Restart the PlatformDriver agent:
+   ```bash
+   vctl restart platform.driver
+   ```
+
+### Verifying Operation
+
+Check that the driver loaded successfully:
+```bash
+vctl status
+vctl log platform.driver | grep spirae_wave
+```
+
+Test reading a point:
+```bash
+vctl rpc platform.driver get_point spirae_wave system/System_frequency
+```
+
 ## Testing
 
-The driver can be tested using the provided sample data files:
-- `endpoints.json`: Sample endpoint responses
+The driver includes comprehensive unit tests in `test_spirae_wave.py`. Run tests with:
+```bash
+python -m pytest test_spirae_wave.py
+```
+
+The driver can also be tested using the provided sample data files:
+- `endpoints.json`: Sample endpoint responses from a real system
 - `assets.json`: Sample asset list
-- `scratch.py`: Example authentication and data fetching code
+- `scratch.py`: Example authentication and data fetching code for manual testing
 
 ## Troubleshooting
 
@@ -221,3 +263,14 @@ The driver can be tested using the provided sample data files:
    - Increase the timeout value in configuration
    - Check network latency to the Spirae Wave system
    - Verify the system is not overloaded
+
+5. **Import Errors with grequests**
+   - Ensure grequests is installed: `pip install grequests`
+   - If you see gevent errors, make sure gevent is properly installed
+   - The driver must run within the PlatformDriver's gevent context
+
+6. **No Registers Discovered**
+   - Check that the user has permissions to access asset properties
+   - Verify the assets endpoint returns a valid list
+   - Check debug logs for discovery process details
+   - Ensure asset_property_map isn't filtering out all assets
