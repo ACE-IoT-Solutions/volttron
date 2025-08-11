@@ -37,13 +37,16 @@
 # }}}
 
 import logging
-import requests
+import grequests
+import requests  # Still needed for Session compatibility
 import json
+import gevent
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime, timedelta
-from threading import Lock
+from gevent.lock import RLock
 from urllib.parse import urljoin
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.exceptions import RequestException, Timeout, ConnectionError as RequestsConnectionError
 
 from platform_driver.interfaces import BaseInterface, BaseRegister, BasicRevert
 
@@ -106,7 +109,7 @@ class Interface(BasicRevert, BaseInterface):
         self.session = None
         self.asset_property_map = None
         self.asset_cache = {}
-        self.lock = Lock()
+        self.lock = RLock()  # Use gevent RLock for greenlet safety
         self.discovered_assets = []
         self.register_map = {}
         
@@ -151,11 +154,17 @@ class Interface(BasicRevert, BaseInterface):
         """Authenticate with the Spirae Wave system and obtain a token."""
         try:
             login_url = urljoin(self.url, '/login')
-            response = self.session.post(
+            # Use grequests for async operation
+            req = grequests.post(
                 login_url,
                 json={'username': self.username, 'password': self.password},
-                timeout=self.timeout
+                timeout=self.timeout,
+                verify=self.verify_ssl
             )
+            response = grequests.map([req], exception_handler=self._exception_handler)[0]
+            
+            if response is None:
+                raise ConnectionError("Authentication request failed - no response received")
             
             if response.status_code != HTTP_STATUS_OK:
                 raise ConnectionError(f"Authentication failed with status {response.status_code}: {response.text}")
@@ -171,12 +180,17 @@ class Interface(BasicRevert, BaseInterface):
             
             _log.debug("Successfully authenticated with Spirae Wave system")
             
-        except requests.exceptions.RequestException as e:
+        except (RequestException, RequestsConnectionError, Timeout) as e:
             _log.error(f"Network error during authentication: {e}")
             raise ConnectionError(f"Failed to connect to Spirae Wave system: {e}")
         except Exception as e:
             _log.error(f"Authentication error: {e}")
             raise
+    
+    def _exception_handler(self, request, exception):
+        """Handle exceptions from grequests."""
+        _log.error(f"Request failed: {request.url} - {exception}")
+        return None
     
     def _ensure_authenticated(self):
         """Ensure we have a valid authentication token, refreshing if necessary."""
@@ -325,26 +339,68 @@ class Interface(BasicRevert, BaseInterface):
             _log.warning(f"Failed to parse registry configuration: {e}")
     
     def _make_request(self, method, url, **kwargs):
-        """Make an HTTP request with automatic token refresh."""
+        """Make an HTTP request with automatic token refresh using grequests."""
         self._ensure_authenticated()
         
         try:
             kwargs['timeout'] = kwargs.get('timeout', self.timeout)
-            response = self.session.request(method, url, **kwargs)
+            kwargs['verify'] = kwargs.get('verify', self.verify_ssl)
+            
+            # Add token header
+            headers = kwargs.get('headers', {})
+            headers.update(self.session.headers)
+            kwargs['headers'] = headers
+            
+            # Create grequests based on method
+            if method.upper() == 'GET':
+                req = grequests.get(url, **kwargs)
+            elif method.upper() == 'POST':
+                req = grequests.post(url, **kwargs)
+            elif method.upper() == 'PUT':
+                req = grequests.put(url, **kwargs)
+            elif method.upper() == 'DELETE':
+                req = grequests.delete(url, **kwargs)
+            else:
+                req = grequests.request(method, url, **kwargs)
+            
+            # Execute request asynchronously
+            response = grequests.map([req], exception_handler=self._exception_handler)[0]
+            
+            if response is None:
+                raise ConnectionError(f"Request to {url} failed - no response received")
             
             # Check if token expired and retry
             if response.status_code == 401:
                 _log.debug("Received 401, re-authenticating and retrying")
                 self._authenticate()
-                response = self.session.request(method, url, **kwargs)
+                
+                # Update headers with new token
+                headers.update(self.session.headers)
+                kwargs['headers'] = headers
+                
+                # Retry request
+                if method.upper() == 'GET':
+                    req = grequests.get(url, **kwargs)
+                elif method.upper() == 'POST':
+                    req = grequests.post(url, **kwargs)
+                else:
+                    req = grequests.request(method, url, **kwargs)
+                    
+                response = grequests.map([req], exception_handler=self._exception_handler)[0]
+                
+                if response is None:
+                    raise ConnectionError(f"Retry request to {url} failed after re-authentication")
             
             return response
             
-        except requests.exceptions.Timeout:
+        except Timeout:
             _log.error(f"Request timeout for {url}")
             raise
-        except requests.exceptions.RequestException as e:
+        except (RequestException, RequestsConnectionError) as e:
             _log.error(f"Request failed for {url}: {e}")
+            raise
+        except Exception as e:
+            _log.error(f"Unexpected error in request to {url}: {e}")
             raise
     
     def get_point(self, point_name, **kwargs):
@@ -406,11 +462,13 @@ class Interface(BasicRevert, BaseInterface):
             raise
     
     def _scrape_all(self):
-        """Read all points from the device."""
+        """Read all points from the device using batch requests."""
         results = {}
         
         try:
-            # Group registers by asset for efficient fetching
+            self._ensure_authenticated()
+            
+            # Group registers by asset/endpoint for efficient fetching
             assets_to_fetch = {}
             for point_name, register in self.point_map.items():
                 if register.asset_name not in assets_to_fetch:
@@ -422,17 +480,61 @@ class Interface(BasicRevert, BaseInterface):
                 
                 assets_to_fetch[register.asset_name][endpoint].append((point_name, register))
             
-            # Fetch data for each asset
+            # Build batch requests
+            batch_requests = []
+            request_map = {}  # Map request to asset/endpoint/registers
+            
             for asset_name, endpoints in assets_to_fetch.items():
                 for endpoint, registers in endpoints.items():
+                    url = urljoin(self.url, f'/assets/{asset_name}/{endpoint}')
+                    
+                    # Create request with headers
+                    headers = dict(self.session.headers)
+                    req = grequests.get(
+                        url,
+                        headers=headers,
+                        timeout=self.timeout,
+                        verify=self.verify_ssl
+                    )
+                    
+                    batch_requests.append(req)
+                    request_map[req] = (asset_name, endpoint, registers)
+            
+            # Execute all requests in parallel
+            responses = grequests.map(
+                batch_requests,
+                exception_handler=self._exception_handler,
+                size=10  # Limit concurrent requests
+            )
+            
+            # Process responses
+            for req, response in zip(batch_requests, responses):
+                asset_name, endpoint, registers = request_map[req]
+                
+                if response is None:
+                    _log.warning(f"No response for {endpoint} on asset {asset_name}")
+                    for point_name, _ in registers:
+                        results[point_name] = None
+                    continue
+                
+                if response.status_code == 401:
+                    # Token expired, re-authenticate and retry this specific request
+                    _log.debug("Token expired during scrape_all, re-authenticating")
+                    self._authenticate()
+                    
+                    # Retry this specific request
+                    headers = dict(self.session.headers)
+                    retry_req = grequests.get(
+                        req.url,
+                        headers=headers,
+                        timeout=self.timeout,
+                        verify=self.verify_ssl
+                    )
+                    retry_response = grequests.map([retry_req], exception_handler=self._exception_handler)[0]
+                    response = retry_response if retry_response else response
+                
+                if response and response.status_code == HTTP_STATUS_OK:
                     try:
-                        url = urljoin(self.url, f'/assets/{asset_name}/{endpoint}')
-                        response = self._make_request('GET', url)
-                        
-                        if response.status_code != HTTP_STATUS_OK:
-                            _log.warning(f"Failed to fetch {endpoint} for asset {asset_name}")
-                            continue
-                        
                         properties = response.json()
                         
                         if isinstance(properties, list):
@@ -447,12 +549,19 @@ class Interface(BasicRevert, BaseInterface):
                                     results[point_name] = register.get_state(value)
                                 else:
                                     results[point_name] = None
-                        
+                        else:
+                            _log.warning(f"Unexpected response format for {endpoint} on {asset_name}")
+                            for point_name, _ in registers:
+                                results[point_name] = None
+                                
                     except Exception as e:
-                        _log.error(f"Failed to fetch {endpoint} for asset {asset_name}: {e}")
-                        # Set None for all registers from this endpoint
+                        _log.error(f"Failed to parse response for {endpoint} on {asset_name}: {e}")
                         for point_name, _ in registers:
                             results[point_name] = None
+                else:
+                    _log.warning(f"Failed to fetch {endpoint} for asset {asset_name}: status {response.status_code if response else 'None'}")
+                    for point_name, _ in registers:
+                        results[point_name] = None
             
             return results
             

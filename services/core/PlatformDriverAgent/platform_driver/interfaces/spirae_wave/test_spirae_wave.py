@@ -6,9 +6,10 @@ Unit tests for the Spirae Wave interface driver.
 """
 
 import unittest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, PropertyMock
 import json
 from datetime import datetime, timedelta
+import grequests
 
 # Import the interface module
 from platform_driver.interfaces.spirae_wave import Interface, Register
@@ -93,8 +94,9 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             }
         ]
     
+    @patch('platform_driver.interfaces.spirae_wave.grequests')
     @patch('platform_driver.interfaces.spirae_wave.requests.Session')
-    def test_configure_basic(self, mock_session_class):
+    def test_configure_basic(self, mock_session_class, mock_grequests):
         """Test basic configuration without asset filtering."""
         # Mock the session and responses
         mock_session = MagicMock()
@@ -115,19 +117,21 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         properties_response.status_code = 200
         properties_response.json.return_value = self.sample_properties
         
-        # Configure mock to return different responses
-        mock_session.post.return_value = auth_response
-        mock_session.request.side_effect = [
-            assets_response,  # For getting assets
-            properties_response,  # For system properties
-            Mock(status_code=404),  # For system status
-            Mock(status_code=404),  # For system quickview
-            properties_response,  # For bess properties
-            Mock(status_code=404),  # For bess status
-            Mock(status_code=404),  # For bess quickview
-            properties_response,  # For pv1 properties
-            Mock(status_code=404),  # For pv1 status
-            Mock(status_code=404),  # For pv1 quickview
+        # Configure grequests mock
+        mock_grequests.post.return_value = Mock()
+        mock_grequests.get.return_value = Mock()
+        mock_grequests.map.side_effect = [
+            [auth_response],  # For authentication
+            [assets_response],  # For getting assets
+            [properties_response],  # For system properties
+            [Mock(status_code=404)],  # For system status
+            [Mock(status_code=404)],  # For system quickview
+            [properties_response],  # For bess properties
+            [Mock(status_code=404)],  # For bess status
+            [Mock(status_code=404)],  # For bess quickview
+            [properties_response],  # For pv1 properties
+            [Mock(status_code=404)],  # For pv1 status
+            [Mock(status_code=404)],  # For pv1 quickview
         ]
         
         # Configure the interface
@@ -141,7 +145,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         self.assertEqual(self.interface.timeout, 10)
         
         # Verify authentication was called
-        mock_session.post.assert_called_once()
+        mock_grequests.post.assert_called()
         
         # Verify token was set
         self.assertEqual(self.interface.token, "test_token")
@@ -158,8 +162,9 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         
         self.assertIn("required configuration parameters", str(context.exception))
     
+    @patch('platform_driver.interfaces.spirae_wave.grequests')
     @patch('platform_driver.interfaces.spirae_wave.requests.Session')
-    def test_asset_property_filtering(self, mock_session_class):
+    def test_asset_property_filtering(self, mock_session_class, mock_grequests):
         """Test configuration with asset/property filtering."""
         # Add filtering to config
         self.config_dict["asset_property_map"] = {
@@ -175,7 +180,9 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         auth_response = Mock()
         auth_response.status_code = 200
         auth_response.json.return_value = {"data": "test_token"}
-        mock_session.post.return_value = auth_response
+        # Configure grequests mock
+        mock_grequests.post.return_value = Mock()
+        mock_grequests.get.return_value = Mock()
         
         # Mock assets response
         assets_response = Mock()
@@ -187,14 +194,15 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         properties_response.status_code = 200
         properties_response.json.return_value = self.sample_properties
         
-        mock_session.request.side_effect = [
-            assets_response,
-            properties_response,
-            Mock(status_code=404),
-            Mock(status_code=404),
-            properties_response,
-            Mock(status_code=404),
-            Mock(status_code=404),
+        mock_grequests.map.side_effect = [
+            [auth_response],
+            [assets_response],
+            [properties_response],
+            [Mock(status_code=404)],
+            [Mock(status_code=404)],
+            [properties_response],
+            [Mock(status_code=404)],
+            [Mock(status_code=404)],
         ]
         
         # Configure the interface
@@ -204,8 +212,9 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         self.assertIn("system/System_frequency", self.interface.point_map)
         self.assertNotIn("pv1/System_frequency", self.interface.point_map)
     
+    @patch('platform_driver.interfaces.spirae_wave.grequests')
     @patch('platform_driver.interfaces.spirae_wave.requests.Session')
-    def test_authentication_failure(self, mock_session_class):
+    def test_authentication_failure(self, mock_session_class, mock_grequests):
         """Test handling of authentication failure."""
         mock_session = MagicMock()
         mock_session_class.return_value = mock_session
@@ -214,7 +223,8 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         auth_response = Mock()
         auth_response.status_code = 401
         auth_response.text = "Invalid credentials"
-        mock_session.post.return_value = auth_response
+        mock_grequests.post.return_value = Mock()
+        mock_grequests.map.return_value = [auth_response]
         
         with self.assertRaises(ConnectionError) as context:
             self.interface.configure(self.config_dict, None)
@@ -348,8 +358,9 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         self.assertEqual(results["system/System_frequency"], 60.01)
         self.assertEqual(results["system/System_voltage"], 210.5)
     
+    @patch('platform_driver.interfaces.spirae_wave.grequests')
     @patch('platform_driver.interfaces.spirae_wave.requests.Session')
-    def test_token_refresh(self, mock_session_class):
+    def test_token_refresh(self, mock_session_class, mock_grequests):
         """Test automatic token refresh when expired."""
         mock_session = MagicMock()
         mock_session_class.return_value = mock_session
@@ -366,7 +377,8 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         auth_response = Mock()
         auth_response.status_code = 200
         auth_response.json.return_value = {"data": "new_token"}
-        mock_session.post.return_value = auth_response
+        mock_grequests.post.return_value = Mock()
+        mock_grequests.map.return_value = [auth_response]
         
         # Trigger token refresh
         self.interface._ensure_authenticated()

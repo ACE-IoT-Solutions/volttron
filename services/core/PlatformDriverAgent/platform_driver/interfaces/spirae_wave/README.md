@@ -10,6 +10,17 @@ This driver provides integration with Spirae Wave energy management systems thro
 - **Asset filtering**: Optional filtering to limit data collection to specific assets/properties
 - **Robust error handling**: Includes retry logic and graceful error recovery
 - **SSL support**: Configurable SSL verification for secure connections
+- **Async operations**: Uses grequests for non-blocking HTTP requests in gevent context
+- **Batch scraping**: Efficiently fetches all points using parallel requests
+
+## Dependencies
+
+The driver requires the following Python packages:
+- `grequests>=0.6.0` - For async HTTP requests in gevent context
+- `requests>=2.28.0` - HTTP library
+- `gevent>=21.0.0` - Coroutine-based Python networking library
+
+These are automatically installed with the PlatformDriver agent.
 
 ## Configuration
 
