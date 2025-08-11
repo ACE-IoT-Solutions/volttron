@@ -84,12 +84,9 @@ When the driver starts, it:
 
 1. Authenticates with the Spirae Wave system
 2. Fetches the list of available assets from `/assets`
-3. For each asset, queries the following endpoints:
-   - `/assets/{asset}/properties` - Configuration and command properties
-   - `/assets/{asset}/status` - Status information
-   - `/assets/{asset}/quickview` - Quick view data
+3. For each asset, queries the `/assets/{asset}/properties` endpoint to get all available properties
 4. Creates VOLTTRON registers for each discovered property
-5. Properties in the "Command Info" group are marked as writable
+5. Properties with "Command" in their group name are marked as writable
 
 ## Register Naming Convention
 

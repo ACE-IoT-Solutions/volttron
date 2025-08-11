@@ -27,7 +27,7 @@ class TestSpiraeWaveRegister(unittest.TestCase):
             description="Test Point",
             asset_name="system",
             property_name="test_point",
-            property_data={"endpoint": "properties", "group": "Command Info"}
+            property_data={"group": "Command Info"}
         )
     
     def test_register_initialization(self):
@@ -124,14 +124,8 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             [auth_response],  # For authentication
             [assets_response],  # For getting assets
             [properties_response],  # For system properties
-            [Mock(status_code=404)],  # For system status
-            [Mock(status_code=404)],  # For system quickview
             [properties_response],  # For bess properties
-            [Mock(status_code=404)],  # For bess status
-            [Mock(status_code=404)],  # For bess quickview
             [properties_response],  # For pv1 properties
-            [Mock(status_code=404)],  # For pv1 status
-            [Mock(status_code=404)],  # For pv1 quickview
         ]
         
         # Configure the interface
@@ -197,12 +191,8 @@ class TestSpiraeWaveInterface(unittest.TestCase):
         mock_grequests.map.side_effect = [
             [auth_response],
             [assets_response],
-            [properties_response],
-            [Mock(status_code=404)],
-            [Mock(status_code=404)],
-            [properties_response],
-            [Mock(status_code=404)],
-            [Mock(status_code=404)],
+            [properties_response],  # For system properties
+            [properties_response],  # For bess properties
         ]
         
         # Configure the interface
@@ -242,7 +232,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             description="System Frequency",
             asset_name="system",
             property_name="System_frequency",
-            property_data={"endpoint": "properties"}
+            property_data={}
         )
         
         self.interface.point_map = {"system/System_frequency": register}
@@ -275,7 +265,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             description="Reset Alarms",
             asset_name="system",
             property_name="System_reset",
-            property_data={"endpoint": "properties", "group": "Command Info"}
+            property_data={"group": "Command Info"}
         )
         
         self.interface.point_map = {"system/System_reset": register}
@@ -302,7 +292,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             description="System Frequency",
             asset_name="system",
             property_name="System_frequency",
-            property_data={"endpoint": "properties"}
+            property_data={}
         )
         
         self.interface.point_map = {"system/System_frequency": register}
@@ -325,7 +315,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             description="System Frequency",
             asset_name="system",
             property_name="System_frequency",
-            property_data={"endpoint": "properties"}
+            property_data={}
         )
         
         register2 = Register(
@@ -335,7 +325,7 @@ class TestSpiraeWaveInterface(unittest.TestCase):
             description="System Voltage",
             asset_name="system",
             property_name="System_voltage",
-            property_data={"endpoint": "properties"}
+            property_data={}
         )
         
         self.interface.point_map = {

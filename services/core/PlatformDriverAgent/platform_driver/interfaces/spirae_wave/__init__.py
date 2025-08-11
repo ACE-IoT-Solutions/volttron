@@ -74,7 +74,6 @@ class Register(BaseRegister):
         self.asset_name = asset_name
         self.property_name = property_name
         self.property_data = property_data
-        self.endpoint = property_data.get('endpoint', 'properties')
         
     def get_state(self, value):
         """Convert value to appropriate type based on property data."""
@@ -228,73 +227,66 @@ class Interface(BasicRevert, BaseInterface):
     def _generate_registers_for_asset(self, asset_name):
         """Generate registers for a specific asset by fetching its properties."""
         try:
-            # Fetch properties for the asset
-            for endpoint in ['properties', 'status', 'quickview']:
-                properties_url = urljoin(self.url, f'/assets/{asset_name}/{endpoint}')
-                
-                try:
-                    response = self._make_request('GET', properties_url)
-                    
-                    if response.status_code != HTTP_STATUS_OK:
-                        _log.debug(f"No {endpoint} endpoint for asset {asset_name}")
-                        continue
-                    
-                    properties = response.json()
-                    
-                    if not isinstance(properties, list):
-                        _log.warning(f"Unexpected {endpoint} format for asset {asset_name}: {type(properties)}")
-                        continue
-                    
-                    # Create registers from properties
-                    for prop in properties:
-                        if not isinstance(prop, dict):
-                            continue
-                        
-                        property_name = prop.get('name')
-                        if not property_name:
-                            continue
-                        
-                        # Check if we should include this property based on filter map
-                        if self.asset_property_map:
-                            if asset_name in self.asset_property_map:
-                                allowed_props = self.asset_property_map[asset_name]
-                                if allowed_props and property_name not in allowed_props:
-                                    _log.debug(f"Skipping property {property_name} for asset {asset_name}")
-                                    continue
-                        
-                        # Create unique volttron point name
-                        volttron_point_name = f"{asset_name}/{property_name}"
-                        
-                        # Determine if property is writable
-                        # In the properties endpoint, typically command-related properties are writable
-                        group = prop.get('group', '')
-                        read_only = 'Command' not in group
-                        
-                        # Create register
-                        register = Register(
-                            read_only=read_only,
-                            volttron_point_name=volttron_point_name,
-                            units=prop.get('units', ''),
-                            description=prop.get('displayname', property_name),
-                            asset_name=asset_name,
-                            property_name=property_name,
-                            property_data={
-                                'endpoint': endpoint,
-                                'group': group,
-                                'subgroup': prop.get('subgroup', ''),
-                                'value': prop.get('value')
-                            }
-                        )
-                        
-                        # Add to point map and register map
-                        self.insert_register(register)
-                        self.register_map[volttron_point_name] = register
-                        
-                        _log.debug(f"Added register: {volttron_point_name} (read_only={read_only})")
-                        
-                except Exception as e:
-                    _log.warning(f"Failed to process {endpoint} for asset {asset_name}: {e}")
+            # Fetch properties for the asset (only endpoint needed)
+            properties_url = urljoin(self.url, f'/assets/{asset_name}/properties')
+            
+            response = self._make_request('GET', properties_url)
+            
+            if response.status_code != HTTP_STATUS_OK:
+                _log.warning(f"Failed to fetch properties for asset {asset_name}: status {response.status_code}")
+                return
+            
+            properties = response.json()
+            
+            if not isinstance(properties, list):
+                _log.warning(f"Unexpected properties format for asset {asset_name}: {type(properties)}")
+                return
+            
+            # Create registers from properties
+            for prop in properties:
+                if not isinstance(prop, dict):
                     continue
+                
+                property_name = prop.get('name')
+                if not property_name:
+                    continue
+                
+                # Check if we should include this property based on filter map
+                if self.asset_property_map:
+                    if asset_name in self.asset_property_map:
+                        allowed_props = self.asset_property_map[asset_name]
+                        if allowed_props and property_name not in allowed_props:
+                            _log.debug(f"Skipping property {property_name} for asset {asset_name}")
+                            continue
+                
+                # Create unique volttron point name
+                volttron_point_name = f"{asset_name}/{property_name}"
+                
+                # Determine if property is writable
+                # Properties with 'Command' in their group are typically writable
+                group = prop.get('group', '')
+                read_only = 'Command' not in group
+                
+                # Create register
+                register = Register(
+                    read_only=read_only,
+                    volttron_point_name=volttron_point_name,
+                    units=prop.get('units', ''),
+                    description=prop.get('displayname', property_name),
+                    asset_name=asset_name,
+                    property_name=property_name,
+                    property_data={
+                        'group': group,
+                        'subgroup': prop.get('subgroup', ''),
+                        'value': prop.get('value')
+                    }
+                )
+                
+                # Add to point map and register map
+                self.insert_register(register)
+                self.register_map[volttron_point_name] = register
+                
+                _log.debug(f"Added register: {volttron_point_name} (read_only={read_only})")
             
         except Exception as e:
             _log.error(f"Failed to generate registers for asset {asset_name}: {e}")
@@ -329,7 +321,7 @@ class Interface(BasicRevert, BaseInterface):
                             description=reg_def.get('Description', point_name),
                             asset_name=asset_name,
                             property_name=property_name,
-                            property_data={'endpoint': 'properties'}
+                            property_data={}
                         )
                         
                         self.insert_register(register)
@@ -408,9 +400,8 @@ class Interface(BasicRevert, BaseInterface):
         try:
             register = self.get_register_by_name(point_name)
             
-            # Build URL for the specific property
-            endpoint = register.property_data.get('endpoint', 'properties')
-            url = urljoin(self.url, f'/assets/{register.asset_name}/{endpoint}')
+            # Build URL for the asset properties
+            url = urljoin(self.url, f'/assets/{register.asset_name}/properties')
             
             response = self._make_request('GET', url)
             
@@ -468,37 +459,31 @@ class Interface(BasicRevert, BaseInterface):
         try:
             self._ensure_authenticated()
             
-            # Group registers by asset/endpoint for efficient fetching
+            # Group registers by asset for efficient fetching
             assets_to_fetch = {}
             for point_name, register in self.point_map.items():
                 if register.asset_name not in assets_to_fetch:
-                    assets_to_fetch[register.asset_name] = {}
-                
-                endpoint = register.property_data.get('endpoint', 'properties')
-                if endpoint not in assets_to_fetch[register.asset_name]:
-                    assets_to_fetch[register.asset_name][endpoint] = []
-                
-                assets_to_fetch[register.asset_name][endpoint].append((point_name, register))
+                    assets_to_fetch[register.asset_name] = []
+                assets_to_fetch[register.asset_name].append((point_name, register))
             
-            # Build batch requests
+            # Build batch requests - one per asset
             batch_requests = []
-            request_map = {}  # Map request to asset/endpoint/registers
+            request_map = {}  # Map request to asset/registers
             
-            for asset_name, endpoints in assets_to_fetch.items():
-                for endpoint, registers in endpoints.items():
-                    url = urljoin(self.url, f'/assets/{asset_name}/{endpoint}')
-                    
-                    # Create request with headers
-                    headers = dict(self.session.headers)
-                    req = grequests.get(
-                        url,
-                        headers=headers,
-                        timeout=self.timeout,
-                        verify=self.verify_ssl
-                    )
-                    
-                    batch_requests.append(req)
-                    request_map[req] = (asset_name, endpoint, registers)
+            for asset_name, registers in assets_to_fetch.items():
+                url = urljoin(self.url, f'/assets/{asset_name}/properties')
+                
+                # Create request with headers
+                headers = dict(self.session.headers)
+                req = grequests.get(
+                    url,
+                    headers=headers,
+                    timeout=self.timeout,
+                    verify=self.verify_ssl
+                )
+                
+                batch_requests.append(req)
+                request_map[req] = (asset_name, registers)
             
             # Execute all requests in parallel
             responses = grequests.map(
@@ -509,10 +494,10 @@ class Interface(BasicRevert, BaseInterface):
             
             # Process responses
             for req, response in zip(batch_requests, responses):
-                asset_name, endpoint, registers = request_map[req]
+                asset_name, registers = request_map[req]
                 
                 if response is None:
-                    _log.warning(f"No response for {endpoint} on asset {asset_name}")
+                    _log.warning(f"No response for properties on asset {asset_name}")
                     for point_name, _ in registers:
                         results[point_name] = None
                     continue
@@ -550,16 +535,16 @@ class Interface(BasicRevert, BaseInterface):
                                 else:
                                     results[point_name] = None
                         else:
-                            _log.warning(f"Unexpected response format for {endpoint} on {asset_name}")
+                            _log.warning(f"Unexpected response format for properties on {asset_name}"
                             for point_name, _ in registers:
                                 results[point_name] = None
                                 
                     except Exception as e:
-                        _log.error(f"Failed to parse response for {endpoint} on {asset_name}: {e}")
+                        _log.error(f"Failed to parse response for properties on {asset_name}: {e}"
                         for point_name, _ in registers:
                             results[point_name] = None
                 else:
-                    _log.warning(f"Failed to fetch {endpoint} for asset {asset_name}: status {response.status_code if response else 'None'}")
+                    _log.warning(f"Failed to fetch properties for asset {asset_name}: status {response.status_code if response else 'None'}")
                     for point_name, _ in registers:
                         results[point_name] = None
             
