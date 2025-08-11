@@ -535,12 +535,12 @@ class Interface(BasicRevert, BaseInterface):
                                 else:
                                     results[point_name] = None
                         else:
-                            _log.warning(f"Unexpected response format for properties on {asset_name}"
+                            _log.warning(f"Unexpected response format for properties on {asset_name}")
                             for point_name, _ in registers:
                                 results[point_name] = None
                                 
                     except Exception as e:
-                        _log.error(f"Failed to parse response for properties on {asset_name}: {e}"
+                        _log.error(f"Failed to parse response for properties on {asset_name}: {e}")
                         for point_name, _ in registers:
                             results[point_name] = None
                 else:
