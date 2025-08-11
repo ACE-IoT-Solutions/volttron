@@ -88,7 +88,7 @@ Configure the gateway as a VOLTTRON device with multiple units, each having its 
 }
 ```
 
-Points will be named: `power_meter_1.voltage`, `power_meter_2.current`, etc.
+Points will be named: `power_meter_1/voltage`, `power_meter_2/current`, etc.
 
 ### 2. Unit as Device (More granular control)
 

@@ -91,7 +91,7 @@ Use "address" in gateway config (though "device_address" is supported for backwa
 
 ### Gateway Device Mode
 - One VOLTTRON device represents a gateway with multiple modbus units
-- Point names are prefixed with unit names (e.g., "power_meter_1.voltage")
+- Point names are prefixed with unit names (e.g., "power_meter_1/voltage")
 - Registry config is a dict mapping unit IDs to CSV files
 
 ### Unit Device Mode  

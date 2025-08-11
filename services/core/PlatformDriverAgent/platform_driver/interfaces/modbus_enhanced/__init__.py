@@ -461,7 +461,7 @@ class Interface(BasicRevert, BaseInterface):
                             register_type = 'uint16'  # Default
                     
                     # Prefix point name with unit name for gateway device mode
-                    full_point_name = f"{unit_config['name']}.{point_name}"
+                    full_point_name = f"{unit_config['name']}/{point_name}"
                     
                     # Parse transform if provided
                     transform = None
@@ -526,7 +526,7 @@ class Interface(BasicRevert, BaseInterface):
                         address=reg_dict['address'],
                         register_type=reg_dict.get('type', 'uint16'),
                         read_only=not reg_dict.get('writable', False),
-                        point_name=f"{unit_config['name']}.{reg_dict['name']}",
+                        point_name=f"{unit_config['name']}/{reg_dict['name']}",
                         units=reg_dict.get('units', ''),
                         unit_id=unit_id,
                         gateway_id=gateway_id,
