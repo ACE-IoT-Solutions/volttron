@@ -204,6 +204,16 @@ class DriverAgent(BasicAgent):
             self.meta_data[point] = {'units': register.get_units(),
                                      'type': ts_type,
                                      'tz': config.get('timezone', '')}
+        
+        # Initialize Prometheus metrics for this device
+        try:
+            total_points = len(self.interface.get_register_names())
+            self.parent.configured_points.labels(device=self.device_name).set(total_points)
+            self.parent.scraped_points.labels(device=self.device_name).set(0)
+            self.parent.device_up.labels(device=self.device_name).set(0)  # Initially down until first successful scrape
+            _log.debug(f"Initialized metrics for device {self.device_name} with {total_points} configured points")
+        except Exception as e:
+            _log.warning(f"Failed to initialize metrics for device {self.device_name}: {e}")
 
         self.base_topic = DEVICES_VALUE(campus='',
                                         building='',
@@ -244,26 +254,40 @@ class DriverAgent(BasicAgent):
         self.parent.scrape_starting(self.device_name)
 
         try:
-            # _log.debug(f"scraping {self.device_path=} from driver interface")
-            # if self.last_noresponse + datetime.timedelta(hours=24) > datetime.datetime.now():
-            #     _log.debug(f"Skipping scrape of {self.device_name} due to recent noresponse")
-            #     return
             results = self.interface.scrape_all()
-            self.parent.point_count.labels(device=self.device_name).set(len(results))
-            _log.debug(f"{len(results)=}")
+            
+            # Get total configured points
             register_names = self.interface.get_register_names_view()
+            total_configured = len(register_names)
+            
+            # Update metrics
+            self.parent.configured_points.labels(device=self.device_name).set(total_configured)
+            self.parent.scraped_points.labels(device=self.device_name).set(len(results))
+            self.parent.device_up.labels(device=self.device_name).set(1)  # Device is up if scrape succeeded
+            
+            _log.debug(f"Device {self.device_name}: scraped {len(results)}/{total_configured} points")
+            
+            # Track failed points
             for point in (register_names - results.keys()):
                 depth_first_topic = self.base_topic(point=point)
                 self.parent.failed_point_scrape.labels(point=depth_first_topic, device=self.device_name).inc()
                 _log.error("Failed to scrape point: "+depth_first_topic)
+                
         except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
             self.parent.error_counter.labels(device=self.device_name).inc()
+            self.parent.device_up.labels(device=self.device_name).set(0)  # Device is down if scrape failed
+            
+            # Still set configured points even on failure
+            try:
+                register_names = self.interface.get_register_names_view()
+                self.parent.configured_points.labels(device=self.device_name).set(len(register_names))
+            except:
+                pass  # If we can't get register names, skip
+                
+            self.parent.scraped_points.labels(device=self.device_name).set(0)  # No points scraped on failure
+            
             _log.error(f"Failed to scrape {self.device_name}. {exc=} traceback: {tb}")
-            # if "Device communication aborted: noResponse" in str(exc):
-            #     _log.debug(f"Adding unresponsive device: {self.device_name}")
-            #     self.last_noresponse = datetime.datetime.now()
-            # self.parent.last_scraped = datetime.datetime.now()
             return
         end_time = time.time()
         scrape_time = end_time-start_time

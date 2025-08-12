@@ -173,11 +173,24 @@ class PlatformDriverAgent(Agent):
 
         self.collector_registry = CollectorRegistry()
         new_buckets = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, 30, float("inf"))
+        
+        # Performance metrics
         self.performance_histogram = Histogram("device_scrape_time_histogram", "Time taken to scrape given device - histogram", ['device'], registry=self.collector_registry, buckets=new_buckets)
         self.performance_gauge = Gauge("device_scrape_time", "Time taken to scrape device", ['device'], registry=self.collector_registry)
+        
+        # Error tracking
         self.error_counter = Counter("device_error_count", "Number of errors per device", ['device'], registry=self.collector_registry)
         self.failed_point_scrape = Counter("failed_point_scrape", "Failed scrape for existing point", ['point', 'device'], registry=self.collector_registry)
-        self.point_count = Gauge("point_count", "Number of points per device", ['device'], registry=self.collector_registry)
+        
+        # Point count metrics - renamed for clarity
+        self.configured_points = Gauge("device_configured_points", "Total number of configured points per device", ['device'], registry=self.collector_registry)
+        self.scraped_points = Gauge("device_scraped_points", "Number of points successfully scraped in last attempt", ['device'], registry=self.collector_registry)
+        
+        # Device status (up/down)
+        self.device_up = Gauge("device_up", "Device status: 1=up, 0=down", ['device'], registry=self.collector_registry)
+        
+        # Deprecated - kept for backwards compatibility, will be removed
+        self.point_count = self.scraped_points  # Alias for backwards compatibility
 
         self.publish_depth_first_all = bool(publish_depth_first_all)
         self.publish_breadth_first_all = bool(publish_breadth_first_all)
@@ -215,8 +228,12 @@ class PlatformDriverAgent(Agent):
     @Core.periodic(10)
     def flush_metrics(self):
         if self.last_written < self.last_scraped:
-            self.last_written = datetime.now()
-            write_to_textfile(PROMETHEUS_METRICS_FILE, self.collector_registry)
+            try:
+                self.last_written = datetime.now()
+                write_to_textfile(PROMETHEUS_METRICS_FILE, self.collector_registry)
+                _log.debug(f"Prometheus metrics written to {PROMETHEUS_METRICS_FILE}")
+            except Exception as e:
+                _log.error(f"Failed to write Prometheus metrics to {PROMETHEUS_METRICS_FILE}: {e}")
 
     def configure_main(self, config_name, action, contents):
         config = self.default_config.copy()
