@@ -75,22 +75,36 @@ class Register(BaseRegister):
         self.property_name = property_name
         self.property_data = property_data
         
-    def get_state(self, value):
-        """Convert value to appropriate type based on property data."""
+    def get_state(self, value, collect_string_values=True):
+        """Convert value to appropriate type based on property data.
+        
+        Args:
+            value: The raw value from the API
+            collect_string_values: If False, only return numeric values
+            
+        Returns:
+            Converted value or None if string values are filtered out
+        """
         if value is None:
             return None
         
-        # Handle boolean values
+        # Handle boolean values - always convert to float
         if isinstance(value, bool):
-            return value
+            return 1.0 if value else 0.0
             
-        # Handle numeric values
+        # Try to convert to numeric
         try:
-            if '.' in str(value):
-                return float(value)
-            return int(value)
+            # First try to convert to float
+            numeric_value = float(value)
+            # Return as float to ensure consistency
+            return numeric_value
         except (ValueError, TypeError):
-            return str(value)
+            # Value is a string
+            if collect_string_values:
+                return str(value)
+            else:
+                # Filter out string values when not collecting them
+                return None
 
 
 class Interface(BasicRevert, BaseInterface):
@@ -111,6 +125,7 @@ class Interface(BasicRevert, BaseInterface):
         self.lock = RLock()  # Use gevent RLock for greenlet safety
         self.discovered_assets = []
         self.register_map = {}
+        self.collect_string_values = True  # Default to collecting all values
         
     def configure(self, config_dict, registry_config_str):
         """Configure the interface with connection parameters and discover registers."""
@@ -121,6 +136,7 @@ class Interface(BasicRevert, BaseInterface):
             self.password = config_dict.get('password')
             self.verify_ssl = config_dict.get('verify_ssl', True)
             self.timeout = config_dict.get('timeout', DEFAULT_TIMEOUT)
+            self.collect_string_values = config_dict.get('collect_string_values', True)
             
             # Validate required parameters
             if not all([self.url, self.username, self.password]):
@@ -266,6 +282,23 @@ class Interface(BasicRevert, BaseInterface):
                 # Properties with 'Command' in their group are typically writable
                 group = prop.get('group', '')
                 read_only = 'Command' not in group
+                
+                # Check if we should skip this property based on value type
+                # Do a preliminary check if string values are disabled
+                if not self.collect_string_values:
+                    sample_value = prop.get('value')
+                    if sample_value is not None:
+                        # Try to convert the sample value
+                        try:
+                            # Check if it's boolean or numeric
+                            if isinstance(sample_value, bool):
+                                pass  # Booleans are OK, will be converted to float
+                            else:
+                                float(sample_value)  # Try numeric conversion
+                        except (ValueError, TypeError):
+                            # It's a string value and we're not collecting strings
+                            _log.debug(f"Skipping string property {property_name} for asset {asset_name}")
+                            continue
                 
                 # Create register
                 register = Register(
@@ -416,7 +449,10 @@ class Interface(BasicRevert, BaseInterface):
                 for prop in properties:
                     if prop.get('name') == register.property_name:
                         value = prop.get('value')
-                        return register.get_state(value)
+                        result = register.get_state(value, self.collect_string_values)
+                        if result is None and not self.collect_string_values:
+                            _log.debug(f"Filtered out string value for {point_name}")
+                        return result
             
             _log.warning(f"Property {register.property_name} not found in response")
             return None
@@ -531,7 +567,10 @@ class Interface(BasicRevert, BaseInterface):
                             for point_name, register in registers:
                                 if register.property_name in prop_map:
                                     value = prop_map[register.property_name]
-                                    results[point_name] = register.get_state(value)
+                                    result = register.get_state(value, self.collect_string_values)
+                                    # Only add to results if value passes filter
+                                    if result is not None or self.collect_string_values:
+                                        results[point_name] = result
                                 else:
                                     results[point_name] = None
                         else:

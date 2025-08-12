@@ -40,6 +40,7 @@ The driver requires the following configuration parameters:
         "password": "admin",                    // Authentication password
         "verify_ssl": false,                    // SSL certificate verification (optional, default: true)
         "timeout": 30,                          // Request timeout in seconds (optional, default: 30)
+        "collect_string_values": false,         // Collect string values (optional, default: true)
         "asset_property_map": {                 // Optional asset/property filtering
             "system": [                         // List specific properties to collect
                 "System_frequency",
@@ -54,6 +55,19 @@ The driver requires the following configuration parameters:
     "timezone": "US/Pacific"
 }
 ```
+
+### String Value Collection
+
+The `collect_string_values` parameter controls how the driver handles non-numeric data:
+
+- **`true` (default)**: Collects all values including strings
+- **`false`**: Only collects numeric values and booleans (converted to 1.0/0.0)
+
+When `collect_string_values` is `false`:
+- Boolean values are converted to floats (true → 1.0, false → 0.0)
+- Numeric values are passed through as floats
+- String values are filtered out during discovery and scraping
+- This is useful for historians that only support numeric data
 
 ### Asset Property Map
 

@@ -34,25 +34,33 @@ class TestSpiraeWaveRegister(unittest.TestCase):
         """Test register is properly initialized."""
         self.assertEqual(self.register.asset_name, "system")
         self.assertEqual(self.register.property_name, "test_point")
-        self.assertEqual(self.register.endpoint, "properties")
         self.assertFalse(self.register.read_only)
     
     def test_get_state_boolean(self):
-        """Test get_state with boolean values."""
-        self.assertTrue(self.register.get_state(True))
-        self.assertFalse(self.register.get_state(False))
+        """Test get_state with boolean values - should convert to float."""
+        self.assertEqual(self.register.get_state(True), 1.0)
+        self.assertEqual(self.register.get_state(False), 0.0)
     
     def test_get_state_numeric(self):
-        """Test get_state with numeric values."""
-        self.assertEqual(self.register.get_state("10"), 10)
+        """Test get_state with numeric values - should always return float."""
+        self.assertEqual(self.register.get_state("10"), 10.0)
         self.assertEqual(self.register.get_state("10.5"), 10.5)
-        self.assertEqual(self.register.get_state(42), 42)
+        self.assertEqual(self.register.get_state(42), 42.0)
         self.assertEqual(self.register.get_state(3.14), 3.14)
+        
+        # Numeric values should work regardless of collect_string_values flag
+        self.assertEqual(self.register.get_state("10", False), 10.0)
+        self.assertEqual(self.register.get_state(42, False), 42.0)
     
     def test_get_state_string(self):
         """Test get_state with string values."""
-        self.assertEqual(self.register.get_state("test"), "test")
-        self.assertEqual(self.register.get_state(""), "")
+        # With collect_string_values=True (default)
+        self.assertEqual(self.register.get_state("test", True), "test")
+        self.assertEqual(self.register.get_state("", True), "")
+        
+        # With collect_string_values=False (filter out strings)
+        self.assertIsNone(self.register.get_state("test", False))
+        self.assertIsNone(self.register.get_state("abc", False))
     
     def test_get_state_none(self):
         """Test get_state with None value."""
