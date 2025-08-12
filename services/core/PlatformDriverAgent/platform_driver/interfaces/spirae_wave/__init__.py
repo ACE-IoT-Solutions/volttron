@@ -36,6 +36,19 @@
 # under Contract DE-AC05-76RL01830
 # }}}
 
+"""
+Spirae Wave Interface Driver for VOLTTRON Platform Driver
+
+This driver provides integration with Spirae Wave energy management systems
+through their REST API.
+
+Version: 1.0.0
+Author: ACE IoT Solutions
+License: Apache 2.0
+"""
+
+__version__ = '1.0.0'
+
 import logging
 import grequests
 import requests  # Still needed for Session compatibility
