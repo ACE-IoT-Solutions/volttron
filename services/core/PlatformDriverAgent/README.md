@@ -4,6 +4,8 @@ The Platform Driver agent is a special purpose agent a user can install on the p
 platform with devices. The Platform driver features a number of endpoints for collecting data and sending control signals 
 using the message bus and automatically publishes data to the bus on a specified interval.
 
+**Version:** 4.7.0 - See [CHANGELOG.md](CHANGELOG.md) for recent updates
+
 ## Dependencies
 
 VOLTTRON drivers operated by the platform driver may have additional requirements for installation. Required libraries:
@@ -74,6 +76,41 @@ Volttron Point Name must exist in the registry. If this setting is missing the d
 to the device. Heart beats are triggered by the Actuator Agent which must be running to use this feature.
 3. group - Group this device belongs to. Defaults to 0
 
+
+## Prometheus Metrics
+
+The Platform Driver exports Prometheus metrics for monitoring device health and performance. Metrics are written to `/opt/packages/prometheus_exporter/scrape_files/scrape_metrics.prom` every 10 seconds.
+
+### Available Metrics
+
+#### Device Status
+- `device_up{device="name"}` - Device status (1=up, 0=down)
+- `device_configured_points{device="name"}` - Total configured points per device
+- `device_scraped_points{device="name"}` - Points successfully scraped in last attempt
+
+#### Performance
+- `device_scrape_time_histogram{device="name"}` - Histogram of scrape durations
+- `device_scrape_time{device="name"}` - Last scrape duration in seconds
+
+#### Error Tracking
+- `device_error_count{device="name"}` - Total error count per device
+- `failed_point_scrape{point="path", device="name"}` - Failed point scrape counter
+
+### Example Prometheus Queries
+
+```promql
+# Alert when device is down
+device_up{device="mydevice"} == 0
+
+# Alert on partial data collection (< 90% of points)
+(device_scraped_points / device_configured_points) < 0.9
+
+# Monitor 95th percentile scrape times
+histogram_quantile(0.95, rate(device_scrape_time_histogram[5m]))
+
+# Track error rates
+rate(device_error_count[5m]) > 0
+```
 
 ## Changes
 
