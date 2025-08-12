@@ -210,6 +210,7 @@ class DriverAgent(BasicAgent):
             total_points = len(self.interface.get_register_names())
             self.parent.configured_points.labels(device=self.device_name).set(total_points)
             self.parent.scraped_points.labels(device=self.device_name).set(0)
+            self.parent.point_count.labels(device=self.device_name).set(0)  # Legacy metric
             self.parent.device_up.labels(device=self.device_name).set(0)  # Initially down until first successful scrape
             _log.debug(f"Initialized metrics for device {self.device_name} with {total_points} configured points")
         except Exception as e:
@@ -263,6 +264,7 @@ class DriverAgent(BasicAgent):
             # Update metrics
             self.parent.configured_points.labels(device=self.device_name).set(total_configured)
             self.parent.scraped_points.labels(device=self.device_name).set(len(results))
+            self.parent.point_count.labels(device=self.device_name).set(len(results))  # Legacy metric - same value
             self.parent.device_up.labels(device=self.device_name).set(1)  # Device is up if scrape succeeded
             
             _log.debug(f"Device {self.device_name}: scraped {len(results)}/{total_configured} points")
@@ -286,6 +288,7 @@ class DriverAgent(BasicAgent):
                 pass  # If we can't get register names, skip
                 
             self.parent.scraped_points.labels(device=self.device_name).set(0)  # No points scraped on failure
+            self.parent.point_count.labels(device=self.device_name).set(0)  # Legacy metric
             
             _log.error(f"Failed to scrape {self.device_name}. {exc=} traceback: {tb}")
             return

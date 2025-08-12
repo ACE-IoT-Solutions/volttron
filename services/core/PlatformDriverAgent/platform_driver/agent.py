@@ -189,8 +189,8 @@ class PlatformDriverAgent(Agent):
         # Device status (up/down)
         self.device_up = Gauge("device_up", "Device status: 1=up, 0=down", ['device'], registry=self.collector_registry)
         
-        # Deprecated - kept for backwards compatibility, will be removed
-        self.point_count = self.scraped_points  # Alias for backwards compatibility
+        # Legacy metric for backwards compatibility with existing alerts
+        self.point_count = Gauge("point_count", "Number of points per device (same as device_scraped_points)", ['device'], registry=self.collector_registry)
 
         self.publish_depth_first_all = bool(publish_depth_first_all)
         self.publish_breadth_first_all = bool(publish_breadth_first_all)
