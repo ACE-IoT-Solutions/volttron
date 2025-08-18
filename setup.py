@@ -25,7 +25,32 @@
 import contextlib
 
 from setuptools import setup, find_packages
-from requirements import extras_require, install_requires
+
+# Inline requirements instead of importing
+install_requires = ['gevent==24.2.1',
+                    'grequests==0.7.0',
+                    'requests==2.31.0',
+                    'idna<3,>=2.5',
+                    'ply==3.11',
+                    'psutil==5.9.1',
+                    'python-dateutil==2.8.2',
+                    'pytz==2022.1',
+                    'PyYAML==6.0',
+                    'setuptools>=40.0.0,<=70.0.0',
+                    'tzlocal==2.1',
+                    'cryptography==37.0.4',
+                    'watchdog<5.0',
+                    'watchdog-gevent==0.1.1',
+                    'deprecated==1.2.14']
+
+extras_require = {'testing': ['mock==4.0.3',
+                              'pytest==7.1.2',
+                              'pytest-timeout==2.1.0',
+                              'pytest-rerunfailures==10.2',
+                              'websocket-client==1.2.2',
+                              'deepdiff==5.8.1',
+                              'docker==5.0.3',
+                              'pytest_asyncio==0.19.0']}
 
 with open('volttron/platform/__init__.py') as file:
     for line in file:
