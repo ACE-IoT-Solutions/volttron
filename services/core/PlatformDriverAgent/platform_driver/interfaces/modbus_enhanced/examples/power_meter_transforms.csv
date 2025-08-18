@@ -1,0 +1,45 @@
+Volttron Point Name,Point Address,Modbus Register,Units,Writable,Default Value,Transform,Notes
+voltage_l1,0,uint16,V,FALSE,,scale_0_1,L1 Voltage scaled from 0.1V resolution
+voltage_l2,2,uint16,V,FALSE,,scale_0_1,L2 Voltage scaled from 0.1V resolution
+voltage_l3,4,uint16,V,FALSE,,scale_0_1,L3 Voltage scaled from 0.1V resolution
+voltage_avg,6,uint16,V,FALSE,,scale_0_1,Average Voltage scaled from 0.1V resolution
+current_l1,8,uint16,A,FALSE,,mA_to_A,L1 Current converted from mA to A
+current_l2,10,uint16,A,FALSE,,mA_to_A,L2 Current converted from mA to A
+current_l3,12,uint16,A,FALSE,,mA_to_A,L3 Current converted from mA to A
+current_neutral,14,uint16,A,FALSE,,mA_to_A,Neutral Current converted from mA to A
+power_l1,16,int32,kW,FALSE,,lambda x: x * 0.001 if x != -2147483648 else None,L1 Power W to kW with error handling
+power_l2,20,int32,kW,FALSE,,lambda x: x * 0.001 if x != -2147483648 else None,L2 Power W to kW with error handling
+power_l3,24,int32,kW,FALSE,,lambda x: x * 0.001 if x != -2147483648 else None,L3 Power W to kW with error handling
+power_total,28,int32,kW,FALSE,,W_to_kW,Total Power W to kW
+reactive_power_l1,32,int32,kVAR,FALSE,,VAR_to_kVAR,L1 Reactive Power VAR to kVAR
+reactive_power_l2,36,int32,kVAR,FALSE,,VAR_to_kVAR,L2 Reactive Power VAR to kVAR
+reactive_power_l3,40,int32,kVAR,FALSE,,VAR_to_kVAR,L3 Reactive Power VAR to kVAR
+reactive_power_total,44,int32,kVAR,FALSE,,VAR_to_kVAR,Total Reactive Power VAR to kVAR
+apparent_power_l1,48,uint32,kVA,FALSE,,VA_to_kVA,L1 Apparent Power VA to kVA
+apparent_power_l2,52,uint32,kVA,FALSE,,VA_to_kVA,L2 Apparent Power VA to kVA
+apparent_power_l3,56,uint32,kVA,FALSE,,VA_to_kVA,L3 Apparent Power VA to kVA
+apparent_power_total,60,uint32,kVA,FALSE,,VA_to_kVA,Total Apparent Power VA to kVA
+power_factor_l1,64,int16,,FALSE,,pf_scale,L1 PF scaled from 0.001 with validation
+power_factor_l2,66,int16,,FALSE,,pf_scale,L2 PF scaled from 0.001 with validation
+power_factor_l3,68,int16,,FALSE,,pf_scale,L3 PF scaled from 0.001 with validation
+power_factor_total,70,int16,,FALSE,,pf_scale,Total PF scaled from 0.001 with validation
+frequency,72,uint16,Hz,FALSE,,scale_0_01,Grid Frequency scaled from 0.01 Hz
+energy_active_import,74,uint32,kWh,FALSE,,scale_0_01,Active Energy Import scaled from 10 Wh
+energy_active_export,78,uint32,kWh,FALSE,,scale_0_01,Active Energy Export scaled from 10 Wh
+energy_reactive_import,82,uint32,kVARh,FALSE,,scale_0_01,Reactive Energy Import scaled from 10 VARh
+energy_reactive_export,86,uint32,kVARh,FALSE,,scale_0_01,Reactive Energy Export scaled from 10 VARh
+demand_power,90,int32,kW,FALSE,,W_to_kW,Current Demand in W to kW
+max_demand_power,94,int32,kW,FALSE,,W_to_kW,Max Demand in W to kW
+thd_voltage_l1,98,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L1 Voltage THD scaled from 0.1% with limit
+thd_voltage_l2,100,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L2 Voltage THD scaled from 0.1% with limit
+thd_voltage_l3,102,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L3 Voltage THD scaled from 0.1% with limit
+thd_current_l1,104,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L1 Current THD scaled from 0.1% with limit
+thd_current_l2,106,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L2 Current THD scaled from 0.1% with limit
+thd_current_l3,108,uint16,%,FALSE,,lambda x: min(100.0, x * 0.1),L3 Current THD scaled from 0.1% with limit
+meter_status,110,uint16,,FALSE,,alarm_status,Status code mapped to Normal/Warning/Alarm/Fault
+meter_temperature,112,int16,°C,FALSE,,lambda x: (x - 32768) * 0.1 if x != 32768 else None,Internal temp with offset and scale
+alarm_bitmap,114,uint16,,FALSE,,lambda x: bin(x)[2:].zfill(16),Alarm bits as binary string
+reset_demand,116,uint16,,TRUE,0,,Command register to reset max demand
+meter_id,118,uint16,,TRUE,1,,Modbus address configuration
+ct_ratio,120,uint16,,TRUE,1,lambda x: x if 1 <= x <= 10000 else 1,CT ratio with validation
+vt_ratio,122,uint16,,TRUE,1,lambda x: x if 1 <= x <= 1000 else 1,VT ratio with validation

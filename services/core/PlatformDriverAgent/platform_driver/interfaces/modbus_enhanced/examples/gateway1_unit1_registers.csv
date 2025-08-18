@@ -1,0 +1,13 @@
+Volttron Point Name,Point Address,Modbus Register,Units,Writable,Default Value,Notes
+voltage_l1,0,float,V,FALSE,,Line 1 Voltage
+voltage_l2,2,float,V,FALSE,,Line 2 Voltage
+voltage_l3,4,float,V,FALSE,,Line 3 Voltage
+current_l1,6,float,A,FALSE,,Line 1 Current
+current_l2,8,float,A,FALSE,,Line 2 Current
+current_l3,10,float,A,FALSE,,Line 3 Current
+power_total,12,float,kW,FALSE,,Total Power
+energy_total,14,float,kWh,FALSE,,Total Energy
+power_factor,16,float,,FALSE,,Power Factor
+frequency,18,float,Hz,FALSE,,Frequency
+status,20,uint16,,FALSE,,Device Status
+control_word,22,uint16,,TRUE,0,Control Register

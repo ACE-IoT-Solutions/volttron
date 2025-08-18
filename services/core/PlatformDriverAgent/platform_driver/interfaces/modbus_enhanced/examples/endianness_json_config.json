@@ -1,0 +1,131 @@
+{
+    "driver_config": {
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "192.168.1.100",
+            "port": 502
+        },
+        "units": [
+            {
+                "unit_id": 1,
+                "name": "mixed_endian_device",
+                "registers": [
+                    {
+                        "name": "energy_standard",
+                        "address": 100,
+                        "type": "float",
+                        "units": "kWh",
+                        "writable": false,
+                        "byte_order": "big",
+                        "word_order": "big",
+                        "description": "Standard Modbus big-endian (ABCD)"
+                    },
+                    {
+                        "name": "energy_mixed",
+                        "address": 102,
+                        "type": "float",
+                        "units": "kWh",
+                        "writable": false,
+                        "mixed_endian": true,
+                        "description": "Mixed endian (CDAB) - common in some meters"
+                    },
+                    {
+                        "name": "energy_little",
+                        "address": 104,
+                        "type": "float",
+                        "units": "kWh",
+                        "writable": false,
+                        "byte_order": "little",
+                        "word_order": "little",
+                        "description": "Full little-endian (DCBA)"
+                    },
+                    {
+                        "name": "energy_swapped",
+                        "address": 106,
+                        "type": "float",
+                        "units": "kWh",
+                        "writable": false,
+                        "byte_order": "little",
+                        "word_order": "big",
+                        "description": "Little-endian bytes, big-endian words (BADC)"
+                    },
+                    {
+                        "name": "counter_32bit_big",
+                        "address": 200,
+                        "type": "uint32",
+                        "units": "counts",
+                        "writable": false,
+                        "byte_order": ">",
+                        "word_order": ">",
+                        "description": "32-bit counter, big-endian"
+                    },
+                    {
+                        "name": "counter_32bit_little",
+                        "address": 202,
+                        "type": "uint32",
+                        "units": "counts",
+                        "writable": false,
+                        "byte_order": "<",
+                        "word_order": "<",
+                        "description": "32-bit counter, little-endian"
+                    },
+                    {
+                        "name": "counter_32bit_mixed",
+                        "address": 204,
+                        "type": "uint32",
+                        "units": "counts",
+                        "writable": false,
+                        "byte_order": ">",
+                        "word_order": "low",
+                        "description": "32-bit counter, low word first"
+                    },
+                    {
+                        "name": "temperature_int",
+                        "address": 300,
+                        "type": "int16",
+                        "units": "°C",
+                        "writable": false,
+                        "byte_order": "big",
+                        "transform": "lambda x: x * 0.1",
+                        "description": "16-bit signed temperature"
+                    },
+                    {
+                        "name": "temperature_int_le",
+                        "address": 301,
+                        "type": "int16",
+                        "units": "°C",
+                        "writable": false,
+                        "byte_order": "little",
+                        "transform": "lambda x: x * 0.1",
+                        "description": "16-bit signed temperature, little-endian"
+                    }
+                ]
+            },
+            {
+                "unit_id": 2,
+                "name": "standard_device",
+                "registers": [
+                    {
+                        "name": "voltage",
+                        "address": 0,
+                        "type": "float",
+                        "units": "V",
+                        "writable": false,
+                        "description": "Uses default big-endian when not specified"
+                    },
+                    {
+                        "name": "current",
+                        "address": 2,
+                        "type": "float",
+                        "units": "A",
+                        "writable": false,
+                        "description": "Uses default big-endian when not specified"
+                    }
+                ]
+            }
+        ]
+    },
+    "driver_type": "modbus_enhanced",
+    "interval": 10,
+    "timezone": "UTC"
+}

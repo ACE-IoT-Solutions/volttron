@@ -1,0 +1,30 @@
+# Sample registry configuration for Spirae Wave interface
+# This file is optional - the driver will auto-discover all registers from the system
+# You can use this to override auto-discovered settings or add custom registers
+#
+# Point Name,Volttron Point Name,Units,Writable,Description
+#
+# System commands
+system/System_reset,system/reset_alarms,,TRUE,Reset system alarms
+system/General_enable,system/enable,,TRUE,Enable or disable the system
+system/System_minUtilityImportSetpoint,system/min_import_setpoint,kW,TRUE,Minimum utility import setpoint
+system/System_operationMode,system/operation_mode,,TRUE,System operation mode
+system/System_maxSoCSetpoint,system/max_soc_setpoint,%,TRUE,Maximum state of charge setpoint
+#
+# System monitoring
+system/System_frequency,system/frequency,Hz,FALSE,System frequency
+system/System_voltage,system/voltage,V,FALSE,System voltage
+system/System_activeLoad,system/active_load,kW,FALSE,Active load
+system/System_reactiveLoad,system/reactive_load,kVAr,FALSE,Reactive load
+#
+# BESS monitoring
+bess/ESS_breakerStatus,bess/breaker_status,,FALSE,BESS breaker status
+bess/ESS_essTTL,bess/time_to_live,hr,FALSE,BESS time to live
+bess/ESS_unitsActive,bess/active_units,Count,FALSE,Number of active BESS units
+bess/ESS_totalCapacity,bess/total_capacity,kW,FALSE,Total BESS capacity
+#
+# PV monitoring
+pv1/PV_activePowerReading,pv1/active_power,kW,FALSE,PV1 active power
+pv1/PV_reactivePowerReading,pv1/reactive_power,kVAr,FALSE,PV1 reactive power
+pv2/PV_activePowerReading,pv2/active_power,kW,FALSE,PV2 active power
+pv2/PV_reactivePowerReading,pv2/reactive_power,kVAr,FALSE,PV2 reactive power

@@ -1,0 +1,12 @@
+{
+    "https://localhost:18080/assets": [
+        "system",
+        "bess",
+        "pv1",
+        "pv2",
+        "pcc_relay_lineside",
+        "pcc_relay_loadside",
+        "gen_meter",
+        "tie_meter"
+    ]
+}

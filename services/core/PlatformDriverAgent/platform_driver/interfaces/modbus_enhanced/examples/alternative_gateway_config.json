@@ -1,0 +1,80 @@
+{
+    "driver_config": {
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "100.95.2.66",
+            "port": 502
+        },
+        "units": [
+            {
+                "unit_id": 1,
+                "name": "power_meter_1",
+                "registers": [
+                    {
+                        "name": "active_energy",
+                        "address": 1,
+                        "type": "float",
+                        "units": "MWhr",
+                        "writable": true,
+                        "transform": "scale_0_001"
+                    },
+                    {
+                        "name": "voltage",
+                        "address": 5,
+                        "type": "float",
+                        "units": "V",
+                        "writable": false,
+                        "transform": "scale_0_1"
+                    }
+                ]
+            },
+            {
+                "unit_id": 2,
+                "name": "power_meter_2",
+                "registers": [
+                    {
+                        "name": "active_energy",
+                        "address": 1,
+                        "type": "float",
+                        "units": "MWhr",
+                        "writable": true,
+                        "transform": "scale_0_001"
+                    },
+                    {
+                        "name": "voltage",
+                        "address": 5,
+                        "type": "float",
+                        "units": "V",
+                        "writable": false,
+                        "transform": "scale_0_1"
+                    }
+                ]
+            },
+            {
+                "unit_id": 3,
+                "name": "power_meter_3",
+                "registers": [
+                    {
+                        "name": "active_energy",
+                        "address": 1,
+                        "type": "float",
+                        "units": "MWhr",
+                        "writable": true,
+                        "transform": "scale_0_001"
+                    },
+                    {
+                        "name": "voltage",
+                        "address": 5,
+                        "type": "float",
+                        "units": "V",
+                        "writable": false,
+                        "transform": "scale_0_1"
+                    }
+                ]
+            }
+        ]
+    },
+    "driver_type": "modbus_enhanced",
+    "interval": 10,
+    "timezone": "UTC"
+}

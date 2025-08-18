@@ -5,7 +5,7 @@ import time
 
 from volttron.platform import get_services_core
 from platform_driver.interfaces.modbus_tk.server import Server
-from platform_driver.interfaces.modbus_tk.maps import Catalog
+from platform_driver.interfaces.modbus_tk.maps import Map, Catalog
 from volttron.platform.agent.known_identities import PLATFORM_DRIVER
 
 logger = logging.getLogger(__name__)
@@ -58,12 +58,12 @@ def agent(request, volttron_instance):
     # Clean out platform driver configurations
     # wait for it to return before adding new config
     md_agent.vip.rpc.call('config.store',
-                          'delete_store',
+                          'manage_delete_store',
                           PLATFORM_DRIVER).get()
 
     # Add driver configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           PLATFORM_DRIVER,
                           'devices/modbus_tk',
                           DRIVER_CONFIG_STRING,
@@ -71,14 +71,14 @@ def agent(request, volttron_instance):
 
     # Add csv configurations
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           PLATFORM_DRIVER,
                           'modbus_tk.csv',
                           REGISTRY_CONFIG_STRING,
                           config_type='csv')
 
     md_agent.vip.rpc.call('config.store',
-                          'set_config',
+                          'manage_store',
                           PLATFORM_DRIVER,
                           'modbus_tk_map.csv',
                           REGISTER_MAP,

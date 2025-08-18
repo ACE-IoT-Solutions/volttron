@@ -1,0 +1,148 @@
+{
+    "driver_config": {
+        "device_templates": {
+            "schneider_pm5000": {
+                "description": "Schneider PM5000 Power Meter Template with Transforms",
+                "transforms": {
+                    "scale_0_1": "lambda x: x * 0.1",
+                    "scale_0_01": "lambda x: x * 0.01",
+                    "scale_0_001": "lambda x: x * 0.001",
+                    "mA_to_A": "lambda x: x / 1000.0",
+                    "W_to_kW": "lambda x: x * 0.001",
+                    "VAR_to_kVAR": "lambda x: x * 0.001",
+                    "VA_to_kVA": "lambda x: x * 0.001",
+                    "Wh_to_kWh": "lambda x: x * 0.001",
+                    "scale_pf": "lambda x: x / 1000.0 if -1000 <= x <= 1000 else None",
+                    "temp_offset": "lambda x: (x - 32768) * 0.1",
+                    "error_to_none": "lambda x: None if x in [65535, 65534, -32768, -2147483648] else x",
+                    "status_decode": "lambda x: {0: 'Normal', 1: 'Warning', 2: 'Alarm', 3: 'Fault'}.get(x, 'Unknown')",
+                    "percent_limit": "lambda x: min(100.0, x * 0.1)"
+                },
+                "registers": [
+                    {
+                        "name": "voltage_l1",
+                        "address": 0,
+                        "type": "uint16",
+                        "units": "V",
+                        "transform_name": "scale_0_1",
+                        "writable": false
+                    },
+                    {
+                        "name": "current_l1",
+                        "address": 8,
+                        "type": "uint16",
+                        "units": "A",
+                        "transform_name": "mA_to_A",
+                        "writable": false
+                    },
+                    {
+                        "name": "power_total",
+                        "address": 28,
+                        "type": "int32",
+                        "units": "kW",
+                        "transform_name": "W_to_kW",
+                        "writable": false
+                    },
+                    {
+                        "name": "power_factor_total",
+                        "address": 70,
+                        "type": "int16",
+                        "transform_name": "scale_pf",
+                        "writable": false
+                    },
+                    {
+                        "name": "frequency",
+                        "address": 72,
+                        "type": "uint16",
+                        "units": "Hz",
+                        "transform_name": "scale_0_01",
+                        "writable": false
+                    },
+                    {
+                        "name": "energy_total",
+                        "address": 74,
+                        "type": "uint32",
+                        "units": "kWh",
+                        "transform_name": "Wh_to_kWh",
+                        "writable": false
+                    },
+                    {
+                        "name": "meter_status",
+                        "address": 110,
+                        "type": "uint16",
+                        "transform_name": "status_decode",
+                        "writable": false
+                    },
+                    {
+                        "name": "thd_voltage_avg",
+                        "address": 112,
+                        "type": "uint16",
+                        "units": "%",
+                        "transform_name": "percent_limit",
+                        "writable": false
+                    }
+                ]
+            },
+            "temperature_sensor": {
+                "description": "Generic Temperature Sensor with Calibration",
+                "transforms": {
+                    "temp_calibration": "lambda x: x * 1.02 - 0.5",
+                    "humidity_scale": "lambda x: x * 0.1",
+                    "dewpoint_calc": "lambda t, h: t - ((100 - h) / 5.0)",
+                    "fahrenheit": "lambda x: x * 9/5 + 32",
+                    "kelvin": "lambda x: x + 273.15"
+                },
+                "registers": [
+                    {
+                        "name": "temperature_c",
+                        "address": 0,
+                        "type": "float",
+                        "units": "°C",
+                        "transform_name": "temp_calibration",
+                        "writable": false
+                    },
+                    {
+                        "name": "temperature_f",
+                        "address": 0,
+                        "type": "float",
+                        "units": "°F",
+                        "transform": "lambda x: (x * 1.02 - 0.5) * 9/5 + 32",
+                        "writable": false
+                    },
+                    {
+                        "name": "humidity",
+                        "address": 2,
+                        "type": "uint16",
+                        "units": "%",
+                        "transform_name": "humidity_scale",
+                        "writable": false
+                    }
+                ]
+            }
+        },
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "192.168.1.100",
+            "port": 502
+        },
+        "units": [
+            {
+                "unit_id": 1,
+                "name": "main_meter",
+                "template": "schneider_pm5000"
+            },
+            {
+                "unit_id": 10,
+                "name": "env_sensor_1",
+                "template": "temperature_sensor"
+            },
+            {
+                "unit_id": 11,
+                "name": "env_sensor_2",
+                "template": "temperature_sensor"
+            }
+        ]
+    },
+    "driver_type": "modbus_enhanced",
+    "interval": 10
+}

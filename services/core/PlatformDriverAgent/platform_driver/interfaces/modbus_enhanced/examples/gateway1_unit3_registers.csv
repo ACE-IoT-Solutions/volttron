@@ -1,0 +1,9 @@
+Volttron Point Name,Point Address,Modbus Register,Units,Writable,Default Value,Notes
+temperature,0,float,°C,FALSE,,Current Temperature
+humidity,2,float,%,FALSE,,Current Humidity
+setpoint,4,float,°C,TRUE,22.0,Temperature Setpoint
+deadband,6,float,°C,TRUE,1.0,Temperature Deadband
+status,8,uint16,,FALSE,,Device Status
+alarm_high,10,bit,,FALSE,,High Temperature Alarm
+alarm_low,11,bit,,FALSE,,Low Temperature Alarm
+enable,12,bit,,TRUE,TRUE,Enable Control
