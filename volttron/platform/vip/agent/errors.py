@@ -25,7 +25,9 @@
 
 
 import errno
+import logging
 
+_log = logging.getLogger(__name__)
 
 __all__ = ['VIPError', 'Unreachable', 'Again', 'UnknownSubsystem']
 
@@ -46,7 +48,42 @@ class VIPError(Exception):
 
     @classmethod
     def from_errno(cls, errnum, msg, *args):
-        errnum = int(errnum)
+        original_errnum = errnum
+        # Handle both integer error numbers and string representations like 'Errno.EHOSTUNREACH'
+        if isinstance(errnum, str):
+            # Try to parse string format like 'Errno.EHOSTUNREACH'
+            if errnum.startswith('Errno.'):
+                error_name = errnum.split('.', 1)[1]  # Get 'EHOSTUNREACH' part
+                # Get the errno value from the errno module
+                if hasattr(errno, error_name):
+                    errnum = getattr(errno, error_name)
+                    _log.debug(f"Converted error string '{original_errnum}' to errno {errnum}")
+                else:
+                    # If we can't find the errno, try to extract a number if present
+                    try:
+                        import re
+                        match = re.search(r'\d+', errnum)
+                        if match:
+                            errnum = int(match.group())
+                            _log.warning(f"Extracted errno {errnum} from string '{original_errnum}'")
+                        else:
+                            # Default to a generic error code if we can't parse it
+                            errnum = errno.EIO  # Generic I/O error
+                            _log.warning(f"Could not parse error string '{original_errnum}', using EIO")
+                    except Exception as e:
+                        errnum = errno.EIO
+                        _log.warning(f"Error parsing '{original_errnum}': {e}, using EIO")
+            else:
+                # Try to convert string to int directly
+                try:
+                    errnum = int(errnum)
+                except ValueError:
+                    # Default to a generic error code if we can't parse it
+                    _log.warning(f"Could not convert '{original_errnum}' to int, using EIO")
+                    errnum = errno.EIO  # Generic I/O error
+        else:
+            errnum = int(errnum)
+        
         return {
             errno.EHOSTUNREACH: Unreachable,
             errno.EAGAIN: Again,
