@@ -73,6 +73,56 @@ __all__ = ['BasicCore', 'Core', 'RMQCore', 'ZMQCore', 'killing']
 _log = logging.getLogger(__name__)
 
 
+def obfuscate_sensitive_data(data, show_chars=4):
+    """
+    Obfuscate sensitive data like keys, showing only first and last few characters.
+    
+    :param data: The sensitive data to obfuscate (string)
+    :param show_chars: Number of characters to show at start and end
+    :return: Obfuscated string or original if too short
+    """
+    if not data or not isinstance(data, str):
+        return data
+    
+    # Don't obfuscate short strings that might not be sensitive
+    if len(data) < (show_chars * 2 + 3):
+        return data
+    
+    # Check if this looks like a key (base64 encoded, typically 43-44 chars for CURVE keys)
+    # or contains credentials in various formats
+    looks_like_key = (
+        len(data) in range(32, 128) and  # Typical key lengths
+        not data.startswith(('/', 'ipc://', 'tcp://', 'inproc://'))  # Not a plain path/address
+    )
+    
+    # Check for addresses with embedded credentials (e.g., tcp://KEY:KEY:KEY@host:port)
+    if '@' in data and ':' in data:
+        # This might be an address with credentials
+        parts = data.split('@')
+        if len(parts) == 2:
+            cred_part, addr_part = parts
+            # Check if the credential part has keys (multiple colons suggest keys)
+            if cred_part.count(':') >= 3:  # tcp://pubkey:seckey:srvkey format
+                # Obfuscate the credential part
+                prefix = cred_part[:cred_part.index('://') + 3] if '://' in cred_part else ''
+                keys_part = cred_part[len(prefix):]
+                keys = keys_part.split(':')
+                obfuscated_keys = []
+                for key in keys:
+                    if len(key) > show_chars * 2:
+                        obfuscated = f"{key[:show_chars]}...{key[-show_chars:]}"
+                    else:
+                        obfuscated = key
+                    obfuscated_keys.append(obfuscated)
+                return f"{prefix}{':'.join(obfuscated_keys)}@{addr_part}"
+    
+    # For standalone keys or other sensitive data
+    if looks_like_key:
+        return f"{data[:show_chars]}...{data[-show_chars:]}"
+    
+    return data
+
+
 class Periodic:  # pylint: disable=invalid-name
     ''' Decorator to set a method up as a periodic callback.
 
@@ -517,10 +567,10 @@ class Core(BasicCore):
         self.socket = None
         self.connection = None
 
-        _log.debug('address: %s', address)
+        _log.debug('address: %s', obfuscate_sensitive_data(address))
         _log.debug('identity: %s', self.identity)
         _log.debug('agent_uuid: %s', agent_uuid)
-        _log.debug('serverkey: %s', serverkey)
+        _log.debug('serverkey: %s', obfuscate_sensitive_data(serverkey))
 
     def version(self):
         return self._version
@@ -625,7 +675,7 @@ class Core(BasicCore):
             _log.error("")
             _log.error("Connection Details:")
             _log.error("  Agent Identity: {}".format(self.identity))
-            _log.error("  Platform Address: {}".format(self.address))
+            _log.error("  Platform Address: {}".format(obfuscate_sensitive_data(self.address)))
             _log.error("  Message Bus Type: {}".format(self.messagebus))
             _log.error("  VOLTTRON_HOME: {}".format(self.volttron_home))
             if hasattr(self, 'instance_name') and self.instance_name:
@@ -787,7 +837,7 @@ class ZMQCore(Core):
         # pre-setup
         # self.context.set(zmq.MAX_SOCKETS, 30690)
         _log.info(
-            f"Identity: {self.identity} connecting to address:{self.address}")
+            f"Identity: {self.identity} connecting to address:{obfuscate_sensitive_data(self.address)}")
         self.connection = ZMQConnection(self.address,
                                         self.identity,
                                         self.instance_name,
