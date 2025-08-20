@@ -588,20 +588,107 @@ class Core(BasicCore):
     def create_event_handlers(self, state, hello_response_event,
                               running_event):
 
+        def check_platform_running():
+            """Check if platform is running by looking for socket/pid file"""
+            import os
+            
+            # Check for IPC socket (Unix/Linux)
+            if self.address.startswith('ipc://'):
+                socket_path = self.address[6:]  # Remove 'ipc://' prefix
+                # Remove @ prefix for abstract sockets on Linux
+                if socket_path.startswith('@'):
+                    socket_path = socket_path[1:]
+                socket_file = os.path.join(socket_path, 'run', 'vip.socket')
+                if os.path.exists(socket_file):
+                    return True
+                    
+            # Check for instance file
+            from volttron.platform import is_instance_running
+            try:
+                if is_instance_running(self.volttron_home):
+                    return True
+            except:
+                pass
+                
+            return False
+
         def connection_failed_check():
             # If we don't have a verified connection after 10.0 seconds
             # shut down.
             if hello_response_event.wait(10.0):
                 return
+            
+            _log.error("=" * 60)
+            _log.error("AGENT CONNECTION FAILED")
+            _log.error("=" * 60)
             _log.error("No response to hello message after 10 seconds.")
-            _log.error("Type of message bus used {}".format(self.messagebus))
-            _log.error(
-                "A common reason for this is a conflicting VIP IDENTITY.")
-            _log.error("Another common reason is not having an auth entry on"
-                       "the target instance.")
-            _log.error("Shutting down agent.")
-            _log.error("Possible conflicting identity is: {}".format(
-                self.identity))
+            _log.error("")
+            _log.error("Connection Details:")
+            _log.error("  Agent Identity: {}".format(self.identity))
+            _log.error("  Platform Address: {}".format(self.address))
+            _log.error("  Message Bus Type: {}".format(self.messagebus))
+            _log.error("  VOLTTRON_HOME: {}".format(self.volttron_home))
+            if hasattr(self, 'instance_name') and self.instance_name:
+                _log.error("  Instance Name: {}".format(self.instance_name))
+            
+            # Check if platform appears to be running
+            platform_running = check_platform_running()
+            if not platform_running:
+                _log.error("")
+                _log.error("*** LIKELY CAUSE: Platform does not appear to be running! ***")
+                _log.error("")
+            
+            _log.error("")
+            _log.error("Common Causes and Solutions (in order of likelihood):")
+            _log.error("")
+            
+            # Reorder based on whether platform is running
+            if not platform_running:
+                _log.error("1. Platform not running (MOST LIKELY):")
+                _log.error("   - Start VOLTTRON: volttron -vv")
+                _log.error("   - Check status: volttron-ctl status")
+                _log.error("")
+                _log.error("2. Wrong VOLTTRON_HOME or instance:")
+                _log.error("   - Ensure agent is connecting to correct instance")
+                _log.error("   - Current VOLTTRON_HOME: {}".format(self.volttron_home))
+                _log.error("   - Check if this matches your running instance")
+                _log.error("")
+                _log.error("3. Wrong platform address:")
+                _log.error("   - Verify VOLTTRON_VIP_ADDR environment variable")
+                _log.error("   - Default is: ipc://@$HOME/.volttron/run/vip.socket")
+                _log.error("")
+            else:
+                _log.error("1. Authentication issues (MOST LIKELY since platform is running):")
+                _log.error("   - Agent may not be authorized on the platform")
+                _log.error("   - Check auth entries: volttron-ctl auth list")
+                _log.error("   - Add auth entry: volttron-ctl auth add")
+                _log.error("")
+                _log.error("2. Conflicting agent identity:")
+                _log.error("   - Another agent may already be using identity: '{}'".format(self.identity))
+                _log.error("   - Check running agents: volttron-ctl list")
+                _log.error("   - Use unique identity or stop conflicting agent")
+                _log.error("")
+                _log.error("3. Wrong platform address:")
+                _log.error("   - Verify the platform address is correct")
+                _log.error("   - Check VOLTTRON_VIP_ADDR environment variable")
+                _log.error("")
+            
+            # TCP-specific issues
+            if self.address.startswith('tcp://'):
+                _log.error("4. Network/firewall issues (TCP connection):")
+                _log.error("   - Check if port is accessible")
+                _log.error("   - Verify firewall rules")
+                _log.error("   - Test connection: telnet <host> <port>")
+                _log.error("")
+            
+            _log.error("Additional debugging steps:")
+            _log.error("  - Check platform log: tail -f $VOLTTRON_HOME/volttron.log")
+            _log.error("  - Enable debug logging: export VOLTTRON_LOG_LEVEL=DEBUG")
+            _log.error("  - Verify auth file exists: ls -la $VOLTTRON_HOME/auth.json")
+            _log.error("  - Check agent keys: ls -la $VOLTTRON_HOME/keystores/")
+            _log.error("=" * 60)
+            _log.error("Shutting down agent due to connection failure.")
+            _log.error("=" * 60)
 
             self.stop(timeout=10.0)
 
