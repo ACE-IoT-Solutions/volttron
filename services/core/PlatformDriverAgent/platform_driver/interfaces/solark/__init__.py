@@ -37,11 +37,11 @@ from platform_driver.interfaces import BaseRegister, BaseInterface, BasicRevert
 from volttron.platform.vip.agent import Agent, Core, RPC, PubSub
 from volttron.platform.messaging.health import STATUS_GOOD, STATUS_BAD
 
-from .solark import fetch_bearer_token, get_plant_realtime
+from .solark import fetch_bearer_token, get_plant_realtime, get_battery_realtime
 
 _log = logging.getLogger("solark")
 
-DEFAULT_POINTS = ["id", "status", "pac", "etoday", "etotal", "type", "emonth", "eyear", "income", "efficiency"]
+DEFAULT_POINTS = ["id", "status", "pac", "etoday", "etotal", "type", "emonth", "eyear", "income", "efficiency", "soc"]
 
 class Register(BaseRegister):
     """
@@ -86,7 +86,6 @@ class Interface(BasicRevert, BaseInterface):
         self.client_id = config_dict["client_id"]
         self.plant_id = config_dict["plant_id"]
         _log.info("setting up solark interface")
-        # _log.debug(f"{user_exists(self.username)}")
         self.token = fetch_bearer_token(self.api_key, self.username, self.password)
         if self.token is None:
             _log.error("Failed to fetch bearer token. Please check your credentials.")
@@ -127,6 +126,13 @@ class Interface(BasicRevert, BaseInterface):
 
     def _scrape_all(self):
         output = get_plant_realtime(self.plant_id, self.api_key, self.token)
+        battery_data = get_battery_realtime(self.plant_id, self.api_key, self.token)
+        if output is not None and battery_data is not None:
+            output.update(battery_data)
+        else:
+            _log.error("Failed to fetch data from Sol Ark API")
+            self.vip.health.set_status(STATUS_BAD, "Failed to fetch data from Sol Ark API")
+            return {}
         data = self.filter_valid_points(output)
         _log.debug(f"scraping solark: {data}")
         return data

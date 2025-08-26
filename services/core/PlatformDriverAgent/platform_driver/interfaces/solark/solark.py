@@ -13,6 +13,7 @@ import grequests
 
 _log = logging.getLogger("solarklib")
 
+BASE_URL = "https://openapi.mysolark.com/v1"
 
 def _grequests_exception_handler(request, exception):
     trace = exception.__traceback__
@@ -33,7 +34,7 @@ def user_exists(username):
     - bool: True if the user exists, False otherwise.
     """
     # Make a request to the database to check if the user exists
-    url = f"https://openapi.mysolark.com/v1/anonymous/checkAccount"
+    url = f"{BASE_URL}/anonymous/checkAccount"
     request = grequests.get(url, params={"username": username})
     result = grequests.map([request])[0]
     return result.json()
@@ -57,7 +58,7 @@ def fetch_bearer_token(
     - str: The bearer token.
     """
     # URL and headers
-    url = "https://openapi.mysolark.com/v1/oauth/token"
+    url = f"{BASE_URL}/oauth/token"
     headers = {
         "x-api-key": key,
         "Content-Type": "application/json",
@@ -70,6 +71,7 @@ def fetch_bearer_token(
         "grant_type": grant_type,
         "client_id": client_id,
     }
+    _log.debug(f"user: {username} password: ...{password[-3:-1]} grant_type: {grant_type} client_id: {client_id}")
 
     request = grequests.post(url, headers=headers, json=data)
     result = grequests.map([request], exception_handler=_grequests_exception_handler)[0]
@@ -79,9 +81,11 @@ def fetch_bearer_token(
         result.status_code == 200
         and "application/json" in result.headers["Content-Type"]
     ):
-        if json.loads(result.text).get("code") != 0:
+        code = json.loads(result.text).get("code")
+        message = json.loads(result.text).get("msg")
+        if code != 0:
             _log.error(
-                f"Error fetching bearer token: {json.loads(result.text).get('message', 'Unknown error')}"
+                f"Error fetching bearer token: {code=} {message=}"
             )
             return None
         _log.debug(f"{result.status_code=} {result.text=} {result.json()=}")
@@ -109,7 +113,7 @@ def get_plant_list(key, bearer, page=1, limit=20):
     - dict: A dictionary containing plant data.
     """
     # Construct the URL with page and limit parameters
-    url = f"https://openapi.mysolark.com/v1/plants?page={page}&limit={limit}"
+    url = f"{BASE_URL}/plants?page={page}&limit={limit}"
 
     # Set up the headers
     headers = {
@@ -138,8 +142,19 @@ def get_plant_list(key, bearer, page=1, limit=20):
 # 3.2.3 Get plant realtime
 # Get plant realtime Photovoltaic (PV) energy production over various intervals.
 def get_plant_realtime(plant_id, key, bearer):
+    """
+    Get up to date plant data
+
+    Args:
+    - plant_id (int): The ID of the plant for which the data is needed.
+    - key (str): The API key for the request.
+    - bearer (str): The bearer token for authorization.
+
+    Returns:
+    - dict: A dictionary containing the real-time data for the specified plant.
+    """
     # Construct the URL using the given plant_id
-    url = f"https://openapi.mysolark.com/v1/plant/{plant_id}/realtime"
+    url = f"{BASE_URL}/plant/{plant_id}/realtime"
 
     # Set up the headers using the given key and bearer
     headers = {
@@ -179,7 +194,7 @@ def get_plant_flow(plant_id, key, bearer):
     - dict: A dictionary containing plant flow data.
     """
     # Construct the URL using the given plant_id
-    url = f"https://openapi.mysolark.com/v1/plant/energy/{plant_id}/flow"
+    url = f"{BASE_URL}/v1/plant/energy/{plant_id}/flow"
 
     # Set up the headers using the given key and bearer
     headers = {
@@ -222,7 +237,7 @@ def get_energy_day_chart(plant_id, date, key, bearer, lan="en"):
     """
 
     # Construct the URL using the given plant_id and date
-    url = f"https://openapi.mysolark.com/v1/plant/energy/{plant_id}/day?date={date}&lan={lan}"
+    url = f"{BASE_URL}/v1/plant/energy/{plant_id}/day?date={date}&lan={lan}"
 
     # Set up the headers using the given key and bearer
     headers = {
@@ -247,6 +262,27 @@ def get_energy_day_chart(plant_id, date, key, bearer, lan="en"):
         _log.debug(result.text)
         return None
 
+# 3.5.1 Get realtime battery data
+def get_battery_realtime(plant_id, key, bearer):
+    """
+    Fetches the realtime battery data for a specific plant.
+    """
+    url = f"{BASE_URL}/inverter/battery/{plant_id}/realtime"
+
+    headers = {
+        "x-api-key": key,
+        "Content-Type": "application/json",
+        "Authorization": bearer,
+    }
+
+    request = grequests.get(url, headers=headers)
+    result = grequests.map([request])[0]
+
+    if result.status_code == 200:
+        return result.json()["data"]
+    else:
+        _log.error("Error fetching battery realtime data")
+        return None
 
 # 4.1 Get param setting
 def get_param_settings(sn_inverter, key, bearer):
@@ -295,3 +331,5 @@ def set_param_settings(key, bearer, sn_inverter, data):
         return result.json()
     else:
         result.raise_for_status()  # This will raise an error if the HTTP status code is not 200
+
+# %%
