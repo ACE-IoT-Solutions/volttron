@@ -77,6 +77,10 @@ to the device. Heart beats are triggered by the Actuator Agent which must be run
 
 ## Changes
 
+- 4.6.3
+    - add modbus_enhanced driver
+    - add check in haystack driver for points that no longer exist in point_entities, but are in registry configs
+
 - 4.4.2 (2024-12-04) 
     - updated ethernetip driver to import from new platform_driver module
     - updated rainforest eagle driver with error handling during configuration 

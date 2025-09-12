@@ -152,6 +152,8 @@ class Interface(BasicRevert, BaseInterface):
             except (AttributeError, ValueError) as exc:
                 _log.warning(f"could not scrape {point=}: {exc=}")
                 continue
+            except KeyError as exc:
+                _log.error(f"point {point} not found in point entities: {exc}")
         return results
 
     def _set_point(self, point_name, value):
