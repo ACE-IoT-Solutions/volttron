@@ -1,0 +1,55 @@
+Volttron Point Name,Point Address,Modbus Register,Units,Writable,Default Value,Transform,Notes
+# Power Measurements - Using named transforms
+voltage_l1,0,uint16,V,FALSE,,scale_0_1,Line 1 Voltage scaled by 0.1
+voltage_l2,2,uint16,V,FALSE,,scale_0_1,Line 2 Voltage scaled by 0.1
+voltage_l3,4,uint16,V,FALSE,,scale_0_1,Line 3 Voltage scaled by 0.1
+current_l1,6,uint16,A,FALSE,,mA_to_A,Line 1 Current in milliamps
+current_l2,8,uint16,A,FALSE,,mA_to_A,Line 2 Current in milliamps
+current_l3,10,uint16,A,FALSE,,mA_to_A,Line 3 Current in milliamps
+power_total,12,int32,kW,FALSE,,W_to_kW,Total Power in watts
+reactive_power,14,int32,kVAR,FALSE,,VAR_to_kVAR,Reactive Power in VAR
+apparent_power,16,int32,kVA,FALSE,,VA_to_kVA,Apparent Power in VA
+power_factor,18,int16,,FALSE,,pf_scale,Power Factor scaled by 1000
+frequency,20,uint16,Hz,FALSE,,scale_0_01,Frequency scaled by 0.01
+# Energy - Using parameterized transforms
+energy_delivered,22,uint32,kWh,FALSE,,Wh_to_kWh,Energy Delivered in Wh
+energy_received,24,uint32,kWh,FALSE,,Wh_to_kWh,Energy Received in Wh
+energy_net,26,int32,kWh,FALSE,,Wh_to_kWh,Net Energy in Wh
+# Temperature - Multiple transform formats
+temperature_internal_c,30,int16,°C,FALSE,,scale_0_1,Internal Temperature
+temperature_internal_f,30,int16,°F,FALSE,,lambda x: x * 0.1 * 9/5 + 32,Same register in Fahrenheit
+temperature_external_c,32,int16,°C,FALSE,,scale(0.1),External Temperature using parameterized
+temperature_external_k,32,int16,K,FALSE,,lambda x: x * 0.1 + 273.15,Same register in Kelvin
+# Status and Alarms - Using status transforms
+device_status,40,uint16,,FALSE,,alarm_status,Maps 0-3 to Normal/Warning/Alarm/Fault
+relay_1_status,42,uint16,,FALSE,,bool_to_status,Relay 1 ON/OFF status
+relay_2_status,43,uint16,,FALSE,,bool_to_status,Relay 2 ON/OFF status
+communication_status,44,uint16,,FALSE,,binary_status,Active/Inactive based on bit 0
+# Bit Extraction - Individual alarm bits
+alarm_overvoltage,50,uint16,,FALSE,,bit_0,Overvoltage alarm bit
+alarm_undervoltage,50,uint16,,FALSE,,bit_1,Undervoltage alarm bit
+alarm_overcurrent,50,uint16,,FALSE,,bit_2,Overcurrent alarm bit
+alarm_overtemperature,50,uint16,,FALSE,,bit_3,Overtemperature alarm bit
+alarm_phase_loss,50,uint16,,FALSE,,bit_4,Phase loss alarm bit
+alarm_reverse_power,50,uint16,,FALSE,,bit_5,Reverse power alarm bit
+# ION Format - Using mod10k transforms
+ion_energy_delivered,60,int32,kWh,FALSE,,mod10k(false),ION format energy
+ion_energy_received,62,int32,kWh,FALSE,,mod10k(true),ION format with reverse
+pm800_energy_64bit,64,int64,kWh,FALSE,,mod10k64(false),PM800 64-bit format
+# Scaled by Register - Dynamic scaling
+scaling_exponent,70,int16,,FALSE,0,,Power of 10 scaling factor
+scaled_voltage,72,uint16,V,FALSE,,scale_reg_pow_10(scaling_exponent),Voltage scaled by 10^exponent
+scaling_multiplier,74,float,,FALSE,1.0,,Direct multiplier
+scaled_current,76,uint16,A,FALSE,,scale_reg(scaling_multiplier),Current scaled by multiplier
+# Error Handling - Convert errors to None
+sensor_1_value,80,float,°C,FALSE,,error_to_none,Returns None for error values
+sensor_2_value,82,float,%,FALSE,,nan_to_none,Returns None for NaN
+sensor_3_value,84,float,bar,FALSE,,inf_to_none,Returns None for infinity
+# Percentage and Limits
+battery_soc,90,uint16,%,FALSE,,percent_limit,Battery SOC limited to 0-100%
+load_ratio,92,float,,FALSE,,ratio_to_percent,Load as percentage
+efficiency,94,uint16,%,FALSE,,lambda x: min(100 x * 0.1),Efficiency with limit
+# Calibration with Offsets
+temperature_calibrated,100,int16,°C,FALSE,,lambda x: x * 0.1 + 0.5,Temperature with offset
+pressure_calibrated,102,uint16,mBar,FALSE,,lambda x: (x - 1000) * 0.1,Pressure with zero offset
+flow_calibrated,104,float,m³/h,FALSE,,lambda x: x * 1.02,Flow with calibration factor

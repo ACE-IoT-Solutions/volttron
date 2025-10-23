@@ -1,0 +1,30 @@
+{
+    "driver_type": "modbus_enhanced",
+    "driver_config": {
+        "gateway": {
+            "connection_type": "tcp",
+            "address": "192.168.1.100",
+            "port": 502,
+            "retry_attempts": 3
+        },
+        "units": [
+            {
+                "unit_id": 1,
+                "name": "power_meter_1"
+            },
+            {
+                "unit_id": 2,
+                "name": "power_meter_2"
+            },
+            {
+                "unit_id": 3,
+                "name": "temperature_sensor"
+            }
+        ]
+    },
+    "registry_config": {
+        "1": "config://gateway1_unit1_registers.csv",
+        "2": "config://gateway1_unit2_registers.csv",
+        "3": "config://gateway1_unit3_registers.csv"
+    }
+}

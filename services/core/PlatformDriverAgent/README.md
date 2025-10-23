@@ -73,3 +73,17 @@ These settings are optional:
 Volttron Point Name must exist in the registry. If this setting is missing the driver will not send a heart beat signal 
 to the device. Heart beats are triggered by the Actuator Agent which must be running to use this feature.
 3. group - Group this device belongs to. Defaults to 0
+
+
+## Changes
+
+- 4.6.3
+    - add modbus_enhanced driver
+    - add check in haystack driver for points that no longer exist in point_entities, but are in registry configs
+
+- 4.4.2 (2024-12-04) 
+    - updated ethernetip driver to import from new platform_driver module
+    - updated rainforest eagle driver with error handling during configuration 
+
+
+- 4.4.1 (2024-10-29) fixes for desigo api issues, retrieve token via bus regardless to allow effective caching. Fixed register getting created with wrong name, making every scrape generate errors

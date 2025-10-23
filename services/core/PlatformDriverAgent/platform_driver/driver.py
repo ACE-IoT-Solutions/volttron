@@ -1,30 +1,45 @@
 # -*- coding: utf-8 -*- {{{
-# ===----------------------------------------------------------------------===
+# vim: set fenc=utf-8 ft=python sw=4 ts=4 sts=4 et:
 #
-#                 Component of Eclipse VOLTTRON
+# Copyright 2019, Battelle Memorial Institute.
 #
-# ===----------------------------------------------------------------------===
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# Copyright 2023 Battelle Memorial Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not
-# use this file except in compliance with the License. You may obtain a copy
-# of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
-# ===----------------------------------------------------------------------===
+# This material was prepared as an account of work sponsored by an agency of
+# the United States Government. Neither the United States Government nor the
+# United States Department of Energy, nor Battelle, nor any of their
+# employees, nor any jurisdiction or organization that has cooperated in the
+# development of these materials, makes any warranty, express or
+# implied, or assumes any legal liability or responsibility for the accuracy,
+# completeness, or usefulness or any information, apparatus, product,
+# software, or process disclosed, or represents that its use would not infringe
+# privately owned rights. Reference herein to any specific commercial product,
+# process, or service by trade name, trademark, manufacturer, or otherwise
+# does not necessarily constitute or imply its endorsement, recommendation, or
+# favoring by the United States Government or any agency thereof, or
+# Battelle Memorial Institute. The views and opinions of authors expressed
+# herein do not necessarily state or reflect those of the
+# United States Government or any agency thereof.
+#
+# PACIFIC NORTHWEST NATIONAL LABORATORY operated by
+# BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
+# under Contract DE-AC05-76RL01830
 # }}}
 
 from volttron.platform.vip.agent import BasicAgent, Core
 from volttron.platform.agent import utils
 import logging
+import time
 import random
 import gevent
 import traceback
@@ -39,7 +54,7 @@ from .driver_locks import publish_lock
 import datetime
 
 utils.setup_logging()
-_log = logging.getLogger(__name__)
+_log = logging.getLogger("driver_interface")
 
 
 class DriverAgent(BasicAgent):
@@ -58,6 +73,7 @@ class DriverAgent(BasicAgent):
         self.vip = parent.vip
         self.config = config
         self.device_path = device_path
+        self.last_noresponse = datetime.datetime.now()
 
         self.update_publish_types(default_publish_depth_first_all ,
                                  default_publish_breadth_first_all,
@@ -159,7 +175,6 @@ class DriverAgent(BasicAgent):
 
 
     def setup_device(self):
-
         config = self.config
         driver_config = config["driver_config"]
         driver_type = config["driver_type"]
@@ -167,24 +182,24 @@ class DriverAgent(BasicAgent):
 
         self.heart_beat_point = config.get("heart_beat_point")
 
-
-
         self.interface = self.get_interface(driver_type, driver_config, registry_config)
         self.meta_data = {}
-
         for point in self.interface.get_register_names():
             register = self.interface.get_register_by_name(point)
-            if register.register_type == 'bit' or register.python_type is bool:
+            if register.register_type == 'bit':
                 ts_type = 'boolean'
             else:
                 if register.python_type is int:
                     ts_type = 'integer'
                 elif register.python_type is float:
                     ts_type = 'float'
+                elif register.python_type is bool:
+                    ts_type = 'boolean'
                 elif register.python_type is str:
                     ts_type = 'string'
-                else:
-                    ts_type = register.python_type.__name__
+                else: 
+                    ts_type = 'string'
+                    _log.debug(f"ts_type is of type {register.python_type}")
 
             self.meta_data[point] = {'units': register.get_units(),
                                      'type': ts_type,
@@ -225,22 +240,40 @@ class DriverAgent(BasicAgent):
         self.periodic_read_event = self.core.schedule(next_scrape_time, self.periodic_read, next_scrape_time)
 
         _log.debug("scraping device: " + self.device_name)
-
+        start_time = time.time()
         self.parent.scrape_starting(self.device_name)
 
         try:
+            # _log.debug(f"scraping {self.device_path=} from driver interface")
+            # if self.last_noresponse + datetime.timedelta(hours=24) > datetime.datetime.now():
+            #     _log.debug(f"Skipping scrape of {self.device_name} due to recent noresponse")
+            #     return
             results = self.interface.scrape_all()
+            self.parent.point_count.labels(device=self.device_name).set(len(results))
+            _log.debug(f"{len(results)=}")
             register_names = self.interface.get_register_names_view()
             for point in (register_names - results.keys()):
                 depth_first_topic = self.base_topic(point=point)
+                self.parent.failed_point_scrape.labels(point=depth_first_topic, device=self.device_name).inc()
                 _log.error("Failed to scrape point: "+depth_first_topic)
-        except (Exception, gevent.Timeout) as ex:
+        except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
-            _log.error('Failed to scrape ' + self.device_name + ':\n' + tb)
+            self.parent.error_counter.labels(device=self.device_name).inc()
+            _log.error(f"Failed to scrape {self.device_name}. {exc=} traceback: {tb}")
+            # if "Device communication aborted: noResponse" in str(exc):
+            #     _log.debug(f"Adding unresponsive device: {self.device_name}")
+            #     self.last_noresponse = datetime.datetime.now()
+            # self.parent.last_scraped = datetime.datetime.now()
             return
-
+        end_time = time.time()
+        scrape_time = end_time-start_time
+        self.parent.performance_histogram.labels(device=self.device_name).observe(scrape_time)
+        self.parent.performance_gauge.labels(device=self.device_name).set(scrape_time)
+        self.parent.last_scraped = datetime.datetime.now()
+        #temporarily moving return out of Excelt clause for testing
         # XXX: Does a warning need to be printed?
         if not results:
+            _log.warning(f"no results for {self.device_name}")
             return
 
         utcnow = utils.get_aware_utc_now()
@@ -326,47 +359,29 @@ class DriverAgent(BasicAgent):
         return depth_first, breadth_first
 
     def get_point(self, point_name, **kwargs):
-        try:
-            return self.interface.get_point(point_name, **kwargs)
-        except AttributeError as e:
-            _log.warning(e)
-
+        return self.interface.get_point(point_name, **kwargs)
 
     def set_point(self, point_name, value, **kwargs):
-        try:
-            return self.interface.set_point(point_name, value, **kwargs)
-        except AttributeError as e:
-            _log.warning(e)
+        return self.interface.set_point(point_name, value, **kwargs)
 
     def scrape_all(self):
-        try:
-            return self.interface.scrape_all()
-        except AttributeError as e:
-            _log.warning(e)
+        return self.interface.scrape_all()
 
     def get_multiple_points(self, point_names, **kwargs):
-        try:
-            return self.interface.get_multiple_points(self.device_name, point_names, **kwargs)
-        except AttributeError as e:
-            _log.warning(e)
+        return self.interface.get_multiple_points(self.device_name,
+                                                  point_names,
+                                                  **kwargs)
 
     def set_multiple_points(self, point_names_values, **kwargs):
-        try:
-            return self.interface.set_multiple_points(self.device_name, point_names_values, **kwargs)
-        except AttributeError as e:
-            _log.warning(e)
+        return self.interface.set_multiple_points(self.device_name,
+                                                  point_names_values,
+                                                  **kwargs)
 
     def revert_point(self, point_name, **kwargs):
-        try:
-            self.interface.revert_point(point_name, **kwargs)
-        except AttributeError as e:
-            _log.warning(e)
+        self.interface.revert_point(point_name, **kwargs)
 
     def revert_all(self, **kwargs):
-        try:
-            self.interface.revert_all(**kwargs)
-        except AttributeError as e:
-            _log.warning(e)
+        self.interface.revert_all(**kwargs)
 
     def publish_cov_value(self, point_name, point_values):
         """

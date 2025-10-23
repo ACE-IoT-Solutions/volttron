@@ -1,29 +1,45 @@
 # -*- coding: utf-8 -*- {{{
-# ===----------------------------------------------------------------------===
+# vim: set fenc=utf-8 ft=python sw=4 ts=4 sts=4 et:
 #
-#                 Component of Eclipse VOLTTRON
+# Copyright 2020, Battelle Memorial Institute.
 #
-# ===----------------------------------------------------------------------===
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# Copyright 2023 Battelle Memorial Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not
-# use this file except in compliance with the License. You may obtain a copy
-# of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
-# ===----------------------------------------------------------------------===
+# This material was prepared as an account of work sponsored by an agency of
+# the United States Government. Neither the United States Government nor the
+# United States Department of Energy, nor Battelle, nor any of their
+# employees, nor any jurisdiction or organization that has cooperated in the
+# development of these materials, makes any warranty, express or
+# implied, or assumes any legal liability or responsibility for the accuracy,
+# completeness, or usefulness or any information, apparatus, product,
+# software, or process disclosed, or represents that its use would not infringe
+# privately owned rights. Reference herein to any specific commercial product,
+# process, or service by trade name, trademark, manufacturer, or otherwise
+# does not necessarily constitute or imply its endorsement, recommendation, or
+# favoring by the United States Government or any agency thereof, or
+# Battelle Memorial Institute. The views and opinions of authors expressed
+# herein do not necessarily state or reflect those of the
+# United States Government or any agency thereof.
+#
+# PACIFIC NORTHWEST NATIONAL LABORATORY operated by
+# BATTELLE for the UNITED STATES DEPARTMENT OF ENERGY
+# under Contract DE-AC05-76RL01830
 # }}}
 
-import gevent
+
 import logging
+import gevent
+import traceback
 from datetime import datetime, timedelta
 
 from platform_driver.driver_exceptions import DriverConfigError
@@ -36,16 +52,37 @@ _log = logging.getLogger(__name__)
 
 DEFAULT_COV_LIFETIME = 180
 COV_UPDATE_BUFFER = 3
-BACNET_TYPE_MAPPING = {"multiStateValue": int, "multiStateInput": int, "multiStateOutput": int,
-                       "analogValue": float, "analogInput": float, "analogOutput": float,
-                       "binaryValue": bool, "binaryInput": bool, "binaryOutput": bool
-                      }
+BACNET_TYPE_MAPPING = {
+    "multiStateValue": int,
+    "multiStateInput": int,
+    "multiStateOutput": int,
+    "accumulator": int,
+    "analogValue": float,
+    "analogInput": float,
+    "analogOutput": float,
+    "loop": float,
+    "binaryValue": bool,
+    "binaryInput": bool,
+    "binaryOutput": bool,
+}
 
 
 class Register(BaseRegister):
-    def __init__(self, instance_number, object_type, property_name, read_only, point_name, units,
-                 description='', priority=None, list_index=None):
-        super(Register, self).__init__("byte", read_only, point_name, units, description=description)
+    def __init__(
+        self,
+        instance_number,
+        object_type,
+        property_name,
+        read_only,
+        point_name,
+        units,
+        description="",
+        priority=None,
+        list_index=None,
+    ):
+        super(Register, self).__init__(
+            "byte", read_only, point_name, units, description=description
+        )
         self.instance_number = int(instance_number)
         self.object_type = object_type
         self.property = property_name
@@ -60,6 +97,10 @@ class Interface(BaseInterface):
         self.register_count = 10000
         self.register_count_divisor = 1
         self.cov_points = []
+        self.use_read_multiple = True
+        self.enable_collection = True
+        self.collection_disabled_time = None
+        # self.unresponsive_devices = {}
 
     def configure(self, config_dict, registry_config_str):
         self.min_priority = config_dict.get("min_priority", 8)
@@ -71,8 +112,11 @@ class Interface(BaseInterface):
         self.max_per_request = config_dict.get("max_per_request", 24)
         self.use_read_multiple = config_dict.get("use_read_multiple", True)
         self.timeout = float(config_dict.get("timeout", 30.0))
+        self.failover_bacnet_to_single = bool(config_dict.get("failover_bacnet_to_single", False))
 
-        self.ping_retry_interval = timedelta(seconds=config_dict.get("ping_retry_interval", 5.0))
+        self.ping_retry_interval = timedelta(
+            seconds=config_dict.get("ping_retry_interval", 5.0)
+        )
         self.scheduled_ping = None
 
         self.ping_target()
@@ -94,13 +138,20 @@ class Interface(BaseInterface):
 
         pinged = False
         try:
-            self.vip.rpc.call(self.proxy_address, 'ping_device', self.target_address, self.device_id).get(timeout=self.timeout)
+            self.vip.rpc.call(
+                self.proxy_address, "ping_device", self.target_address, self.device_id
+            ).get(timeout=self.timeout)
             pinged = True
         except errors.Unreachable:
-            _log.warning(f"Unable to reach BACnet proxy at: {self.proxy_address}.")
-        except (Exception, gevent.Timeout) as e:
-            _log.warning(f"Error trying to ping device with device_id '{self.device_id}' at {self.target_address}"
-                         f"through proxy {self.proxy_address}: {e}")
+            _log.warning("Unable to reach BACnet proxy.")
+
+        except errors.VIPError:
+            _log.warning("Error trying to ping device.")
+
+        except gevent.timeout.Timeout:
+            _log.warning(
+                f"Timeout trying to ping device {self.target_address}. Scheduling to retry"
+            )
 
         self.scheduled_ping = None
 
@@ -108,42 +159,55 @@ class Interface(BaseInterface):
         if not pinged:
             self.schedule_ping()
 
-    def get_point(self, point_name, on_property=None):
+    def get_point(self, point_name, get_priority_array=False):
         register = self.get_register_by_name(point_name)
-        if on_property is None:
-            result = self.vip.rpc.call(self.proxy_address, 'read_property',
-                                       self.target_address, register.object_type,
-                                       register.instance_number, register.property, register.index).get(timeout=self.timeout)
-        else:
-            point_map = {}
-            point_map[register.point_name] = [register.object_type,
-                                              register.instance_number,
-                                              on_property,
-                                              register.index]
-            result = self.vip.rpc.call(self.proxy_address, 'read_properties',
-                                       self.target_address, point_map,
-                                       self.max_per_request, True).get(timeout=self.timeout)
-            result = list(result.values())[0]
+        property_name = "priorityArray" if get_priority_array else register.property
+        register_index = None if get_priority_array else register.index
+        result = self.vip.rpc.call(
+            self.proxy_address,
+            "read_property",
+            self.target_address,
+            register.object_type,
+            register.instance_number,
+            property_name,
+            register_index,
+        ).get(timeout=self.timeout)
         return result
 
-    def set_point(self, point_name, value, priority=None, on_property=None):
+    def set_point(self, point_name, value, priority=None):
         # TODO: support writing from an array.
         register = self.get_register_by_name(point_name)
         if register.read_only:
-            raise  IOError("Trying to write to a point configured read only: " + point_name)
+            raise IOError(
+                "Trying to write to a point configured read only: " + point_name
+            )
 
         if priority is not None and priority < self.min_priority:
-            raise  IOError("Trying to write with a priority lower than the minimum of " + str(self.min_priority))
+            raise IOError(
+                "Trying to write with a priority lower than the minimum of "
+                + str(self.min_priority)
+            )
 
         # We've already validated the register priority against the min priority.
-        args = [self.target_address, value,
-                register.object_type,
-                register.instance_number,
-                on_property if on_property is not None else register.property,
-                priority if priority is not None else register.priority,
-                register.index]
-        result = self.vip.rpc.call(self.proxy_address, 'write_property', *args).get(timeout=self.timeout)
+        args = [
+            self.target_address,
+            value,
+            register.object_type,
+            register.instance_number,
+            register.property,
+            priority if priority is not None else register.priority,
+            register.index,
+        ]
+        result = self.vip.rpc.call(self.proxy_address, "write_property", *args).get(
+            timeout=self.timeout
+        )
         return result
+
+    # def add_unresponsive_device(self, address):
+    #     """
+    #     Keep list of devices that don't respond so they aren't scanned too frequently
+    #     """
+    #     self.unresponsive_devices[address] = datetime.now()
 
     def scrape_all(self):
         # TODO: support reading from an array.
@@ -151,32 +215,77 @@ class Interface(BaseInterface):
         read_registers = self.get_registers_by_type("byte", True)
         write_registers = self.get_registers_by_type("byte", False)
 
+        if self.enable_collection is False:
+            if datetime.now() - self.collection_disabled_time < timedelta(hours=24):
+                return
+            else:
+                self.enable_collection = True
+
         for register in read_registers + write_registers:
-            point_map[register.point_name] = [register.object_type,
-                                              register.instance_number,
-                                              register.property,
-                                              register.index]
+            point_map[register.point_name] = [
+                register.object_type,
+                register.instance_number,
+                register.property,
+                register.index,
+            ]
 
         while True:
             try:
-                result = self.vip.rpc.call(self.proxy_address, 'read_properties',
-                                           self.target_address, point_map,
-                                           self.max_per_request, self.use_read_multiple).get(timeout=self.timeout)
-            except RemoteError as e:
-                if "segmentationNotSupported" in e.message:
+                result = self.vip.rpc.call(
+                    self.proxy_address,
+                    "read_properties",
+                    self.target_address,
+                    point_map,
+                    self.max_per_request,
+                    self.use_read_multiple,
+                ).get(timeout=self.timeout)
+
+                _log.debug(f"found {len(result)} results in platform driver")
+            except gevent.timeout.Timeout as exc:
+                _log.error(f"Timed out reading target {self.target_address}")
+                raise exc
+            except RemoteError as exc:
+                if "unknownProperty" in exc.message:
+                    _log.debug(f"unknownProperty error: {exc.message}")
+                    # self.vip.config.set("unknown_properties", exc.message)
+                if "noResponse" in exc.message and self.use_read_multiple and self.failover_bacnet_to_single is True:
+                    _log.warning(
+                        f"device {self.target_address} did not respond reading multiple"
+                    )
+                    self.use_read_multiple = False
+                    continue
+                elif "noResponse" in exc.message and not self.use_read_multiple:
+                    # disable device for collection
+                    self.enable_collection = False
+                    break
+                if "segmentationNotSupported" in exc.message:
                     if self.max_per_request <= 1:
-                        _log.error("Receiving a segmentationNotSupported error with 'max_per_request' setting of 1.")
+                        _log.error(
+                            "Receiving a segmentationNotSupported error with 'max_per_request' setting of 1."
+                        )
                         raise
                     self.register_count_divisor += 1
-                    self.max_per_request = max(int(self.register_count/self.register_count_divisor), 1)
-                    _log.info("Device requires a lower max_per_request setting. Trying: "+str(self.max_per_request))
+                    self.max_per_request = max(
+                        int(self.register_count / self.register_count_divisor), 1
+                    )
+                    _log.info(
+                        "Device requires a lower max_per_request setting. Trying: "
+                        + str(self.max_per_request)
+                    )
                     continue
-                elif e.message.endswith("rejected the request: 9") and self.use_read_multiple:
-                    _log.info("Device rejected request with 'unrecognized-service' error, attempting to access with use_read_multiple false")
+                elif (
+                    exc.message.endswith("rejected the request: 9")
+                    and self.use_read_multiple
+                ):
+                    _log.info(
+                        "Device rejected request with 'unrecognized-service' error, attempting to access with use_read_multiple false"
+                    )
                     self.use_read_multiple = False
                     continue
                 else:
-                    raise
+                    trace = traceback.format_exc()
+                    _log.error(f"Error reading target {self.target_address}: {trace}")
+                    raise exc
             except errors.Unreachable:
                 # If the Proxy is not running bail.
                 _log.warning("Unable to reach BACnet proxy.")
@@ -184,7 +293,7 @@ class Interface(BaseInterface):
                 raise
             else:
                 break
-
+        _log.debug(f"{self.target_address=}")
         return result
 
     def revert_all(self, priority=None):
@@ -210,19 +319,19 @@ class Interface(BaseInterface):
 
         for regDef in configDict:
             # Skip lines that have no address yet.
-            if not regDef.get('Volttron Point Name'):
+            if not regDef.get("Volttron Point Name"):
                 continue
 
-            io_type = regDef.get('BACnet Object Type')
-            read_only = regDef.get('Writable').lower() != 'true'
-            point_name = regDef.get('Volttron Point Name')
+            io_type = regDef.get("BACnet Object Type")
+            read_only = regDef.get("Writable").lower() != "true"
+            point_name = regDef.get("Volttron Point Name")
 
             # checks if the point is flagged for change of value
-            is_cov = regDef.get("COV Flag", 'false').lower() == "true"
+            is_cov = regDef.get("COV Flag", "false").lower() == "true"
 
-            index = int(regDef.get('Index'))
+            index = int(regDef.get("Index"))
 
-            list_index = regDef.get('Array Index', '')
+            list_index = regDef.get("Array Index", "")
             list_index = list_index.strip()
 
             if not list_index:
@@ -230,7 +339,7 @@ class Interface(BaseInterface):
             else:
                 list_index = int(list_index)
 
-            priority = regDef.get('Write Priority', '')
+            priority = regDef.get("Write Priority", "")
             priority = priority.strip()
             if not priority:
                 priority = None
@@ -239,25 +348,32 @@ class Interface(BaseInterface):
 
                 if priority < self.min_priority:
                     message = "{point} configured with a priority {priority} which is lower than than minimum {min}."
-                    raise DriverConfigError(message.format(point=point_name,
-                                                           priority=priority,
-                                                           min=self.min_priority))
+                    raise DriverConfigError(
+                        message.format(
+                            point=point_name, priority=priority, min=self.min_priority
+                        )
+                    )
 
-            description = regDef.get('Notes', '')
-            units = regDef.get('Units')
-            property_name = regDef.get('Property')
+            description = regDef.get("Notes", "")
+            units = regDef.get("Units")
+            property_name = regDef.get("Property")
 
-            register = Register(index,
-                                io_type,
-                                property_name,
-                                read_only,
-                                point_name,
-                                units,
-                                description=description,
-                                priority=priority,
-                                list_index=list_index)
+            try:
+                register = Register(
+                    index,
+                    io_type,
+                    property_name,
+                    read_only,
+                    point_name,
+                    units,
+                    description=description,
+                    priority=priority,
+                    list_index=list_index,
+                )
 
-            self.insert_register(register)
+                self.insert_register(register)
+            except Exception as exc:  # pylint: disable=broad-except
+                _log.error(f"Error parsing register definition: {regDef=} {exc=}")
 
             if is_cov:
                 self.cov_points.append(point_name)
@@ -272,12 +388,28 @@ class Interface(BaseInterface):
         """
         register = self.get_register_by_name(point_name)
         try:
-            self.vip.rpc.call(self.proxy_address, 'create_cov_subscription', self.target_address, self.device_path,
-                              point_name, register.object_type, register.instance_number, lifetime=lifetime)
+            self.vip.rpc.call(
+                self.proxy_address,
+                "create_cov_subscription",
+                self.target_address,
+                self.device_path,
+                point_name,
+                register.object_type,
+                register.instance_number,
+                lifetime=lifetime,
+            )
         except errors.Unreachable:
-            _log.warning("Unable to establish a subscription via the bacnet proxy as it was unreachable.")
+            _log.warning(
+                "Unable to establish a subscription via the bacnet proxy as it was unreachable."
+            )
         # Schedule COV resubscribe
         if renew and (lifetime > COV_UPDATE_BUFFER):
             now = datetime.now()
             next_sub_update = now + timedelta(seconds=(lifetime - COV_UPDATE_BUFFER))
-            self.core.schedule(next_sub_update, self.establish_cov_subscription, point_name, lifetime, renew)
+            self.core.schedule(
+                next_sub_update,
+                self.establish_cov_subscription,
+                point_name,
+                lifetime,
+                renew,
+            )
