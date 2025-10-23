@@ -36,6 +36,7 @@
 # under Contract DE-AC05-76RL01830
 # }}}
 
+import json
 import logging
 import sys
 import gevent
@@ -45,7 +46,7 @@ from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, writ
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.agent import utils
 from volttron.platform.agent import math_utils
-from volttron.platform.agent.known_identities import PLATFORM_DRIVER
+from volttron.platform.agent.known_identities import PLATFORM_DRIVER, CONFIGURATION_STORE
 from volttron.platform.vip.agent.core import Core
 from .driver import DriverAgent
 import resource
@@ -58,7 +59,7 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.6.3'
+__version__ = '4.7.0b'
 
 
 PROMETHEUS_METRICS_FILE = "/opt/packages/prometheus_exporter/scrape_files/scrape_metrics.prom"
@@ -829,6 +830,34 @@ class PlatformDriverAgent(Agent):
             if driver.device_path == source_address:
                 driver.publish_cov_value(point_name, point_values)
 
+
+    @RPC.export
+    def add_config_to_store(
+        self, name, contents, config_type="json"
+    ):
+        """
+        Install given configuration to given identity's config store
+        """
+        _log.debug(f"rpc_test: received RPC call from ace agent(?) to add {name} to config store")
+        if "None" in name:
+            _log.debug(f"not adding {name} to config store")
+            return
+        if config_type == "json":
+            config_contents = json.dumps(contents)
+        else:
+            config_contents = contents
+        try:
+            self.vip.rpc.call(
+                CONFIGURATION_STORE,
+                "manage_store",
+                PLATFORM_DRIVER, # use fixed identity for platform driver configs
+                name,
+                config_contents,
+                config_type=config_type,
+            ).get(timeout=30)
+        except gevent.timeout.Timeout as exc:
+            _log.error(f"timed out adding {name} to config store: {exc}")
+        return True
 
 def main(argv=sys.argv):
     """Main method called to start the agent."""
