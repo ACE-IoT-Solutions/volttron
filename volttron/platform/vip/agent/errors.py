@@ -46,7 +46,37 @@ class VIPError(Exception):
 
     @classmethod
     def from_errno(cls, errnum, msg, *args):
-        errnum = int(errnum)
+        original_errnum = errnum
+        # Handle both integer error numbers and string representations like 'Errno.EHOSTUNREACH'
+        if isinstance(errnum, str):
+            # Try to parse string format like 'Errno.EHOSTUNREACH'
+            if errnum.startswith('Errno.'):
+                error_name = errnum.split('.', 1)[1]  # Get 'EHOSTUNREACH' part
+                # Get the errno value from the errno module
+                if hasattr(errno, error_name):
+                    errnum = getattr(errno, error_name)
+                else:
+                    # If we can't find the errno, try to extract a number if present
+                    try:
+                        import re
+                        match = re.search(r'\d+', errnum)
+                        if match:
+                            errnum = int(match.group())
+                        else:
+                            # Default to a generic error code if we can't parse it
+                            errnum = errno.EIO  # Generic I/O error
+                    except Exception as e:
+                        errnum = errno.EIO
+            else:
+                # Try to convert string to int directly
+                try:
+                    errnum = int(errnum)
+                except ValueError:
+                    # Default to a generic error code if we can't parse it
+                    errnum = errno.EIO  # Generic I/O error
+        else:
+            errnum = int(errnum)
+        
         return {
             errno.EHOSTUNREACH: Unreachable,
             errno.EAGAIN: Again,
