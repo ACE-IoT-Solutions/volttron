@@ -270,8 +270,13 @@ class Interface(BasicRevert, BaseInterface):
             use_singleton = True
         else:
             # Legacy mode - check for traditional modbus config keys
+            # Legacy configs use device_address + port + slave_id
             deployment_mode = 'legacy'
-            use_singleton = False
+            # IMPORTANT: Legacy mode should ALSO use singleton for connection sharing!
+            # When multiple driver instances use the same device_address:port,
+            # they need to share the TCP connection via singleton
+            use_singleton = True
+            _log.info("Legacy config detected - enabling singleton for connection sharing")
 
         _log.info(f"Deployment mode: {deployment_mode}, use_singleton: {use_singleton}")
         
