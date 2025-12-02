@@ -240,18 +240,25 @@ class ConnectionPool:
         return self._connections[key]
     
     def _test_connection(self, client):
-        """Test if a connection is still valid"""
+        """
+        Test if a connection is still valid at the socket level.
+
+        IMPORTANT: This tests TCP socket connectivity, NOT Modbus protocol responses.
+        A Modbus exception (e.g., illegal address) is still a valid connection.
+        We only want to detect broken sockets, not device-specific errors.
+        """
         try:
-            # Simple test - try to read one register
-            # This will fail quickly if connection is broken
-            if hasattr(client, 'read_holding_registers'):
-                # For some devices, address 0 might not be valid
-                # This is just a connectivity test
-                response = client.read_holding_registers(0, 1, unit=1)
-                # We don't care about the actual response, just that we got one
-                return response is not None
-            return True
-        except:
+            # Test socket connectivity using pymodbus API
+            # is_socket_open() checks if the TCP socket is connected
+            # This does NOT perform any Modbus operations
+            if hasattr(client, 'is_socket_open'):
+                return client.is_socket_open()
+
+            # Fallback for clients without is_socket_open()
+            # Check if the socket object exists and is not None
+            return client.socket is not None
+        except Exception as e:
+            _log.debug(f"Connection test exception: {e}")
             return False
     
     def _update_health(self, key, success):
