@@ -51,16 +51,12 @@ class TransformRegistry:
     
     def _register_builtin_transforms(self):
         """Register all built-in transform functions"""
-        
-        # Legacy modbus-tk compatible transforms
-        self.register('scale', scale)
-        self.register('scale_int', scale_int)
-        self.register('scale_decimal_int_signed', scale_decimal_int_signed)
-        self.register('mod10k', mod10k)
-        self.register('mod10k64', mod10k64)
-        self.register('mod10k48', mod10k48)
-        self.register('scale_reg', scale_reg)
-        self.register('scale_reg_pow_10', scale_reg_pow_10)
+
+        # Note: Parametric transforms (scale, scale_int, etc.) are NOT registered here
+        # because they require parameters. They are handled by create_transform() which
+        # calls the factory functions (scale(), scale_int(), etc.) with arguments.
+        #
+        # Only simple transforms (lambdas and no-arg functions) are pre-registered.
         
         # Additional common transforms
         self.register('scale_0_1', lambda x: x * 0.1)
