@@ -255,6 +255,11 @@ class Interface(BasicRevert, BaseInterface):
         driver_config = config_dict
         
         # Determine deployment mode
+        _log.debug(f"Driver config keys: {list(driver_config.keys())}")
+        _log.debug(f"'gateway' in driver_config: {'gateway' in driver_config}")
+        _log.debug(f"'units' in driver_config: {'units' in driver_config}")
+        _log.debug(f"'unit_id' in driver_config: {'unit_id' in driver_config}")
+
         if 'gateway' in driver_config and 'units' in driver_config:
             # Gateway as device mode - multiple units with their own registry configs
             deployment_mode = 'gateway_device'
@@ -267,8 +272,8 @@ class Interface(BasicRevert, BaseInterface):
             # Legacy mode - check for traditional modbus config keys
             deployment_mode = 'legacy'
             use_singleton = False
-        
-        _log.info(f"Deployment mode: {deployment_mode}")
+
+        _log.info(f"Deployment mode: {deployment_mode}, use_singleton: {use_singleton}")
         
         # Initialize components
         self.connection_pool = ConnectionPool(use_singleton=use_singleton, driver_instance=self)

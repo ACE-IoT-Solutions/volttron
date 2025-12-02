@@ -90,11 +90,14 @@ class ConnectionSingleton:
         """
         Get or create a connection for a gateway.
         Must be called while holding the gateway lock!
-        
+
         :param gateway_key: Unique gateway identifier
         :param connection_info: Connection configuration
         :return: Modbus client
         """
+        _log.debug(f"Singleton get_or_create_connection called for {gateway_key}")
+        _log.debug(f"Connection exists: {gateway_key in self._connections and self._connections.get(gateway_key) is not None}")
+
         if gateway_key not in self._connections or self._connections[gateway_key] is None:
             # Create new connection
             if connection_info.connection_type == 'tcp':

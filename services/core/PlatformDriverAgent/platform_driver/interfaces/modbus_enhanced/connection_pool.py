@@ -179,8 +179,10 @@ class ConnectionPool:
             try:
                 # Get or create the single connection for this gateway
                 if self.use_singleton:
+                    _log.debug(f"Using singleton for connection to {key}")
                     client = self._singleton.get_or_create_connection(key, connection_info)
                 else:
+                    _log.debug(f"Using local connection pool for {key}")
                     client = self._get_or_create_connection(key)
                 
                 # Test connection and reconnect if needed
@@ -205,12 +207,15 @@ class ConnectionPool:
                 
             except Exception as e:
                 _log.error(f"Connection error for {key}: {e}")
+                _log.debug(f"Exception type: {type(e).__name__}, use_singleton: {self.use_singleton}")
                 self._update_health(key, success=False)
-                
+
                 # Mark connection as broken
                 if self.use_singleton:
+                    _log.debug(f"Resetting singleton connection for {key}")
                     self._singleton.reset_connection(key)
                 else:
+                    _log.debug(f"Nullifying local connection for {key}")
                     if self._connections[key]:
                         try:
                             self._connections[key].close()
