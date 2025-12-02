@@ -248,15 +248,40 @@ class ConnectionPool:
         We only want to detect broken sockets, not device-specific errors.
         """
         try:
-            # Test socket connectivity using pymodbus API
-            # is_socket_open() checks if the TCP socket is connected
-            # This does NOT perform any Modbus operations
-            if hasattr(client, 'is_socket_open'):
-                return client.is_socket_open()
+            # Try multiple methods to test socket connectivity
 
-            # Fallback for clients without is_socket_open()
-            # Check if the socket object exists and is not None
-            return client.socket is not None
+            # Method 1: Check if socket exists and is connected
+            if hasattr(client, 'socket') and client.socket is not None:
+                try:
+                    # For TCP sockets, check if the socket is still connected
+                    # by examining the socket object directly
+                    sock = client.socket
+                    if hasattr(sock, 'fileno'):
+                        # If we can get the file descriptor, socket is valid
+                        _ = sock.fileno()
+                        return True
+                except (OSError, AttributeError):
+                    # Socket is closed or invalid
+                    return False
+
+            # Method 2: Try is_socket_open() if available (may fail in some pymodbus versions)
+            if hasattr(client, 'is_socket_open'):
+                try:
+                    return client.is_socket_open()
+                except AttributeError as e:
+                    # Some pymodbus versions have is_socket_open() but it fails
+                    # with AttributeError: '_in_waiting' on TCP clients
+                    _log.debug(f"is_socket_open() failed with {e}, falling back to socket check")
+                    # Fall through to next method
+
+            # Method 3: Check connect() status
+            if hasattr(client, 'connect'):
+                # If socket doesn't exist, connection is not valid
+                return hasattr(client, 'socket') and client.socket is not None
+
+            # Default: assume not connected
+            return False
+
         except Exception as e:
             _log.debug(f"Connection test exception: {e}")
             return False
