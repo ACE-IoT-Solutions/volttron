@@ -103,7 +103,7 @@ class ConnectionPool:
     def __init__(self, connection_timeout=30, use_singleton=False, driver_instance=None):
         """
         Initialize connection pool.
-        
+
         :param connection_timeout: Timeout for connections
         :param use_singleton: Whether to use the singleton (for unit as device mode)
         :param driver_instance: The driver instance using this pool
@@ -111,19 +111,25 @@ class ConnectionPool:
         self.connection_timeout = connection_timeout
         self.use_singleton = use_singleton
         self.driver_instance = driver_instance
-        
+
+        # Always initialize these - needed even in singleton mode for health tracking
+        self._global_lock = RLock()  # gevent.lock.RLock for greenlet safety
+        self._connection_health = {}  # Track connection health
+
         if use_singleton:
             # Use the process-wide singleton
             self._singleton = get_connection_singleton()
             if driver_instance:
                 self._singleton.register_driver_instance(driver_instance)
+            # These are not used in singleton mode
+            self._connections = None
+            self._connection_configs = None
+            self._connection_locks = None
         else:
             # Manage connections directly (gateway as device mode)
             self._connections = {}  # Dict of connection_key -> single client
             self._connection_configs = {}  # Dict of connection_key -> ConnectionInfo
             self._connection_locks = {}  # Dict of connection_key -> RLock for serialization
-            self._global_lock = RLock()  # gevent.lock.RLock for greenlet safety
-            self._connection_health = {}  # Track connection health
     
     def register_connection(self, connection_info: ConnectionInfo):
         """Register a new gateway connection configuration"""
@@ -294,6 +300,14 @@ class ConnectionPool:
     def _update_health(self, key, success):
         """Update connection health statistics"""
         with self._global_lock:
+            # Initialize health tracking for this key if it doesn't exist
+            if key not in self._connection_health:
+                self._connection_health[key] = {
+                    'failures': 0,
+                    'last_success': None,
+                    'last_failure': None
+                }
+
             health = self._connection_health[key]
             if success:
                 health['failures'] = 0
@@ -306,15 +320,29 @@ class ConnectionPool:
         """Get status of all gateway connections"""
         status = {}
         with self._global_lock:
-            for key in self._connections:
-                status[key] = {
-                    'connected': self._connections[key] is not None,
-                    'health': dict(self._connection_health[key])
-                }
+            if self.use_singleton:
+                # In singleton mode, we only track health, not connections
+                for key, health in self._connection_health.items():
+                    status[key] = {
+                        'connected': 'unknown (singleton mode)',
+                        'health': dict(health)
+                    }
+            else:
+                # In local mode, we track both connections and health
+                for key in self._connections:
+                    status[key] = {
+                        'connected': self._connections[key] is not None,
+                        'health': dict(self._connection_health.get(key, {}))
+                    }
         return status
     
     def close_all(self):
         """Close all gateway connections"""
+        if self.use_singleton:
+            # In singleton mode, don't close connections - they're managed by the singleton
+            _log.info("Singleton mode - connections managed by singleton, not closing")
+            return
+
         with self._global_lock:
             for key, client in self._connections.items():
                 if client:
@@ -322,10 +350,10 @@ class ConnectionPool:
                         client.close()
                     except:
                         pass
-            
+
             self._connections.clear()
             self._connection_configs.clear()
             self._connection_locks.clear()
             self._connection_health.clear()
-        
+
         _log.info("All gateway connections closed")
