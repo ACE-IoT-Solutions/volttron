@@ -64,6 +64,7 @@ BACNET_TYPE_MAPPING = {
     "binaryValue": bool,
     "binaryInput": bool,
     "binaryOutput": bool,
+    "schedule": float
 }
 
 
