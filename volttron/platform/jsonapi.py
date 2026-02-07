@@ -36,15 +36,30 @@
 # under Contract DE-AC05-76RL01830
 # }}}
 
-from json import dump, dumps, load, loads
+from orjson import dumps as _dumps, loads as _loads
 
 
 __all__ = ('dump', 'dumpb', 'dumps', 'load', 'loadb', 'loads')
 
 
 def dumpb(data, **kwargs):
-    return dumps(data, **kwargs).encode('utf-8')
+    return _dumps(data, **kwargs)
 
 
 def loadb(s, **kwargs):
-    return loads(s.decode('utf-8'), **kwargs)
+    return _loads(s, **kwargs)
+
+def dumps(data, **kwargs):
+    return _dumps(data, **kwargs).decode('utf-8')
+
+def loads(s, **kwargs):
+    return _loads(s.encode('utf-8'), **kwargs)
+
+def dump(data, fp, **kwargs):
+    fp.write(dumps(data, **kwargs).decode('utf-8'))
+
+def load(fp, **kwargs):
+    if isinstance(fp, io.TextIOBase):
+        return _loads(fp.read().encode('utf-8'), **kwargs)
+    else:
+        return _loads(fp.read(), **kwargs)
