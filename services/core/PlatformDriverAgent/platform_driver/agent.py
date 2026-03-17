@@ -58,10 +58,10 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.6.4'
+__version__ = '4.6.5'
 
 
-PROMETHEUS_METRICS_FILE = "/opt/packages/prometheus_exporter/scrape_files/scrape_metrics.prom"
+PROMETHEUS_METRICS_FILE = "/var/lib/volttron/metrics/scrape_metrics.prom"
 
 class OverrideError(DriverInterfaceError):
     """Error raised when the user tries to set/revert point when global override is set."""
