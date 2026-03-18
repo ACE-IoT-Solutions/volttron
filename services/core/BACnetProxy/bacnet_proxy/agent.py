@@ -52,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 from collections import defaultdict
 
@@ -1178,8 +1178,33 @@ class BACnetProxyAgent(Agent):
                     for prop_tuple, value in bacnet_results[0].items():
                         name = reverse_point_map[prop_tuple]
                         result_dict[name] = value
-
-        return result_dict
+        # ensure all points are JSON serializable
+        return_dict = {}
+        for key, value in result_dict.items():
+            try:
+                json.dumps(value)
+                return_dict[key] = value
+            except (TypeError, OverflowError):
+                if isinstance(value, Enumerated):
+                    value = value.value
+                    _log.debug(f"found raw enumerated {key} with value {value}")
+                    return_dict[key] = value
+                    if isinstance(value, Unsigned):
+                        value = int(value)
+                        _log.debug(f"found enumerated unsigned {key} with value {value}")
+                        return_dict[key] = value
+                    elif isinstance(value, Null):
+                        value = None
+                        _log.debug(f"found Null {key}, returning None")
+                        return_dict[key] = value
+                else:
+                    _log.warning(f"Point {key} with value {value} is not JSON serializable, attempting float conversion")
+                    try:
+                        return_dict[key] = float(value)
+                    except (ValueError, TypeError):
+                        # if the value cannot be converted to float, remove it
+                        _log.error(f"Could not convert point {key} with value {value} to float for JSON serialization")
+        return return_dict
 
     @RPC.export
     def create_cov_subscription(self, address, device_path, point_name, object_type, instance_number, lifetime=None):
