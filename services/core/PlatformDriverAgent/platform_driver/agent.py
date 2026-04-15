@@ -41,7 +41,7 @@ import sys
 import gevent
 from collections import defaultdict
 
-from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, write_to_textfile
+from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, start_http_server
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.agent import utils
 from volttron.platform.agent import math_utils
@@ -58,10 +58,10 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.6.5'
+__version__ = '4.6.6'
 
 
-PROMETHEUS_METRICS_FILE = "/var/lib/volttron/metrics/scrape_metrics.prom"
+PROMETHEUS_METRICS_PORT = 8000
 
 class OverrideError(DriverInterfaceError):
     """Error raised when the user tries to set/revert point when global override is set."""
@@ -186,8 +186,6 @@ class PlatformDriverAgent(Agent):
         self._override_devices = set()
         self._override_patterns = None
         self._override_interval_events = {}
-        self.last_written = datetime.now()
-        self.last_scraped = datetime.now()
 
         if scalability_test:
             self.waiting_to_finish = set()
@@ -211,12 +209,11 @@ class PlatformDriverAgent(Agent):
         self.vip.config.subscribe(self.update_driver, actions=["NEW", "UPDATE"], pattern="devices/*")
         self.vip.config.subscribe(self.remove_driver, actions="DELETE", pattern="devices/*")
         # self.vip.pubsub.subscribe(peer="pubsub", callback=self.add_unresponsive_bacnet_device, prefix="errors/bacnet")
-        
-    @Core.periodic(10)
-    def flush_metrics(self):
-        if self.last_written < self.last_scraped:
-            self.last_written = datetime.now()
-            write_to_textfile(PROMETHEUS_METRICS_FILE, self.collector_registry)
+
+    @Core.receiver('onstart')
+    def onstart(self, sender, **kwargs):
+        start_http_server(PROMETHEUS_METRICS_PORT, addr='127.0.0.1', registry=self.collector_registry)
+        _log.info("Prometheus metrics available at http://127.0.0.1:%d/metrics", PROMETHEUS_METRICS_PORT)
 
     def configure_main(self, config_name, action, contents):
         config = self.default_config.copy()
