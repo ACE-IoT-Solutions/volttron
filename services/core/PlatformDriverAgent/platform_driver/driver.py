@@ -249,16 +249,16 @@ class DriverAgent(BasicAgent):
             #     _log.debug(f"Skipping scrape of {self.device_name} due to recent noresponse")
             #     return
             results = self.interface.scrape_all()
-            self.parent.point_count.labels(device=self.device_name).set(len(results))
+            self.parent.point_count.set(len(results), {"device": self.device_name})
             _log.debug(f"{len(results)=}")
             register_names = self.interface.get_register_names_view()
             for point in (register_names - results.keys()):
                 depth_first_topic = self.base_topic(point=point)
-                self.parent.failed_point_scrape.labels(point=depth_first_topic, device=self.device_name).inc()
+                self.parent.failed_point_scrape.add(1, {"point": depth_first_topic, "device": self.device_name})
                 _log.error("Failed to scrape point: "+depth_first_topic)
         except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
-            self.parent.error_counter.labels(device=self.device_name).inc()
+            self.parent.error_counter.add(1, {"device": self.device_name})
             _log.error(f"Failed to scrape {self.device_name}. {exc=} traceback: {tb}")
             # if "Device communication aborted: noResponse" in str(exc):
             #     _log.debug(f"Adding unresponsive device: {self.device_name}")
@@ -267,8 +267,8 @@ class DriverAgent(BasicAgent):
             return
         end_time = time.time()
         scrape_time = end_time-start_time
-        self.parent.performance_histogram.labels(device=self.device_name).observe(scrape_time)
-        self.parent.performance_gauge.labels(device=self.device_name).set(scrape_time)
+        self.parent.performance_histogram.record(scrape_time, {"device": self.device_name})
+        self.parent.performance_gauge.set(scrape_time, {"device": self.device_name})
         self.parent.last_scraped = datetime.datetime.now()
         #temporarily moving return out of Excelt clause for testing
         # XXX: Does a warning need to be printed?

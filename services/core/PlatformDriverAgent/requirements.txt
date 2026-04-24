@@ -2,6 +2,8 @@ bacpypes==0.16.7
 pymodbus==2.5.2
 modbus-tk==1.1.2
 pyserial==3.5
-prometheus-client==0.15.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-http>=1.20.0
 paho-mqtt==1.6.1
 pyhaystack

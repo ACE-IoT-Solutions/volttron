@@ -41,7 +41,11 @@ import sys
 import gevent
 from collections import defaultdict
 
-from prometheus_client import CollectorRegistry, Gauge, Counter, Histogram, start_http_server
+from opentelemetry import metrics as otel_metrics
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.agent import utils
 from volttron.platform.agent import math_utils
@@ -58,10 +62,8 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.6.6'
+__version__ = '4.7.0'
 
-
-PROMETHEUS_METRICS_PORT = 8000
 
 class OverrideError(DriverInterfaceError):
     """Error raised when the user tries to set/revert point when global override is set."""
@@ -171,13 +173,39 @@ class PlatformDriverAgent(Agent):
 
         self.unresponsive_devices = {}
 
-        self.collector_registry = CollectorRegistry()
-        new_buckets = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, 30, float("inf"))
-        self.performance_histogram = Histogram("device_scrape_time_histogram", "Time taken to scrape given device - histogram", ['device'], registry=self.collector_registry, buckets=new_buckets)
-        self.performance_gauge = Gauge("device_scrape_time", "Time taken to scrape device", ['device'], registry=self.collector_registry)
-        self.error_counter = Counter("device_error_count", "Number of errors per device", ['device'], registry=self.collector_registry)
-        self.failed_point_scrape = Counter("failed_point_scrape", "Failed scrape for existing point", ['point', 'device'], registry=self.collector_registry)
-        self.point_count = Gauge("point_count", "Number of points per device", ['device'], registry=self.collector_registry)
+        _histogram_view = View(
+            instrument_name="device_scrape_time_histogram",
+            aggregation=ExplicitBucketHistogramAggregation(
+                boundaries=(.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, 30)
+            ),
+        )
+        _exporter = OTLPMetricExporter(endpoint="http://localhost:4318/v1/metrics")
+        _reader = PeriodicExportingMetricReader(_exporter, export_interval_millis=30_000)
+        self._meter_provider = MeterProvider(metric_readers=[_reader], views=[_histogram_view])
+        otel_metrics.set_meter_provider(self._meter_provider)
+        _meter = self._meter_provider.get_meter("platform.driver", version=__version__)
+        self.performance_histogram = _meter.create_histogram(
+            "device_scrape_time_histogram",
+            unit="s",
+            description="Time taken to scrape given device",
+        )
+        self.performance_gauge = _meter.create_gauge(
+            "device_scrape_time",
+            unit="s",
+            description="Time taken to scrape device",
+        )
+        self.error_counter = _meter.create_counter(
+            "device_error_count",
+            description="Number of errors per device",
+        )
+        self.failed_point_scrape = _meter.create_counter(
+            "failed_point_scrape",
+            description="Failed scrape for existing point",
+        )
+        self.point_count = _meter.create_gauge(
+            "point_count",
+            description="Number of points per device",
+        )
 
         self.publish_depth_first_all = bool(publish_depth_first_all)
         self.publish_breadth_first_all = bool(publish_breadth_first_all)
@@ -212,8 +240,12 @@ class PlatformDriverAgent(Agent):
 
     @Core.receiver('onstart')
     def onstart(self, sender, **kwargs):
-        start_http_server(PROMETHEUS_METRICS_PORT, addr='127.0.0.1', registry=self.collector_registry)
-        _log.info("Prometheus metrics available at http://127.0.0.1:%d/metrics", PROMETHEUS_METRICS_PORT)
+        _log.info("OTLP metrics publisher started, pushing to http://localhost:4318/v1/metrics")
+
+    @Core.receiver('onstop')
+    def onstop(self, sender, **kwargs):
+        if hasattr(self, '_meter_provider') and self._meter_provider is not None:
+            self._meter_provider.shutdown()
 
     def configure_main(self, config_name, action, contents):
         config = self.default_config.copy()
