@@ -46,6 +46,7 @@ from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExp
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
 from volttron.platform.vip.agent import Agent, RPC
 from volttron.platform.agent import utils
 from volttron.platform.agent import math_utils
@@ -181,7 +182,7 @@ class PlatformDriverAgent(Agent):
         )
         _exporter = OTLPMetricExporter(endpoint="http://localhost:4318/v1/metrics")
         _reader = PeriodicExportingMetricReader(_exporter, export_interval_millis=30_000)
-        self._meter_provider = MeterProvider(metric_readers=[_reader], views=[_histogram_view])
+        self._meter_provider = MeterProvider(metric_readers=[_reader], views=[_histogram_view], resource=Resource.create({"service.name": self.core.identity}))
         otel_metrics.set_meter_provider(self._meter_provider)
         _meter = self._meter_provider.get_meter("platform.driver", version=__version__)
         self.performance_histogram = _meter.create_histogram(
