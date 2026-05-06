@@ -186,13 +186,13 @@ class PlatformDriverAgent(Agent):
         _meter = self._meter_provider.get_meter("platform.driver", version=__version__)
         self.performance_histogram = _meter.create_histogram(
             "device_scrape_time_histogram",
-            unit="s",
-            description="Time taken to scrape given device",
+            unit="",
+            description="Time taken to scrape given device, in seconds",
         )
         self.performance_gauge = _meter.create_gauge(
             "device_scrape_time",
-            unit="s",
-            description="Time taken to scrape device",
+            unit="",
+            description="Time taken to scrape device, in seconds",
         )
         self.error_counter = _meter.create_counter(
             "device_error_count",
