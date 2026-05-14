@@ -23,7 +23,8 @@ from bacpypes.object import get_object_class, get_datatype
 from bacpypes.apdu import SimpleAckPDU, \
     ReadPropertyRequest, ReadPropertyACK, WritePropertyRequest
 from bacpypes.primitivedata import Null, Atomic, Integer, Unsigned, Real
-from bacpypes.constructeddata import Array, Any
+from bacpypes.constructeddata import Array, Any, ArrayOf, SequenceOf
+from bacpypes.basetypes import PropertyIdentifier, LogRecord
 
 from bacpypes.app import BIPSimpleApplication
 from bacpypes.service.device import LocalDeviceObject
@@ -113,6 +114,63 @@ class ReadWritePropertyConsoleCmd(ConsoleCmd):
                 sys.stdout.flush()
 
             # do something for error/reject/abort
+            if iocb.ioError:
+                sys.stdout.write(str(iocb.ioError) + '\n')
+
+        except Exception as error:
+            ReadWritePropertyConsoleCmd._exception("exception: %r", error)
+
+    def do_props(self, args):
+        """props <addr> <type> <inst>
+
+        Read the propertyList (property ID 371) from a BACnet object and print
+        all optional properties present on it.  Required properties defined by
+        the spec for that object type are not included in this list.
+
+        Example:
+            props 192.168.1.10 analogInput 1
+        """
+        args = args.split()
+        if _debug: ReadWritePropertyConsoleCmd._debug("do_props %r", args)
+
+        try:
+            addr, obj_type, obj_inst = args[:3]
+
+            if obj_type.isdigit():
+                obj_type = int(obj_type)
+            elif not get_object_class(obj_type):
+                raise ValueError("unknown object type")
+
+            obj_inst = int(obj_inst)
+
+            request = ReadPropertyRequest(
+                objectIdentifier=(obj_type, obj_inst),
+                propertyIdentifier='propertyList',
+            )
+            request.pduDestination = Address(addr)
+            if _debug: ReadWritePropertyConsoleCmd._debug("    - request: %r", request)
+
+            iocb = IOCB(request)
+            if _debug: ReadWritePropertyConsoleCmd._debug("    - iocb: %r", iocb)
+
+            this_application.request_io(iocb)
+            iocb.wait()
+
+            if iocb.ioResponse:
+                apdu = iocb.ioResponse
+
+                if not isinstance(apdu, ReadPropertyACK):
+                    if _debug: ReadWritePropertyConsoleCmd._debug("    - not an ack")
+                    return
+
+                value = apdu.propertyValue.cast_out(ArrayOf(PropertyIdentifier))
+                if _debug: ReadWritePropertyConsoleCmd._debug("    - value: %r", value)
+
+                sys.stdout.write("optional properties present on %s %s:\n" % (obj_type, obj_inst))
+                for prop_id in value:
+                    sys.stdout.write("  %s\n" % (prop_id,))
+                sys.stdout.flush()
+
             if iocb.ioError:
                 sys.stdout.write(str(iocb.ioError) + '\n')
 
