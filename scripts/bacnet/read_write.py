@@ -26,7 +26,7 @@ from bacpypes.primitivedata import Null, Atomic, Integer, Unsigned, Real
 from bacpypes.constructeddata import Array, Any, ArrayOf, SequenceOf
 from bacpypes.basetypes import PropertyIdentifier, LogRecord
 
-from bacpypes.app import BIPSimpleApplication
+from bacpypes.app import BIPSimpleApplication, BIPForeignApplication
 from bacpypes.service.device import LocalDeviceObject
 
 # some debugging
@@ -315,8 +315,13 @@ def main():
         vendorIdentifier=int(args.ini.vendoridentifier),
         )
 
-    # make a simple application
-    this_application = BIPSimpleApplication(this_device, args.ini.address)
+    # make a simple application, or a foreign application if a BBMD is configured
+    if hasattr(args.ini, 'foreignbbmd') and args.ini.foreignbbmd:
+        sys.stdout.write("WARNING: using BBMD at %s (TTL %s)\n" % (args.ini.foreignbbmd, args.ini.foreignttl))
+        sys.stdout.flush()
+        this_application = BIPForeignApplication(this_device, args.ini.address, Address(args.ini.foreignbbmd), int(args.ini.foreignttl))
+    else:
+        this_application = BIPSimpleApplication(this_device, args.ini.address)
 
     # get the services supported
     services_supported = this_application.get_services_supported()
