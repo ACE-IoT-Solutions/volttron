@@ -39,6 +39,7 @@ import gevent
 import gevent.event
 from gevent import subprocess
 from gevent.subprocess import PIPE
+import psutil
 from wheel.tool import unpack
 
 from volttron.platform.agent.known_identities import VOLTTRON_CENTRAL_PLATFORM
@@ -678,6 +679,11 @@ class AIPplatform:
                 _log.warning(user_id_err)
         if remove_auth:
             self._unauthorize_agent_keys(agent_uuid)
+        pid_file = os.path.join(agent_directory, 'AGENT_PID')
+        try:
+            os.remove(pid_file)
+        except FileNotFoundError:
+            pass
         shutil.rmtree(agent_directory)
         if volttron_agent_user:
             self.remove_agent_user(volttron_agent_user)
@@ -1018,6 +1024,13 @@ class AIPplatform:
         self.agents[agent_uuid] = execenv
         proc = execenv.process
         _log.info('agent %s has PID %s', agent_path_with_name, proc.pid)
+        try:
+            create_time = psutil.Process(proc.pid).create_time()
+            pid_file = os.path.join(self.install_dir, agent_uuid, 'AGENT_PID')
+            with open(pid_file, 'w') as f:
+                jsonapi.dump({'pid': proc.pid, 'create_time': create_time}, f)
+        except Exception as e:
+            _log.warning('Could not write PID file for agent %s: %s', agent_uuid, e)
         gevent.spawn(log_stream, 'agents.stderr', name, proc.pid, argv[0],
                       log_entries('agents.log', name, proc.pid, logging.ERROR,
                                   proc.stderr))
@@ -1040,7 +1053,62 @@ class AIPplatform:
             execenv = self.agents[agent_uuid]
             return execenv.stop()
         except KeyError:
+            pass
+
+        # In-memory tracking is missing — attempt recovery via PID file.
+        pid_file = os.path.join(self.install_dir, agent_uuid, 'AGENT_PID')
+        if not os.path.exists(pid_file):
             return
+
+        try:
+            with open(pid_file) as f:
+                data = jsonapi.load(f)
+            pid = int(data['pid'])
+            saved_create_time = float(data['create_time'])
+        except Exception as e:
+            _log.warning('stop_agent: could not read PID file for %s: %s — skipping', agent_uuid, e)
+            return
+
+        try:
+            proc = psutil.Process(pid)
+            current_create_time = proc.create_time()
+        except psutil.NoSuchProcess:
+            return  # Already dead
+
+        if abs(current_create_time - saved_create_time) > 1.0:
+            # PID was reused by an unrelated process (reboot, wraparound, etc.)
+            _log.warning(
+                'stop_agent: PID %d exists but create_time mismatch '
+                '(saved=%.2f current=%.2f) — PID reused, leaving process untouched',
+                pid, saved_create_time, current_create_time)
+            return
+
+        # Secondary check: cmdline must reference this agent's UUID.
+        try:
+            cmdline = ' '.join(proc.cmdline())
+            if agent_uuid not in cmdline:
+                _log.warning(
+                    'stop_agent: PID %d create_time matches but cmdline does not '
+                    'contain agent UUID %s — leaving process untouched', pid, agent_uuid)
+                return
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return  # Gone between checks or unreadable — safe to skip
+
+        _log.warning(
+            'stop_agent: %s not in agents dict but PID %d is alive and verified — killing',
+            agent_uuid, pid)
+        try:
+            proc.send_signal(signal.SIGINT)
+            proc.wait(timeout=60)
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.TimeoutExpired:
+            _log.warning('stop_agent: PID %d did not exit after SIGINT, sending SIGKILL', pid)
+            try:
+                proc.kill()
+                proc.wait(timeout=10)
+            except psutil.NoSuchProcess:
+                pass
 
     def agent_uuid_from_pid(self, pid):
         for agent_uuid, execenv in self.agents.items():
