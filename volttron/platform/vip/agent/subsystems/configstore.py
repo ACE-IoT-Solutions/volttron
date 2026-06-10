@@ -31,6 +31,7 @@ import inspect
 from .base import SubsystemBase
 from volttron.platform.storeutils import list_unique_links, check_for_config_link
 from volttron.platform.vip.agent import errors
+from volttron.platform.jsonrpc import RemoteError
 from volttron.platform.agent.known_identities import CONFIGURATION_STORE
 from volttron.platform import jsonapi
 from volttron.platform.agent.utils import is_auth_enabled
@@ -93,7 +94,7 @@ class ConfigStore(SubsystemBase):
             except errors.Unreachable as e:
                 _log.error("Connected platform does not support the Configuration Store feature.")
                 return
-            except errors.VIPError as e:
+            except (errors.VIPError, RemoteError) as e:
                 _log.error("Error retrieving agent configurations: {}".format(e))
                 return
 
