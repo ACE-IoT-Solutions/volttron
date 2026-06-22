@@ -252,10 +252,10 @@ class DriverAgent(BasicAgent):
             self.parent.point_count.set(len(results), {"device": self.device_name})
             _log.debug(f"{len(results)=}")
             register_names = self.interface.get_register_names_view()
-            for point in (register_names - results.keys()):
-                depth_first_topic = self.base_topic(point=point)
-                self.parent.failed_point_scrape.add(1, {"point": depth_first_topic, "device": self.device_name})
-                _log.error("Failed to scrape point: "+depth_first_topic)
+            failed_points = register_names - results.keys()
+            self.parent.failed_point_count.set(len(failed_points), {"device": self.device_name})
+            for point in failed_points:
+                _log.error("Failed to scrape point: " + self.base_topic(point=point))
         except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
             self.parent.error_counter.add(1, {"device": self.device_name})

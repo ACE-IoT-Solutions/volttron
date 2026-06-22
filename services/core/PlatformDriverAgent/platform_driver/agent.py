@@ -63,7 +63,7 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.7.0'
+__version__ = '4.7.1b'
 
 
 class OverrideError(DriverInterfaceError):
@@ -199,9 +199,9 @@ class PlatformDriverAgent(Agent):
             "device_error_count",
             description="Number of errors per device",
         )
-        self.failed_point_scrape = _meter.create_counter(
-            "failed_point_scrape",
-            description="Failed scrape for existing point",
+        self.failed_point_count = _meter.create_gauge(
+            "failed_point_count",
+            description="Number of points that failed to scrape in the most recent scrape cycle",
         )
         self.point_count = _meter.create_gauge(
             "point_count",
