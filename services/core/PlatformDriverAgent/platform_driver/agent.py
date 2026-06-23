@@ -63,7 +63,7 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.7.1b'
+__version__ = '4.7.1'
 
 
 class OverrideError(DriverInterfaceError):
