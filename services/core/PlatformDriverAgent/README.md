@@ -77,6 +77,21 @@ to the device. Heart beats are triggered by the Actuator Agent which must be run
 
 ## Changes
 
+- 4.7.1
+    - change failed_point_scrape counter to failed_point_count gauge
+
+- 4.7.0
+    - change to OTLP metrics to push to central alloy server
+
+- 4.6.6
+    - expose server for alloy to collect metrics via tcp
+
+- 4.6.5
+    - change metrics directory to new one
+
+- 4.6.4
+    - fix schedule object not being handled
+
 - 4.6.3
     - add modbus_enhanced driver
     - add check in haystack driver for points that no longer exist in point_entities, but are in registry configs
