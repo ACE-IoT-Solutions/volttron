@@ -1,0 +1,11 @@
+{
+    "connection": {
+        "mqtt_hostname": "emqx.syyclops.com",
+        "mqtt_port": 8080,
+        "mqtt_auth": {
+                "username": "",
+                "password": ""
+        }
+    },
+    "site_slug": ""
+}
