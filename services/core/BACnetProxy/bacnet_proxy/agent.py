@@ -52,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 
 from collections import defaultdict
 
@@ -1158,10 +1158,10 @@ class BACnetProxyAgent(Agent):
                     bacnet_results = iocb.ioResult.get(10)
                 except RuntimeError as exc:
                     try:
-                        _log.debug(f"error reading multiple properties for {target_address} {exc}")
+                        _log.error(f"error reading multiple properties for {target_address} {exc}")
                         raise exc
                     except gevent.Timeout as exc_e:
-                        _log.debug(exc_e)
+                        _log.error(exc_e)
                         continue
                 except Exception as exc:
                     _log.error(f"{exc} {target_address=} {request=}")
