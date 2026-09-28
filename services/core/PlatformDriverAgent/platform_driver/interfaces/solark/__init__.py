@@ -37,11 +37,16 @@ from platform_driver.interfaces import BaseRegister, BaseInterface, BasicRevert
 from volttron.platform.vip.agent import Agent, Core, RPC, PubSub
 from volttron.platform.messaging.health import STATUS_GOOD, STATUS_BAD
 
-from .solark import fetch_bearer_token, get_plant_realtime
+from .solark import fetch_bearer_token, get_plant_flow
 
 _log = logging.getLogger("solark")
 
-DEFAULT_POINTS = ["id", "status", "pac", "etoday", "etotal", "type", "emonth", "eyear", "income", "efficiency"]
+# plant/energy/{id}/flow, not plant/{id}/realtime: flow carries PV power AND
+# battery SOC/charge/discharge in one response, so one call covers everything
+# downstream consumers (e.g. racer_optimization) need. Calling both realtime
+# and flow every scrape doubled the request rate and got this driver rate
+# limited -- flow alone is also what TAMU's own reference code calls.
+DEFAULT_POINTS = ["pvPower", "soc", "battPower", "batTo", "toBat", "loadOrEpsPower"]
 
 class Register(BaseRegister):
     """
@@ -116,17 +121,40 @@ class Interface(BasicRevert, BaseInterface):
         points = self._scrape_all()
         return points.get(point_name)
     
+    @staticmethod
+    def _to_float(point_name, value):
+        """
+        Cast a scraped point value to float. Historians (e.g. the Postgres/Timescale
+        views) expect numeric values, but batTo/toBat come back from SolArk's API as
+        booleans (or, in some responses, the strings "true"/"false") rather than 0/1,
+        so those are mapped to 1.0/0.0. Anything else that isn't numeric has no
+        meaningful float value, so it's dropped rather than published as a string
+        downstream consumers can't handle.
+        :param point_name: name of the point the value belongs to, for logging
+        :param value: raw value returned by the SolArk API for this point
+        :return: value cast to float, or None if it could not be cast (caller should drop it)
+        """
+        if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+            value = value.strip().lower() == "true"
+        try:
+            return float(value)
+        except (TypeError, ValueError) as e:
+            _log.error(f"Dropping SolArk point {point_name}: could not cast value {value!r} to float: {e}")
+            return None
+
     def filter_valid_points(self, points):
         new_points = {}
         _log.debug(f"filtering points: {points}")
         for point, value in points.items():
             if point not in DEFAULT_POINTS:
                 continue
-            new_points[point] = value
+            cast_value = self._to_float(point, value)
+            if cast_value is not None:
+                new_points[point] = cast_value
         return new_points
 
     def _scrape_all(self):
-        output = get_plant_realtime(self.plant_id, self.api_key, self.token)
+        output = get_plant_flow(self.plant_id, self.api_key, self.token) or {}
         data = self.filter_valid_points(output)
         _log.debug(f"scraping solark: {data}")
         return data
