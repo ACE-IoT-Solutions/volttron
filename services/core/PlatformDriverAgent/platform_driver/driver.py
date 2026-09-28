@@ -259,6 +259,7 @@ class DriverAgent(BasicAgent):
         except (Exception, gevent.Timeout) as exc:
             tb = traceback.format_exc()
             self.parent.error_counter.add(1, {"device": self.device_name})
+            self.parent.failed_point_count.set(len(register_names), {"device": self.device_name})
             _log.error(f"Failed to scrape {self.device_name}. {exc=} traceback: {tb}")
             # if "Device communication aborted: noResponse" in str(exc):
             #     _log.debug(f"Adding unresponsive device: {self.device_name}")

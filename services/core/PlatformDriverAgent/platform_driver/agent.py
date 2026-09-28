@@ -39,6 +39,12 @@
 import logging
 import sys
 import gevent
+from gevent import monkey
+# Must patch ssl before anything below (opentelemetry -> requests -> urllib3) imports it,
+# otherwise urllib3.util.ssl_ binds direct references to the unpatched ssl classes and a
+# later, lazy gevent.monkey.patch_all() call (e.g. from importing grequests in an interface
+# module) corrupts SSLContext, causing RecursionError on the first real TLS connection.
+monkey.patch_all()
 from collections import defaultdict
 
 from opentelemetry import metrics as otel_metrics
@@ -63,7 +69,7 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.7.1'
+__version__ = '4.7.4'
 
 
 class OverrideError(DriverInterfaceError):
