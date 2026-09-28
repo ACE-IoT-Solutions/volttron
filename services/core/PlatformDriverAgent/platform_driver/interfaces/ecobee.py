@@ -120,9 +120,14 @@ class Interface(BasicRevert, BaseInterface):
                         self.get_thermostat_data()
                         self.authorization_stage = "AUTHORIZED"
                     except HTTPError:
-                        _log.warning("Ecobee request response contained HTTP Error, authorization code may be expired. "
-                                     "Requesting new authorization code from Ecobee api")
-                        self.authorization_stage = "UNAUTHORIZED"
+                        # The access token is short-lived and routinely rejected after any
+                        # restart that follows more than ~1h of idle time -- that alone does
+                        # not mean the refresh token (which lasts far longer) is also dead.
+                        # Try refreshing before throwing away a still-good refresh token and
+                        # forcing the user through a brand new PIN flow.
+                        _log.warning("Ecobee access token rejected (HTTPError). Attempting to refresh "
+                                     "using the stored refresh token before requesting a new PIN.")
+                        self.authorization_stage = "REFRESH_TOKENS"
         if self.authorization_stage != "AUTHORIZED":
             # if this fails, our attempt to obtain new auth code and tokens was unsuccessful and the driver is in an
             # error state
@@ -221,13 +226,17 @@ class Interface(BasicRevert, BaseInterface):
                                    "contained {response}")
         self.authorization_code = response.get('code')
         pin = response.get('ecobeePin')
+        self.authorization_stage = "REQUEST_TOKENS"
+        # Persist the auth code now, before attempting request_tokens(): if that call fails
+        # (e.g. the user hasn't authorized the PIN on ecobee.com yet), a subsequent retry
+        # must reuse this same code/PIN rather than minting a new one and stranding the user.
+        self.update_auth_config()
         _log.warning("***********************************************************")
         _log.warning(
             f'Please authorize your Ecobee developer app with PIN code {pin}.\nGo to '
             'https://www.ecobee.com/consumerportal /index.html, click My Apps, Add application, Enter Pin and click '
             'Authorize.')
         _log.warning("***********************************************************")
-        self.authorization_stage = "REQUEST_TOKENS"
         gevent.sleep(60)
 
     def request_tokens(self):
@@ -279,7 +288,8 @@ class Interface(BasicRevert, BaseInterface):
                        "ACCESS_TOKEN": self.access_token,
                        "REFRESH_TOKEN": self.refresh_token}
         _log.debug("Updating Ecobee auth configuration with new tokens.")
-        self.vip.rpc.call(CONFIGURATION_STORE, "set_config", self.auth_config_path, auth_config, trigger_callback=False,
+        self.vip.rpc.call(CONFIGURATION_STORE, "set_config", PLATFORM_DRIVER, self.auth_config_path,
+                          jsonapi.dumps(auth_config), trigger_callback=False,
                           send_update=False).get(timeout=3)
 
     def get_auth_config_from_store(self):
@@ -453,21 +463,54 @@ class Interface(BasicRevert, BaseInterface):
         for register in registers:
             try:
                 register_data = register.get_state(self.thermostat_data)
-                if isinstance(register_data, dict):
-                    result.update(register_data)
-                else:
-                    result[register.point_name] = register_data
+                self._store_scraped_value(result, register, register_data)
             except ValueError:
                 if refresh is True:
                     # refresh data, but don't create a non-deterministic loop of refreshes
                     self.get_thermostat_data(refresh=refresh)
                     refresh = False
                     register_data = register.get_state(self.thermostat_data)
-                    if isinstance(register_data, dict):
-                        result.update(register_data)
-                    else:
-                        result[register.point_name] = register_data
+                    self._store_scraped_value(result, register, register_data)
         return result
+
+    @staticmethod
+    def _to_float(point_name, value):
+        """
+        Cast a scraped point value to float. Historians (e.g. TimescaleDB) expect numeric
+        values, but Ecobee sometimes returns booleans as strings (e.g. "true"/"false" for
+        settings like condensationAvoid) instead of JSON booleans, so those are mapped to
+        1.0/0.0. Anything else that isn't numeric (a categorical setting like hvacMode, or
+        a list-valued register like Status) has no meaningful float value, so it's dropped
+        rather than published as a string that downstream consumers can't handle.
+        :param point_name: name of the point the value belongs to, for logging
+        :param value: raw value returned by a register's get_state()
+        :return: value cast to float, or None if it could not be cast (caller should drop it)
+        """
+        if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+            # float("true"/"false") raises ValueError - Ecobee returns some booleans this way
+            # (e.g. condensationAvoid) instead of as JSON booleans.
+            value = value.strip().lower() == "true"
+        try:
+            return float(value)
+        except (TypeError, ValueError) as e:
+            _log.error(f"Dropping Ecobee point {point_name}: could not cast value {value!r} to float: {e}")
+            return None
+
+    def _store_scraped_value(self, result, register, register_data):
+        """
+        Cast register_data to float and add it to result under the appropriate point
+        name(s), dropping any value that can't be cast (logged in _to_float) instead of
+        publishing a string the historian's numeric views can't handle.
+        """
+        if isinstance(register_data, dict):
+            for name, value in register_data.items():
+                cast_value = self._to_float(name, value)
+                if cast_value is not None:
+                    result[name] = cast_value
+        else:
+            cast_value = self._to_float(register.point_name, register_data)
+            if cast_value is not None:
+                result[register.point_name] = cast_value
 
 
 class Setting(BaseRegister):
@@ -804,7 +847,6 @@ def populate_selection_objects(access_token, selection_type, selection_match, sp
     body.update(specification)
     return populate_thermostat_headers(access_token), body
 
-
 def call_grequest(method_name, url, **kwargs):
     """
     Make grequest calls to remote api
@@ -813,12 +855,30 @@ def call_grequest(method_name, url, **kwargs):
     :param kwargs: Additional arguments for http request
     :return: grequest response
     """
+    captured_exceptions = []
+
+    def _grequests_exception_handler(request, exception):
+        # traceback.format_exc() is unreliable here: grequests invokes this callback
+        # outside the except block that raised, so there is no exception in-flight for
+        # it to format. Capture the exception object we were given so it can be
+        # re-raised below instead of surfacing as a confusing AttributeError on None.
+        _log.error(f"grequests error calling {url}: {exception!r}")
+        captured_exceptions.append(exception)
+
     try:
         fn = getattr(grequests, method_name)
         request = fn(url, **kwargs)
-        response = grequests.map([request])[0]
+        response = grequests.map([request], exception_handler=_grequests_exception_handler)[0]
         if response and isinstance(response, list):
             response = response[0]
+        if response is None:
+            if captured_exceptions:
+                raise captured_exceptions[0]
+            raise ConnectionError(f"Request to {url} failed with no response and no exception captured")
+        if not response.ok:
+            # Ecobee's error responses (e.g. {"error": "invalid_grant", "error_description": "..."})
+            # explain *why* a request failed; raise_for_status() alone discards that body.
+            _log.error(f"Ecobee request to {url} failed with {response.status_code}: {response.text}")
         response.raise_for_status()
         return response
     except (ConnectionError, NewConnectionError) as e:
