@@ -25,7 +25,10 @@ import inspect
 import os
 import re
 
+import gevent
+import gevent.lock
 from watchdog.events import PatternMatchingEventHandler
+from watchdog.utils.patterns import match_any_paths
 import logging
 
 _log = logging.getLogger(__name__)
@@ -93,12 +96,88 @@ def monkey_patch():
         if not monkey.is_module_patched(module):
             fn()
 
-class VolttronHomeFileReloader(PatternMatchingEventHandler):
+class _GeventFileReloader(PatternMatchingEventHandler):
+    """
+    Base for the file reloaders.  Schedule it on the *directory* containing the
+    file(s), never on the file itself: an inotify watch on a file follows its
+    inode, so it dies silently the first time the file is replaced by a rename
+    (atomic writes, editors, config management).
+
+    Watchdog dispatches events on its own native thread.  Callbacks touch gevent
+    and zmq state, so they are handed to the hub of the thread that created the
+    reloader and run there in a greenlet, one at a time.  Exceptions are logged
+    and never propagate back into watchdog, where they would kill the observer
+    thread and stop all further events.
+    """
+    def __init__(self, patterns, path=None):
+        super().__init__(patterns=patterns, ignore_directories=True)
+        self._path = path
+        self._hub = gevent.get_hub()
+        self._lock = gevent.lock.Semaphore()
+        self._last_signature = self._file_signature()
+
+    def _invoke(self):
+        raise NotImplementedError()
+
+    def on_closed(self, event):
+        # Only emitted for IN_CLOSE_WRITE, reads do not trigger a reload.
+        self._schedule(event)
+
+    def on_moved(self, event):
+        # A file renamed into place, e.g. an atomic write.  Moves *away* from
+        # the watched name are ignored.
+        if match_any_paths([event.dest_path], included_patterns=self.patterns,
+                           case_sensitive=self.case_sensitive):
+            self._schedule(event)
+
+    def _schedule(self, event):
+        # Called on the watchdog thread.
+        self._hub.loop.run_callback_threadsafe(gevent.spawn, self._run_callback, event)
+
+    def _run_callback(self, event):
+        with self._lock:
+            self._last_signature = self._file_signature()
+            _log.debug("Calling callback on event {}".format(event))
+            try:
+                self._invoke()
+            except Exception:
+                _log.exception("Exception in file watch callback for event {}".format(event))
+            _log.debug("After callback on event {}".format(event))
+
+    def _file_signature(self):
+        if self._path is None:
+            return None
+        try:
+            st = os.stat(self._path)
+        except OSError:
+            return None
+        return st.st_ino, st.st_mtime_ns, st.st_size
+
+    def poll(self, interval):
+        """
+        Safety net for missed file events: every `interval` seconds, run the
+        callback if the file's inode, mtime or size differs from what the last
+        callback saw.  Runs forever, so call it in its own greenlet.  Only
+        available for reloaders watching a single concrete path.
+        """
+        if self._path is None:
+            raise ValueError("polling requires a single file path")
+        while True:
+            gevent.sleep(interval)
+            if self._file_signature() != self._last_signature:
+                _log.warning("Change to {} detected by polling, file events were "
+                             "missed".format(self._path))
+                self._run_callback("poll")
+
+
+class VolttronHomeFileReloader(_GeventFileReloader):
     """
     Extends PatternMatchingEvent handler to watch changes to a singlefile/file pattern within volttron home.
     filetowatch should be path relative to volttron home.
     For example filetowatch auth.json with watch file <volttron_home>/auth.json.
     filetowatch *.json will watch all json files in <volttron_home>
+
+    Schedule on <volttron_home>, see _GeventFileReloader.
     """
     def __init__(self, filetowatch, callback):
         # Protect from circular reference for file
@@ -108,24 +187,19 @@ class VolttronHomeFileReloader(PatternMatchingEventHandler):
         _log.debug("patterns is {}".format([get_home() + '/' + filetowatch]))
         self._callback = callback
 
-    def on_closed(self, event):
-        _log.debug("Calling callback on event {}. Calling {}".format(event, self._callback))
-        try:
-            self._callback()
-        except BaseException as e:
-            _log.error("Exception in callback: {}".format(e))
-        _log.debug("After callback on event {}".format(event))
+    def _invoke(self):
+        self._callback()
 
 
-class AbsolutePathFileReloader(PatternMatchingEventHandler):
+class AbsolutePathFileReloader(_GeventFileReloader):
     """
-    Extends PatternMatchingEvent handler to watch changes to a singlefile/file pattern within volttron home.
-    filetowatch should be path relative to volttron home.
-    For example filetowatch auth.json with watch file <volttron_home>/auth.json.
-    filetowatch *.json will watch all json files in <volttron_home>
+    Extends PatternMatchingEvent handler to watch changes to a single file
+    given by its absolute path.  The callback is called with that path.
+
+    Schedule on the file's directory, see _GeventFileReloader.
     """
     def __init__(self, filetowatch, callback):
-        super(AbsolutePathFileReloader, self).__init__([filetowatch])
+        super(AbsolutePathFileReloader, self).__init__([filetowatch], path=filetowatch)
         self._callback = callback
         self._filetowatch = filetowatch
 
@@ -133,13 +207,8 @@ class AbsolutePathFileReloader(PatternMatchingEventHandler):
     def watchfile(self):
         return self._filetowatch
 
-    def on_closed(self, event):
-        _log.debug("Calling callback on event {}. Calling {}".format(event, self._callback))
-        try:
-            self._callback(self._filetowatch)
-        except BaseException as e:
-            _log.error("Exception in callback: {}".format(e))
-        _log.debug("After callback on event {}".format(event))
+    def _invoke(self):
+        self._callback(self._filetowatch)
 
 
 def print_stack():

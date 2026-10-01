@@ -42,6 +42,10 @@ from volttron.platform.vip.pubsubservice import ProtectedPubSubTopics
 
 _log = logging.getLogger(__name__)
 
+# Seconds between checks of the auth and protected topics files, a fallback
+# in case file events are missed.
+AUTH_FILE_POLL_INTERVAL = 60
+
 
 class AuthService(Agent):
 
@@ -58,6 +62,10 @@ class AuthService(Agent):
         self.core.delay_running_event_set = False
         self.auth_file_path = os.path.abspath(auth_file)
         self.auth_file = AuthFile(self.auth_file_path)
+        # Allow entries as of the last reload, used to find entries whose rpc
+        # method authorizations changed.  Kept apart from the AuthFile cache,
+        # which is refreshed on every write.
+        self._applied_allow_entries = self.auth_file.read_allow_entries()
         self.export_auth_file()
         self.can_update = False
         self.needs_rpc_update = False
@@ -92,6 +100,7 @@ class AuthService(Agent):
             :params: None
             :return: auth_data
             """
+            self.auth_file.load()
             return self.auth_file.auth_data
 
         def auth_file_add(entry):
@@ -144,11 +153,13 @@ class AuthService(Agent):
                 auth_service=self)
             self.authorization_server = RMQAuthorization(auth_service=self)
         self._read_protected_topics_file()
-        self.core.spawn(watch_file, self.auth_file_path, self.read_auth_file)
+        self.core.spawn(watch_file, self.auth_file_path, self.read_auth_file,
+                        poll_interval=AUTH_FILE_POLL_INTERVAL)
         self.core.spawn(
             watch_file,
             self._protected_topics_file_path,
             self._read_protected_topics_file,
+            poll_interval=AUTH_FILE_POLL_INTERVAL,
         )
         self.authentication_server.setup_authentication()
 
@@ -176,6 +187,8 @@ class AuthService(Agent):
             {rpc_method_name: [allowed_rpc_capability_1, ...]}
         :return: updated_rpc_methods or None
         """
+        # Fresh read, the index found here is used to write back.
+        self.auth_file.load()
         entries = self.auth_file.read_allow_entries()
         for entry in entries:
             if entry.identity == identity:
@@ -301,6 +314,8 @@ class AuthService(Agent):
         if identity in PROCESS_IDENTITIES or identity == CONTROL_CONNECTION:
             _log.error(f"{identity} cannot be modified using this command!")
             return
+        # Fresh read, the index found here is used to write back.
+        self.auth_file.load()
         entries = copy.deepcopy(self.auth_file.read_allow_entries())
         for entry in entries:
             if entry.identity == identity:
@@ -334,6 +349,8 @@ class AuthService(Agent):
         if identity in PROCESS_IDENTITIES or identity == CONTROL_CONNECTION:
             _log.error(f"{identity} cannot be modified using this command!")
             return
+        # Fresh read, the index found here is used to write back.
+        self.auth_file.load()
         entries = copy.deepcopy(self.auth_file.read_allow_entries())
         for entry in entries:
             if entry.identity == identity:
@@ -428,22 +445,17 @@ class AuthService(Agent):
     def read_auth_file(self):
         _log.debug("loading auth file %s", self.auth_file_path)
         # Update from auth file into memory
-        if self.auth_file.auth_data:
-            old_entries = self.auth_file.read_allow_entries().copy()
+        self.auth_file.load()
+        entries = self.auth_file.read_allow_entries()
+        count = 0
+        # Allow for multiple tries to ensure auth file is read
+        while not entries and count < 3:
             self.auth_file.load()
             entries = self.auth_file.read_allow_entries()
-            count = 0
-            # Allow for multiple tries to ensure auth file is read
-            while not entries and count < 3:
-                self.auth_file.load()
-                entries = self.auth_file.read_allow_entries()
-                count += 1
-            modified_entries = self._get_updated_entries(old_entries, entries)
-            denied_entries = self.auth_file.read_deny_entries()
-        else:
-            self.auth_file.load()
-            entries = self.auth_file.read_allow_entries()
-            denied_entries = self.auth_file.read_deny_entries()
+            count += 1
+        modified_entries = self._get_updated_entries(self._applied_allow_entries, entries)
+        self._applied_allow_entries = self.auth_file.read_allow_entries()
+        denied_entries = self.auth_file.read_deny_entries()
         # Populate auth lists with current entries
         self._update_auth_lists(entries)
         self._update_auth_lists(denied_entries, is_allow=False)

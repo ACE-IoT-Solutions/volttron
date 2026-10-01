@@ -8,7 +8,7 @@ import json
 import jwt
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from passlib.hash import argon2
-from watchdog_gevent import Observer
+from watchdog.observers import Observer
 
 from volttron.platform import get_home
 from volttron.platform.agent.web import Response

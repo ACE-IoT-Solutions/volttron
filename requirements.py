@@ -48,7 +48,6 @@ install_requires = ['gevent==24.2.1',
                     #'pyOpenSSL==19.0.0',
                     'cryptography==37.0.4',
                     'watchdog<5.0',
-                    'watchdog-gevent==0.1.1',
                     'deprecated==1.2.14']
 
 extras_require = {'crate': ['crate==0.27.1'],
