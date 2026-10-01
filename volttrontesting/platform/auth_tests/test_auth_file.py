@@ -503,3 +503,74 @@ def test_upgrade_file_version_1_2_to_1_3(tmpdir_factory):
     assert len(entries) == 4
     for entry in entries:
         assert entry.rpc_method_authorizations == {}
+
+
+@pytest.mark.auth
+def test_write_rereads_file_before_writing(auth_file_platform_tuple, auth_entry1,
+                                           auth_entry2):
+    """A write through a stale AuthFile must not drop another writer's entry."""
+    auth_file = auth_file_platform_tuple
+    other_writer = AuthFile(auth_file.auth_file)
+
+    other_writer.add(auth_entry1)
+    # auth_file's cache predates auth_entry1 and is never reloaded explicitly.
+    auth_file.add(auth_entry2)
+
+    user_ids = [entry.user_id for entry in AuthFile(auth_file.auth_file).read_allow_entries()]
+    assert auth_entry1.user_id in user_ids
+    assert auth_entry2.user_id in user_ids
+
+
+@pytest.mark.auth
+def test_update_by_index_uses_current_file(auth_file_platform_tuple, auth_entry1,
+                                           auth_entry2, auth_entry3):
+    auth_file = auth_file_platform_tuple
+    auth_file.add(auth_entry1)
+    stale_len = len(auth_file.read_allow_entries())
+    AuthFile(auth_file.auth_file).add(auth_entry2)
+
+    auth_file.update_by_index(auth_entry3, stale_len - 1)
+
+    user_ids = [entry.user_id for entry in AuthFile(auth_file.auth_file).read_allow_entries()]
+    assert auth_entry2.user_id in user_ids
+    assert auth_entry3.user_id in user_ids
+    assert auth_entry1.user_id not in user_ids
+
+
+@pytest.mark.auth
+def test_write_refreshes_cache(auth_file_platform_tuple, auth_entry1):
+    auth_file = auth_file_platform_tuple
+    auth_file.add(auth_entry1)
+    assert auth_entry1.user_id in [entry.user_id for entry in auth_file.read_allow_entries()]
+
+
+@pytest.mark.auth
+def test_write_is_atomic_and_keeps_mode(auth_file_platform_tuple, auth_entry1):
+    auth_file = auth_file_platform_tuple
+    os.chmod(auth_file.auth_file, 0o640)
+    inode_before = os.stat(auth_file.auth_file).st_ino
+
+    auth_file.add(auth_entry1)
+
+    st = os.stat(auth_file.auth_file)
+    # Replaced by rename rather than rewritten in place.
+    assert st.st_ino != inode_before
+    assert st.st_mode & 0o777 == 0o640
+    dirname = os.path.dirname(auth_file.auth_file)
+    assert not [name for name in os.listdir(dirname) if name.endswith(".tmp")]
+    with open(auth_file.auth_file) as fp:
+        assert auth_entry1.user_id in fp.read()
+
+
+@pytest.mark.auth
+def test_write_through_symlink_keeps_symlink(tmpdir, auth_entry1):
+    real_path = tmpdir.mkdir("real").join("auth.json")
+    link_path = tmpdir.join("auth.json")
+    os.symlink(str(real_path), str(link_path))
+    auth_file = AuthFile(str(link_path))
+
+    auth_file.add(auth_entry1)
+
+    assert os.path.islink(str(link_path))
+    with open(str(real_path)) as fp:
+        assert auth_entry1.user_id in fp.read()

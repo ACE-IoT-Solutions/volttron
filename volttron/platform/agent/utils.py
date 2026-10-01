@@ -32,7 +32,7 @@ import subprocess
 import sys
 import warnings
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 try:
     HAS_SYSLOG = True
@@ -52,8 +52,7 @@ import yaml
 from dateutil.parser import parse
 from dateutil.tz import tzoffset, tzutc
 from tzlocal import get_localzone
-from watchdog.events import FileClosedEvent, FileSystemEventHandler
-from watchdog_gevent import Observer
+from watchdog.observers import Observer
 
 from volttron.platform import get_address, get_home, jsonapi
 from volttron.utils import AbsolutePathFileReloader, VolttronHomeFileReloader
@@ -718,41 +717,40 @@ def process_timestamp(timestamp_string, topic=''):
     return timestamp, original_tz
 
 
-def watch_file(path: str, callback: Callable):
+def watch_file(path: str, callback: Callable, poll_interval: Optional[float] = None):
     """Run callback method whenever `path` changes.
 
     If `path` is not rooted the function assumes relative to the $VOLTTRON_HOME
     environmental variable
 
-    The watch_file will create a watchdog event handler and will trigger when
-    the close event happens for writing to the file.
+    The watch_file will create a watchdog event handler on the file's directory
+    and will trigger when a write to the file is closed or when a file is
+    renamed over it. The callback runs in a greenlet on the calling thread's
+    hub.
 
-    Not available on OS X/MacOS.
+    If `poll_interval` is given, the file is also checked every `poll_interval`
+    seconds as a fallback for missed events; this call then never returns, so
+    run it in its own greenlet.
     """
     file_path = Path(path)
     if not file_path.is_absolute():
         file_path = Path(get_home()) / file_path
-
-    class Reloader(FileSystemEventHandler):
-
-        def on_closed(self, event):
-            """ Only called after a write to file has been closed
-            """
-            callback()
+    file_path = file_path.resolve()
 
     _log.debug(f"Watch file added for filename {file_path}")
+    reloader = AbsolutePathFileReloader(str(file_path), lambda _path: callback())
     observer = Observer()
-
-    observer.schedule(Reloader(), str(file_path))
+    observer.schedule(reloader, str(file_path.parent))
     observer.start()
     _log.debug("Added file watch for %s", path)
+    if poll_interval:
+        reloader.poll(poll_interval)
 
 
 def watch_file_with_fullpath(fullpath, callback):
     """Run callback method whenever the file changes
-
-        Not available on OS X/MacOS.
     """
+    fullpath = os.path.realpath(fullpath)
     dirname, filename = os.path.split(fullpath)
     _log.info("Adding file watch for %s", fullpath)
     _observer = Observer()

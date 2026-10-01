@@ -27,6 +27,8 @@ import logging
 import os
 import re
 import shutil
+import stat
+import tempfile
 import uuid
 
 import gevent
@@ -413,6 +415,7 @@ class AuthFile(object):
                      existing entry then this method will raise
                      AuthFileEntryAlreadyExists unless no_error is set to true
         """
+        self.load()
         try:
             self._check_if_exists(auth_entry, is_allow)
         except AuthFileEntryAlreadyExists as err:
@@ -446,6 +449,7 @@ class AuthFile(object):
         :type user_id: str
         :type is_approved: bool
         """
+        self.load()
         allow_entries, deny_entries, groups, roles = self.read()
         if is_approved:
             for entry in deny_entries:
@@ -494,6 +498,7 @@ class AuthFile(object):
         :param credentials: entries with these credentials will be removed
         :type credentials: str
         """
+        self.load()
         allow_entries, deny_entries, groups, roles = self.read()
         if is_allow:
             entries = allow_entries
@@ -531,6 +536,7 @@ class AuthFile(object):
         """
         indices = list(set(indices))
         indices.sort(reverse=True)
+        self.load()
         allow_entries, deny_entries, groups, roles = self.read()
         if is_allow:
             entries = allow_entries
@@ -556,6 +562,7 @@ class AuthFile(object):
                     "each value of the {} dict must be "
                     "a list".format(param_name)
                 )
+        self.load()
         allow_entries, deny_entries, groups, roles = self.read()
         if is_group:
             groups = groups_or_roles
@@ -599,6 +606,7 @@ class AuthFile(object):
         .. warning:: Calling with out-of-range index will raise
                      AuthFileIndexError
         """
+        self.load()
         allow_entries, deny_entries, groups, roles = self.read()
         if is_allow:
             entries = allow_entries
@@ -622,8 +630,60 @@ class AuthFile(object):
             "version": self.version,
         }
 
-        with open(self.auth_file, "w") as file_pointer:
-            jsonapi.dump(auth, file_pointer, indent=2)
+        self._atomic_write(auth)
+        # Keep the cache in step with the file without waiting on the watcher.
+        self.load()
+
+    def _atomic_write(self, auth):
+        """
+        Write to a temporary file in the same directory and rename it over the
+        auth file, so readers only ever see the complete old or new contents.
+        A crash leaves the old auth file intact and at worst a stray
+        .auth.json.*.tmp file, which nothing reads.
+        """
+        # Write through a symlink rather than replacing it.
+        target = os.path.realpath(self.auth_file)
+        dirname, basename = os.path.split(target)
+        try:
+            target_stat = os.stat(target)
+        except FileNotFoundError:
+            target_stat = None
+        fd, tmp_path = tempfile.mkstemp(prefix="." + basename + ".", suffix=".tmp", dir=dirname)
+        try:
+            with os.fdopen(fd, "w") as file_pointer:
+                jsonapi.dump(auth, file_pointer, indent=2)
+                file_pointer.flush()
+                os.fsync(file_pointer.fileno())
+            if target_stat is None:
+                os.chmod(tmp_path, 0o660)
+            else:
+                os.chmod(tmp_path, stat.S_IMODE(target_stat.st_mode))
+                if (target_stat.st_uid, target_stat.st_gid) != (os.geteuid(), os.getegid()):
+                    try:
+                        os.chown(tmp_path, target_stat.st_uid, target_stat.st_gid)
+                    except PermissionError:
+                        pass
+            try:
+                os.replace(tmp_path, target)
+            except OSError as err:
+                # e.g. EBUSY when auth.json itself is a bind mount
+                _log.warning("Could not atomically replace %s (%s), writing in place",
+                             target, err)
+                with open(target, "w") as file_pointer:
+                    jsonapi.dump(auth, file_pointer, indent=2)
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+        try:
+            dir_fd = os.open(dirname, os.O_RDONLY)
+        except OSError:
+            return
+        try:
+            os.fsync(dir_fd)
+        except OSError:
+            pass
+        finally:
+            os.close(dir_fd)
 
 
 class AuthFileIndexError(AuthException, IndexError):

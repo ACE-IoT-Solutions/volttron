@@ -40,7 +40,7 @@ try:
 except ImportError:
     logging.getLogger().warning("Missing passlib library in admin_endpoints.py")
 
-from watchdog_gevent import Observer
+from watchdog.observers import Observer
 from volttron.platform.agent.web import Response
 
 from volttron.platform import get_home
