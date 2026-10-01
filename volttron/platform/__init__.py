@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 
 from ..utils.frozendict import FrozenDict
 
-__version__ = '9.0.5a1'
+__version__ = '9.0.6a1'
 
 _log = logging.getLogger(__name__)
 
