@@ -52,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 from collections import defaultdict
 
@@ -1157,6 +1157,9 @@ class BACnetProxyAgent(Agent):
                 try:
                     bacnet_results = iocb.ioResult.get(10)
                 except RuntimeError as exc:
+                    if "noResponse" in str(exc):
+                        _log.info(f"noResponse from device {target_address}")
+                        continue
                     try:
                         _log.error(f"error reading multiple properties for {target_address} {exc}")
                         raise exc
