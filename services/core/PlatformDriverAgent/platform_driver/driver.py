@@ -243,6 +243,7 @@ class DriverAgent(BasicAgent):
         start_time = time.time()
         self.parent.scrape_starting(self.device_name)
 
+        register_names = self.interface.get_register_names_view()
         try:
             # _log.debug(f"scraping {self.device_path=} from driver interface")
             # if self.last_noresponse + datetime.timedelta(hours=24) > datetime.datetime.now():
@@ -251,7 +252,6 @@ class DriverAgent(BasicAgent):
             results = self.interface.scrape_all()
             self.parent.point_count.set(len(results), {"device": self.device_name})
             _log.debug(f"{len(results)=}")
-            register_names = self.interface.get_register_names_view()
             failed_points = register_names - results.keys()
             self.parent.failed_point_count.set(len(failed_points), {"device": self.device_name})
             for point in failed_points:
