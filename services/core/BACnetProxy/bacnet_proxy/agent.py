@@ -52,7 +52,7 @@ _log = logging.getLogger(__name__)
 
 bacnet_logger = logging.getLogger("bacpypes")
 bacnet_logger.setLevel(logging.WARNING)
-__version__ = '0.6.3'
+__version__ = '0.7.0b'
 
 from collections import defaultdict
 
@@ -101,6 +101,7 @@ from gevent.event import AsyncResult
 import gevent
 
 from volttron.platform.agent.known_identities import PLATFORM_DRIVER
+from bacnet_proxy.scrape_budget import ScrapeBudget
 
 # Make sure the TaskManager singleton exists...
 task_manager = TaskManager()
@@ -750,9 +751,16 @@ def bacnet_proxy_agent(config_path, **kwargs):
     request_check_interval = config.get("request_check_interval", 100)
     foreignbbmd = config.get("foreignbbmd", None)
     foreignttl = config.get("foreignttl", None)
+    # Per-attempt bacpypes timeouts (milliseconds), shared by every device this proxy talks to.
+    # A request with no answer fails after apdu_timeout * (apdu_retries + 1).
+    apdu_timeout = config.get("apdu_timeout", 3000)
+    apdu_retries = config.get("apdu_retries", 3)
+    apdu_segment_timeout = config.get("apdu_segment_timeout", 5000)
 
     return BACnetProxyAgent(device_address, max_apdu_len, seg_supported, obj_id, obj_name, ven_id, max_per_request, foreignbbmd=foreignbbmd, foreignttl=foreignttl,
-                            request_check_interval=request_check_interval, heartbeat_autostart=True, **kwargs)
+                            request_check_interval=request_check_interval, apdu_timeout=apdu_timeout,
+                            apdu_retries=apdu_retries, apdu_segment_timeout=apdu_segment_timeout,
+                            heartbeat_autostart=True, **kwargs)
 
 
 class BACnetProxyAgent(Agent):
@@ -760,8 +768,12 @@ class BACnetProxyAgent(Agent):
     This agent creates a virtual bacnet device that is used by the bacnet driver interface to communicate with devices.
     """
     def __init__(self, device_address, max_apdu_len, seg_supported, obj_id, obj_name, ven_id, max_per_request, foreignbbmd=None, foreignttl=None,
-                 request_check_interval=100, **kwargs):
+                 request_check_interval=100, apdu_timeout=3000, apdu_retries=3, apdu_segment_timeout=5000,
+                 **kwargs):
         super(BACnetProxyAgent, self).__init__(**kwargs)
+        self.apdu_timeout = int(apdu_timeout)
+        self.apdu_retries = int(apdu_retries)
+        self.apdu_segment_timeout = int(apdu_segment_timeout)
 
         async_call = AsyncCall()
         self.bacnet_application = None
@@ -814,7 +826,12 @@ class BACnetProxyAgent(Agent):
             maxApduLengthAccepted=max_apdu_len,
             segmentationSupported=seg_supported,
             vendorIdentifier=ven_id,
+            apduTimeout=self.apdu_timeout,
+            numberOfApduRetries=self.apdu_retries,
+            apduSegmentTimeout=self.apdu_segment_timeout,
             )
+        _log.info(f"apdu_timeout {self.apdu_timeout}ms, apdu_retries {self.apdu_retries}, "
+                  f"apdu_segment_timeout {self.apdu_segment_timeout}ms")
 
         # build a bit string that knows about the bit names.
         pss = ServicesSupported()
@@ -943,9 +960,12 @@ class BACnetProxyAgent(Agent):
 
     @RPC.export
     def write_property(self, target_address, value, object_type, instance_number, property_name, priority=None,
-                       index=None):
+                       index=None, timeout=None):
         """
         Write to a property.
+
+        :param timeout: the caller's RPC timeout in seconds. The proxy gives up a little before it so
+            the caller gets an error instead of timing out itself. None waits until bacpypes gives up.
         """
 
         _log.debug(write_debug_str.format(target=target_address,
@@ -990,7 +1010,7 @@ class BACnetProxyAgent(Agent):
 
         iocb = self.iocb_class(request)
         self.bacnet_application.submit_request(iocb)
-        result = iocb.ioResult.get(10)
+        result = iocb.ioResult.get(timeout=ScrapeBudget(timeout, 1).remaining())
         if isinstance(result, SimpleAckPDU):
             return value
         raise RuntimeError("Failed to set value: " + str(result))
@@ -1005,12 +1025,17 @@ class BACnetProxyAgent(Agent):
         except TypeError:
             return False
 
-    def read_using_single_request(self, target_address, point_map):
+    def read_using_single_request(self, target_address, point_map, budget=None):
         """
-        Iteratively reads points from a device one at a time
+        Iteratively reads points from a device one at a time, stopping when the budget runs out
         """
+        if budget is None:
+            budget = ScrapeBudget(None, len(point_map))
         results = {}
         for point, properties in point_map.items():
+            if budget.expired():
+                budget.record_deadline_hit()
+                break
             if len(properties) == 3:
                 object_type, instance_number, property_name = properties
                 property_index = None
@@ -1022,10 +1047,27 @@ class BACnetProxyAgent(Agent):
                 continue
 
             try:
-                prop = self.read_property(
-                    target_address, object_type, instance_number, property_name, property_index)
-                if prop is None:
-                    continue
+                prop = self._read_property_or_raise(target_address, object_type, instance_number, property_name,
+                                                    property_index, budget.remaining())
+            except gevent.Timeout:
+                budget.record_deadline_hit()
+                break
+            except RuntimeError as exc:
+                if "noResponse" in str(exc):
+                    budget.record_no_response()
+                else:
+                    # The device answered, just with a BACnet error for this point.
+                    budget.record_answered()
+                _log.error(f"could not read {property_name} on {object_type}-{instance_number} from device {target_address} {exc=}")
+                continue
+            except Exception as exc:
+                _log.error(f"Error reading {property_name} on {object_type}-{instance_number} from device {target_address}: {exc=}")
+                continue
+
+            budget.record_answered()
+            if prop is None:
+                continue
+            try:
                 if not self.is_valid_json(prop):
                     _log.debug(f"not valid JSON: {dir(prop)} on prop")
                     prop = self.to_json(prop)
@@ -1050,8 +1092,12 @@ class BACnetProxyAgent(Agent):
             _log.debug(f"found {entry} of type {type(entry)}")
             return json.dumps(entry, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    @RPC.export
-    def read_property(self, target_address, object_type, instance_number, property_name, property_index=None):
+    def _read_property_or_raise(self, target_address, object_type, instance_number, property_name,
+                                property_index=None, wait=None):
+        """
+        Send one ReadProperty request. Raises RuntimeError on a BACnet error or noResponse, and
+        gevent.Timeout if ``wait`` seconds pass first (None waits until bacpypes gives up).
+        """
         request = ReadPropertyRequest(
             objectIdentifier=(object_type, instance_number),
             propertyIdentifier=property_name,
@@ -1059,14 +1105,20 @@ class BACnetProxyAgent(Agent):
         request.pduDestination = Address(target_address)
         iocb = self.iocb_class(request)
         self.bacnet_application.submit_request(iocb)
+        return iocb.ioResult.get(timeout=wait)
+
+    @RPC.export
+    def read_property(self, target_address, object_type, instance_number, property_name, property_index=None,
+                      timeout=None):
+        """
+        :param timeout: the caller's RPC timeout in seconds; see write_property.
+        """
         try:
-            bacnet_results = iocb.ioResult.get(10)
+            return self._read_property_or_raise(target_address, object_type, instance_number, property_name,
+                                                property_index, ScrapeBudget(timeout, 1).remaining())
         except RuntimeError as exc:
-            trace = traceback.format_exc()
             _log.error(f"could not read {property_name} on {object_type}-{instance_number} from device {target_address} {exc=}")
             return None
-        # _log.debug(f"found {bacnet_results} for {property_name} on {object_type}-{instance_number} from device {target_address}")
-        return bacnet_results
 
     def _get_access_spec(self, obj_data, properties):
         count = 0
@@ -1106,81 +1158,100 @@ class BACnetProxyAgent(Agent):
         return object_property_map, reverse_point_map
 
     @RPC.export
-    def read_properties(self, target_address, point_map, max_per_request=None, use_read_multiple=True):
+    def read_properties(self, target_address, point_map, max_per_request=None, use_read_multiple=True,
+                        timeout=None, return_stats=False):
         """
         Read a set of points and return the results
+
+        :param timeout: the caller's RPC timeout in seconds. It covers every request sent for this call;
+            when it is about to run out, the proxy stops sending requests and returns the points it has.
+            None means no overall limit (each request still ends when bacpypes gives up).
+        :param return_stats: return {"results": <points>, "stats": <ScrapeBudget.to_dict()>} instead of
+            just the points, so the caller can tell whether the scrape was cut short and why.
         """
-
         if not use_read_multiple:
-            props = self.read_using_single_request(target_address, point_map)
-            _log.debug(f"found {len(props)} results using single requests")
-            # tuple_props = {}
-            # for key, val in props.items():
-            #     tuple_props[(key.split('/')[0], int(key.split('/')[1]), 'presentValue', None)] = val
-            # _log.debug(f"{tuple_props=}")
-            # return tuple_props
-            return props
+            budget = ScrapeBudget(timeout, len(point_map))
+            results = self.read_using_single_request(target_address, point_map, budget)
+            _log.debug(f"found {len(results)} results using single requests")
+        else:
+            if max_per_request is None:
+                max_per_request = self._max_per_request
+            results, budget = self._read_using_multiple_requests(target_address, point_map, max_per_request,
+                                                                 timeout)
 
-        # Set max_per_request really high if not set.
-        if max_per_request is None:
-            max_per_request = self._max_per_request
+        stats = budget.to_dict()
+        if stats["deadline_hit"]:
+            _log.warning(f"Timeout reading {target_address}: returning {len(results)} of {len(point_map)} points. "
+                         f"{stats['answered']} requests answered, {stats['no_response']} noResponse, "
+                         f"{stats['skipped']} not finished. cause={stats['cause']}, "
+                         f"estimated full scrape {stats['estimated_seconds']}s, timeout {timeout}s")
+        if return_stats:
+            return {"results": results, "stats": stats}
+        return results
 
+    def _read_using_multiple_requests(self, target_address, point_map, max_per_request, timeout):
         _log.debug("Reading {count} points on {target}, max per scrape: {max}".format(
             count=len(point_map), target=target_address, max=max_per_request))
         # process point map and populate object_property_map and
         # reverse_point_map
         (object_property_map, reverse_point_map) = self._get_object_properties(point_map, target_address)
 
-        result_dict = {}
-        finished = False
+        objects = list(object_property_map.items())
+        batches = [objects[i:i + max_per_request] for i in range(0, len(objects), max_per_request)]
+        budget = ScrapeBudget(timeout, len(batches))
 
-        while not finished:
+        result_dict = {}
+
+        for batch in batches:
+            if budget.expired():
+                budget.record_deadline_hit()
+                break
+
             read_access_spec_list = []
             count = 0
-            for _ in range(max_per_request):
-                try:
-                    obj_data, properties = object_property_map.popitem()
-                except KeyError:
-                    finished = True
-                    break
+            for obj_data, properties in batch:
                 (spec_list, spec_count) = self._get_access_spec(obj_data, properties)
                 count += spec_count
                 read_access_spec_list.append(spec_list)
 
-            if read_access_spec_list:
-                _log.debug("Requesting {count} properties from {target}".format(count=count, target=target_address))
-                request = ReadPropertyMultipleRequest(listOfReadAccessSpecs=read_access_spec_list)
-                request.pduDestination = Address(target_address)
+            _log.debug("Requesting {count} properties from {target}".format(count=count, target=target_address))
+            request = ReadPropertyMultipleRequest(listOfReadAccessSpecs=read_access_spec_list)
+            request.pduDestination = Address(target_address)
 
-                iocb = self.iocb_class(request)
-                self.bacnet_application.submit_request(iocb)
-                try:
-                    bacnet_results = iocb.ioResult.get(10)
-                except RuntimeError as exc:
-                    if "noResponse" in str(exc):
-                        _log.info(f"noResponse from device {target_address}")
-                        continue
-                    try:
-                        _log.error(f"error reading multiple properties for {target_address} {exc}")
-                        raise exc
-                    except gevent.Timeout as exc_e:
-                        _log.error(exc_e)
-                        continue
-                except Exception as exc:
-                    _log.error(f"{exc} {target_address=} {request=}")
-                    raise exc
-                    
-                _log.debug("Received read response from {target} count: {count}".format(
-                    count=count, target=target_address))
+            iocb = self.iocb_class(request)
+            self.bacnet_application.submit_request(iocb)
+            try:
+                bacnet_results = iocb.ioResult.get(timeout=budget.remaining())
+            except gevent.Timeout:
+                # The request is still in flight; bacpypes finishes it on its own and nobody reads the result.
+                budget.record_deadline_hit()
+                break
+            except RuntimeError as exc:
+                if "noResponse" in str(exc):
+                    _log.info(f"noResponse from device {target_address}")
+                    budget.record_no_response()
+                    continue
+                _log.error(f"error reading multiple properties for {target_address} {exc}")
+                raise
+            except Exception as exc:
+                _log.error(f"{exc} {target_address=} {request=}")
+                raise
 
-                try:
-                    for prop_tuple, value in bacnet_results.items():
-                        name = reverse_point_map[prop_tuple]
-                        result_dict[name] = value
-                except AttributeError as exc:
-                    for prop_tuple, value in bacnet_results[0].items():
-                        name = reverse_point_map[prop_tuple]
-                        result_dict[name] = value
+            budget.record_answered()
+            _log.debug("Received read response from {target} count: {count}".format(
+                count=count, target=target_address))
+
+            try:
+                for prop_tuple, value in bacnet_results.items():
+                    name = reverse_point_map[prop_tuple]
+                    result_dict[name] = value
+            except AttributeError as exc:
+                for prop_tuple, value in bacnet_results[0].items():
+                    name = reverse_point_map[prop_tuple]
+                    result_dict[name] = value
+        return self._json_safe(result_dict), budget
+
+    def _json_safe(self, result_dict):
         # ensure all points are JSON serializable
         return_dict = {}
         for key, value in result_dict.items():

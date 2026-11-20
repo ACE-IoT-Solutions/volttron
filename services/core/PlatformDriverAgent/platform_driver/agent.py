@@ -69,7 +69,7 @@ from .driver_locks import configure_socket_lock, configure_publish_lock
 
 utils.setup_logging()
 _log = logging.getLogger(__name__)
-__version__ = '4.7.4'
+__version__ = '4.8.0b'
 
 
 class OverrideError(DriverInterfaceError):
@@ -212,6 +212,29 @@ class PlatformDriverAgent(Agent):
         self.point_count = _meter.create_gauge(
             "point_count",
             description="Number of points per device",
+        )
+        # Scrape timeout tracking, reported by interfaces that set `last_scrape_stats` (BACnet).
+        self.scrape_timeout_counter = _meter.create_counter(
+            "device_scrape_timeout_count",
+            description="Scrapes cut short by the device timeout. cause=slow: device was still answering, "
+                        "raise its timeout; unresponsive: device stopped answering; unknown: no request "
+                        "finished; proxy: the BACnet proxy itself did not answer in time",
+        )
+        self.scrape_timed_out_gauge = _meter.create_gauge(
+            "device_scrape_timed_out",
+            description="1 if the most recent scrape was cut short by the device timeout with this cause, else 0. "
+                        "Only present for causes the device has hit",
+        )
+        self.scrape_timeout_gauge = _meter.create_gauge(
+            "device_scrape_timeout_seconds",
+            unit="",
+            description="Configured scrape timeout for the device, in seconds",
+        )
+        self.scrape_estimated_gauge = _meter.create_gauge(
+            "device_scrape_estimated_seconds",
+            unit="",
+            description="Time a full scrape takes: the actual time when it finished, or a projection "
+                        "from the requests that finished when it was cut short",
         )
 
         self.publish_depth_first_all = bool(publish_depth_first_all)

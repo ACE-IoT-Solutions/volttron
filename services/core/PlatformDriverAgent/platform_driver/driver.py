@@ -91,6 +91,7 @@ class DriverAgent(BasicAgent):
 
         self.interval = interval
         self.periodic_read_event = None
+        self._timeout_causes_seen = set()
 
         self.update_scrape_schedule(time_slot, driver_scrape_interval, group, group_offset_interval)
 
@@ -222,6 +223,27 @@ class DriverAgent(BasicAgent):
         # self.parent.device_startup_callback(self.device_name, self)
 
 
+    def _record_scrape_timeout_stats(self):
+        stats = getattr(self.interface, "last_scrape_stats", None)
+        if not stats:
+            return
+        attrs = {"device": self.device_name}
+        if stats.get("timeout") is not None:
+            self.parent.scrape_timeout_gauge.set(stats["timeout"], attrs)
+        if stats.get("estimated_seconds") is not None:
+            self.parent.scrape_estimated_gauge.set(stats["estimated_seconds"], attrs)
+        cause = (stats.get("cause") or "unknown") if stats.get("deadline_hit") else None
+        if cause:
+            self._timeout_causes_seen.add(cause)
+        # One series per cause this device has hit (so a fixed device drops back to 0), and none at all
+        # for devices that never time out.
+        for seen in self._timeout_causes_seen:
+            self.parent.scrape_timed_out_gauge.set(1 if seen == cause else 0, {**attrs, "cause": seen})
+        if cause:
+            self.parent.scrape_timeout_counter.add(1, {**attrs, "cause": cause})
+            _log.warning(f"Scrape of {self.device_name} hit its {stats.get('timeout')}s timeout ({cause=}, "
+                         f"estimated full scrape {stats.get('estimated_seconds')}s)")
+
     def periodic_read(self, now):
         #we not use self.core.schedule to prevent drift.
         next_scrape_time = now + datetime.timedelta(seconds=self.interval)
@@ -265,7 +287,9 @@ class DriverAgent(BasicAgent):
             #     _log.debug(f"Adding unresponsive device: {self.device_name}")
             #     self.last_noresponse = datetime.datetime.now()
             # self.parent.last_scraped = datetime.datetime.now()
+            self._record_scrape_timeout_stats()
             return
+        self._record_scrape_timeout_stats()
         end_time = time.time()
         scrape_time = end_time-start_time
         self.parent.performance_histogram.record(scrape_time, {"device": self.device_name})

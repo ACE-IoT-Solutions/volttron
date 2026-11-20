@@ -39,6 +39,7 @@
 
 import logging
 import gevent
+import time
 import traceback
 from datetime import datetime, timedelta
 
@@ -101,6 +102,9 @@ class Interface(BaseInterface):
         self.use_read_multiple = True
         self.enable_collection = True
         self.collection_disabled_time = None
+        # Filled by scrape_all for the platform driver's timeout metrics; see BACnetProxy scrape_budget.py.
+        self.last_scrape_stats = None
+        self._proxy_takes_timeout = True
         # self.unresponsive_devices = {}
 
     def configure(self, config_dict, registry_config_str):
@@ -160,19 +164,41 @@ class Interface(BaseInterface):
         if not pinged:
             self.schedule_ping()
 
+    def _call_proxy(self, method, *args, timeout, **new_kwargs):
+        """
+        Call the proxy, passing our timeout so it can give up (or return partial results) before we
+        stop waiting. Proxies older than that keyword get the old call.
+
+        Returns (result, proxy_took_timeout).
+        """
+        if self._proxy_takes_timeout:
+            try:
+                return self.vip.rpc.call(
+                    self.proxy_address, method, *args, timeout=timeout, **new_kwargs
+                ).get(timeout=timeout), True
+            except RemoteError as exc:
+                if "unexpected keyword argument" not in exc.message:
+                    raise
+                _log.warning(
+                    "BACnet proxy does not accept a timeout; update it to get partial results "
+                    "and timeout metrics when a scrape runs out of time"
+                )
+                self._proxy_takes_timeout = False
+        return self.vip.rpc.call(self.proxy_address, method, *args).get(timeout=timeout), False
+
     def get_point(self, point_name, get_priority_array=False):
         register = self.get_register_by_name(point_name)
         property_name = "priorityArray" if get_priority_array else register.property
         register_index = None if get_priority_array else register.index
-        result = self.vip.rpc.call(
-            self.proxy_address,
+        result, _ = self._call_proxy(
             "read_property",
             self.target_address,
             register.object_type,
             register.instance_number,
             property_name,
             register_index,
-        ).get(timeout=self.timeout)
+            timeout=self.timeout,
+        )
         return result
 
     def set_point(self, point_name, value, priority=None):
@@ -199,9 +225,7 @@ class Interface(BaseInterface):
             priority if priority is not None else register.priority,
             register.index,
         ]
-        result = self.vip.rpc.call(self.proxy_address, "write_property", *args).get(
-            timeout=self.timeout
-        )
+        result, _ = self._call_proxy("write_property", *args, timeout=self.timeout)
         return result
 
     # def add_unresponsive_device(self, address):
@@ -212,6 +236,7 @@ class Interface(BaseInterface):
 
     def scrape_all(self):
         # TODO: support reading from an array.
+        self.last_scrape_stats = None
         point_map = {}
         read_registers = self.get_registers_by_type("byte", True)
         write_registers = self.get_registers_by_type("byte", False)
@@ -232,18 +257,34 @@ class Interface(BaseInterface):
 
         while True:
             try:
-                result = self.vip.rpc.call(
-                    self.proxy_address,
+                started = time.monotonic()
+                response, with_stats = self._call_proxy(
                     "read_properties",
                     self.target_address,
                     point_map,
                     self.max_per_request,
                     self.use_read_multiple,
-                ).get(timeout=self.timeout)
+                    timeout=self.timeout,
+                    return_stats=True,
+                )
+                if with_stats:
+                    result = response["results"]
+                    self.last_scrape_stats = dict(response["stats"], timeout=self.timeout)
+                else:
+                    result = response
 
                 _log.debug(f"found {len(result)} results in platform driver")
             except gevent.timeout.Timeout as exc:
+                # The proxy should have returned partial results before this; if it didn't, it was too
+                # busy (or too old) to answer in time, so we can't tell how the device was doing.
                 _log.error(f"Timed out reading target {self.target_address}")
+                self.last_scrape_stats = {
+                    "timeout": self.timeout,
+                    "elapsed": time.monotonic() - started,
+                    "deadline_hit": True,
+                    "cause": "proxy",
+                    "estimated_seconds": None,
+                }
                 raise exc
             except RemoteError as exc:
                 if "unknownProperty" in exc.message:

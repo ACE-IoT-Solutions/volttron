@@ -31,3 +31,11 @@ is a conflicting BACnet device ID on your network.
 5. vendor_id - Vendor ID of the virtual BACnet device. Defaults to 15. (Optional)
 6. segmentation_supported -  Segmentation allows larger messages to be broken up into segments and spliced back together.
 Possible setting are “segmentedBoth” (default), “segmentedTransmit”, “segmentedReceive”, or “noSegmentation” (Optional)
+7. apdu_timeout - Milliseconds to wait for a device to answer one request before resending it. Defaults to 3000. (Optional)
+8. apdu_retries - Times to resend a request that got no answer. A request fails with noResponse after
+apdu_timeout * (apdu_retries + 1). Defaults to 3. (Optional)
+9. apdu_segment_timeout - Milliseconds to wait for the next segment of a segmented message. Defaults to 5000. (Optional)
+
+These three apply to every device the proxy talks to. The overall limit for one device's scrape is the
+`timeout` in that device's platform driver config: the driver passes it with each scrape, and when it is
+about to run out the proxy stops sending requests and returns the points it has read so far.
